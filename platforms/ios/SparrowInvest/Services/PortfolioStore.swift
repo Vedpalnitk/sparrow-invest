@@ -10,6 +10,38 @@ class PortfolioStore: ObservableObject {
     @Published var isLoading = false
     @Published var error: Error?
 
+    // Portfolio health score (0-100)
+    var portfolioHealth: Int {
+        calculatePortfolioHealth()
+    }
+
+    private func calculatePortfolioHealth() -> Int {
+        var score = 70 // Base score
+
+        // Diversification bonus (if holdings > 3)
+        if holdings.count >= 3 {
+            score += 10
+        }
+
+        // Positive returns bonus
+        if portfolio.totalReturns > 0 {
+            score += 10
+        }
+
+        // Active SIPs bonus
+        if activeSIPs.count >= 2 {
+            score += 5
+        }
+
+        // Asset allocation check (equity between 40-80%)
+        let equityPercentage = portfolio.assetAllocation.equityPercentage
+        if equityPercentage >= 40 && equityPercentage <= 80 {
+            score += 5
+        }
+
+        return min(100, max(0, score))
+    }
+
     private let apiService = APIService.shared
 
     init() {
@@ -151,7 +183,7 @@ class PortfolioStore: ObservableObject {
                 id: "1",
                 fundCode: "119598",
                 fundName: "Parag Parikh Flexi Cap Fund",
-                type: .sip,
+                type: .sipInstallment,
                 amount: 10000,
                 units: 127.55,
                 nav: 78.40,
@@ -162,11 +194,33 @@ class PortfolioStore: ObservableObject {
                 id: "2",
                 fundCode: "120503",
                 fundName: "HDFC Mid-Cap Opportunities",
-                type: .sip,
+                type: .sipInstallment,
                 amount: 5000,
                 units: 44.52,
                 nav: 112.30,
                 date: Date().addingTimeInterval(-86400 * 5),
+                status: .completed
+            ),
+            Transaction(
+                id: "3",
+                fundCode: "119775",
+                fundName: "ICICI Pru Corporate Bond",
+                type: .purchase,
+                amount: 25000,
+                units: 1037.34,
+                nav: 24.10,
+                date: Date().addingTimeInterval(-86400 * 15),
+                status: .completed
+            ),
+            Transaction(
+                id: "4",
+                fundCode: "119598",
+                fundName: "Parag Parikh Flexi Cap Fund",
+                type: .dividend,
+                amount: 850,
+                units: 0,
+                nav: 0,
+                date: Date().addingTimeInterval(-86400 * 30),
                 status: .completed
             )
         ]

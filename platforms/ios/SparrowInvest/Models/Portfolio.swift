@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 struct Portfolio: Codable {
     var totalValue: Double
@@ -11,6 +12,10 @@ struct Portfolio: Codable {
     var assetAllocation: AssetAllocation
     var holdings: [Holding]
 
+    // Aliases for compatibility
+    var currentValue: Double { totalValue }
+    var absoluteReturnsPercentage: Double { returnsPercentage }
+
     static var empty: Portfolio {
         Portfolio(
             totalValue: 0,
@@ -20,7 +25,7 @@ struct Portfolio: Codable {
             todayChange: 0,
             todayChangePercentage: 0,
             xirr: nil,
-            assetAllocation: AssetAllocation(equity: 0, debt: 0, hybrid: 0, gold: 0),
+            assetAllocation: AssetAllocation(equity: 0, debt: 0, hybrid: 0, gold: 0, other: 0),
             holdings: []
         )
     }
@@ -31,6 +36,44 @@ struct AssetAllocation: Codable {
     var debt: Double
     var hybrid: Double
     var gold: Double
+    var other: Double
+
+    init(equity: Double, debt: Double, hybrid: Double, gold: Double, other: Double = 0) {
+        self.equity = equity
+        self.debt = debt
+        self.hybrid = hybrid
+        self.gold = gold
+        self.other = other
+    }
+
+    var total: Double {
+        equity + debt + hybrid + gold + other
+    }
+
+    var equityPercentage: Double {
+        guard total > 0 else { return 0 }
+        return (equity / total) * 100
+    }
+
+    var debtPercentage: Double {
+        guard total > 0 else { return 0 }
+        return (debt / total) * 100
+    }
+
+    var hybridPercentage: Double {
+        guard total > 0 else { return 0 }
+        return (hybrid / total) * 100
+    }
+
+    var goldPercentage: Double {
+        guard total > 0 else { return 0 }
+        return (gold / total) * 100
+    }
+
+    var otherPercentage: Double {
+        guard total > 0 else { return 0 }
+        return (other / total) * 100
+    }
 }
 
 struct Holding: Codable, Identifiable {
@@ -46,6 +89,40 @@ struct Holding: Codable, Identifiable {
     var currentValue: Double
     var returns: Double
     var returnsPercentage: Double
+    var dayChange: Double
+    var dayChangePercentage: Double
+
+    init(
+        id: String,
+        fundCode: String,
+        fundName: String,
+        category: String,
+        assetClass: AssetClass,
+        units: Double,
+        averageNav: Double,
+        currentNav: Double,
+        investedAmount: Double,
+        currentValue: Double,
+        returns: Double,
+        returnsPercentage: Double,
+        dayChange: Double = 0,
+        dayChangePercentage: Double = 0
+    ) {
+        self.id = id
+        self.fundCode = fundCode
+        self.fundName = fundName
+        self.category = category
+        self.assetClass = assetClass
+        self.units = units
+        self.averageNav = averageNav
+        self.currentNav = currentNav
+        self.investedAmount = investedAmount
+        self.currentValue = currentValue
+        self.returns = returns
+        self.returnsPercentage = returnsPercentage
+        self.dayChange = dayChange
+        self.dayChangePercentage = dayChangePercentage
+    }
 
     enum AssetClass: String, Codable {
         case equity = "equity"
@@ -53,6 +130,16 @@ struct Holding: Codable, Identifiable {
         case hybrid = "hybrid"
         case gold = "gold"
         case other = "other"
+
+        var color: Color {
+            switch self {
+            case .equity: return Color(hex: "#3B82F6")
+            case .debt: return Color(hex: "#10B981")
+            case .hybrid: return Color(hex: "#8B5CF6")
+            case .gold: return Color(hex: "#F59E0B")
+            case .other: return Color(hex: "#64748B")
+            }
+        }
     }
 }
 
@@ -66,6 +153,14 @@ struct SIP: Codable, Identifiable {
     var status: SIPStatus
     var totalInvested: Double
     var sipCount: Int
+
+    var isActive: Bool {
+        status == .active
+    }
+
+    var nextInstallmentDate: Date? {
+        isActive ? nextDate : nil
+    }
 
     enum SIPFrequency: String, Codable {
         case monthly = "monthly"
@@ -95,9 +190,21 @@ struct Transaction: Codable, Identifiable {
     enum TransactionType: String, Codable {
         case purchase = "purchase"
         case redemption = "redemption"
-        case sip = "sip"
+        case sipInstallment = "sip"
         case switchIn = "switch_in"
         case switchOut = "switch_out"
+        case dividend = "dividend"
+
+        var displayName: String {
+            switch self {
+            case .purchase: return "Purchase"
+            case .redemption: return "Redemption"
+            case .sipInstallment: return "SIP"
+            case .switchIn: return "Switch In"
+            case .switchOut: return "Switch Out"
+            case .dividend: return "Dividend"
+            }
+        }
     }
 
     enum TransactionStatus: String, Codable {

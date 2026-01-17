@@ -25,7 +25,11 @@ enum AppTheme {
     // MARK: - Border & Shadow
     static let cardBorder = Color(light: "#E2E8F0", dark: "#334155")
     static let shadowColor = Color.black.opacity(0.08)
+    static let cardShadow = Color.black.opacity(0.06)
     static let progressBackground = Color(light: "#E2E8F0", dark: "#334155")
+
+    // MARK: - Chip/Pill Colors
+    static let chipBackground = Color(light: "#F1F5F9", dark: "#1E293B")
 
     // MARK: - Gradients
     static var primaryGradient: LinearGradient {
@@ -89,6 +93,21 @@ extension Double {
         formatter.maximumFractionDigits = 0
         formatter.locale = Locale(identifier: "en_IN")
         return formatter.string(from: NSNumber(value: self)) ?? "₹0"
+    }
+
+    var compactCurrencyFormatted: String {
+        let absValue = abs(self)
+        let sign = self < 0 ? "-" : ""
+
+        if absValue >= 10_000_000 { // Crores
+            return "\(sign)₹\(String(format: "%.1f", absValue / 10_000_000)) Cr"
+        } else if absValue >= 100_000 { // Lakhs
+            return "\(sign)₹\(String(format: "%.1f", absValue / 100_000)) L"
+        } else if absValue >= 1_000 { // Thousands
+            return "\(sign)₹\(String(format: "%.0f", absValue / 1_000))K"
+        } else {
+            return currencyFormatted
+        }
     }
 
     var percentFormatted: String {

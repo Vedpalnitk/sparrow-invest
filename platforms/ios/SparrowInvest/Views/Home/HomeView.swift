@@ -5,6 +5,8 @@ struct HomeView: View {
     @EnvironmentObject var goalsStore: GoalsStore
     @EnvironmentObject var fundsStore: FundsStore
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var dashboardStore: DashboardStore
+    @EnvironmentObject var familyStore: FamilyStore
 
     var body: some View {
         NavigationStack {
@@ -13,19 +15,88 @@ struct HomeView: View {
                     // Greeting
                     GreetingHeader(name: authManager.user?.firstName ?? "Investor")
 
-                    // Portfolio Summary Card
-                    PortfolioSummaryCard(portfolio: portfolioStore.portfolio)
+                    // Portfolio Hero Card with Individual/Family Toggle
+                    PortfolioHeroCard(
+                        portfolio: portfolioStore.portfolio,
+                        viewMode: $dashboardStore.viewMode,
+                        familyPortfolio: familyStore.familyPortfolio
+                    )
 
                     // Quick Actions
                     QuickActionsRow()
 
-                    // Goals Section
-                    if !goalsStore.goals.isEmpty {
-                        GoalsSectionView(goals: goalsStore.goals)
+                    // Portfolio Health Score
+                    PortfolioHealthTile(
+                        healthScore: portfolioStore.portfolioHealth,
+                        onTapAnalysis: {
+                            // Navigate to AI Analysis
+                        }
+                    )
+
+                    // Asset Allocation Pie Chart
+                    AssetAllocationPieChart(
+                        allocation: currentPortfolio.assetAllocation
+                    )
+
+                    // Portfolio Growth Line Chart
+                    PortfolioGrowthLineChart(
+                        history: dashboardStore.portfolioHistory,
+                        selectedPeriod: $dashboardStore.selectedHistoryPeriod,
+                        onPeriodChange: { period in
+                            dashboardStore.loadPortfolioHistory(for: period)
+                        }
+                    )
+
+                    // Family Portfolio (only show in family mode or if has family members)
+                    if dashboardStore.viewMode == .family || !familyStore.familyPortfolio.members.isEmpty {
+                        FamilyPortfolioCard(
+                            familyPortfolio: familyStore.familyPortfolio,
+                            onMemberTap: { member in
+                                familyStore.selectMember(member)
+                            }
+                        )
                     }
 
-                    // Recommendations
-                    RecommendationsSectionView(recommendations: fundsStore.recommendations)
+                    // Top Movers
+                    let movers = dashboardStore.topMovers(from: portfolioStore.holdings)
+                    TopMoversCard(
+                        gainers: movers.gainers,
+                        losers: movers.losers
+                    )
+
+                    // SIP Dashboard
+                    SIPDashboardCard(activeSIPs: portfolioStore.activeSIPs)
+
+                    // Goal Progress
+                    GoalProgressTile(
+                        goals: goalsStore.goals,
+                        onTapGoal: { goal in
+                            // Navigate to goal detail
+                        }
+                    )
+
+                    // Market Overview
+                    MarketOverviewCard(marketOverview: dashboardStore.marketOverview)
+
+                    // Upcoming Actions
+                    UpcomingActionsCard(
+                        actions: dashboardStore.upcomingActions,
+                        onComplete: { action in
+                            dashboardStore.completeAction(action)
+                        },
+                        onDismiss: { action in
+                            dashboardStore.dismissAction(action)
+                        }
+                    )
+
+                    // Recent Transactions
+                    RecentTransactionsCard(transactions: portfolioStore.transactions)
+
+                    // Tax Summary
+                    TaxSummaryCard(taxSummary: dashboardStore.taxSummary)
+
+                    // Dividend Income
+                    DividendIncomeCard(dividendSummary: dashboardStore.dividendSummary)
                 }
                 .padding()
             }
@@ -43,9 +114,20 @@ struct HomeView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack(spacing: 16) {
-                        Button(action: {}) {
-                            Image(systemName: "bell.fill")
-                                .foregroundColor(AppTheme.textSecondary)
+                        // Notification Bell with Badge
+                        ZStack(alignment: .topTrailing) {
+                            Button(action: {}) {
+                                Image(systemName: "bell.fill")
+                                    .foregroundColor(AppTheme.textSecondary)
+                            }
+                            if dashboardStore.highPriorityActionCount > 0 {
+                                Text("\(dashboardStore.highPriorityActionCount)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 16, height: 16)
+                                    .background(Circle().fill(AppTheme.error))
+                                    .offset(x: 6, y: -6)
+                            }
                         }
                         NavigationLink(destination: ProfileView()) {
                             Image(systemName: "person.circle.fill")
@@ -55,15 +137,36 @@ struct HomeView: View {
                 }
             }
             .refreshable {
-                await refreshData()
+                await refreshAllData()
             }
         }
     }
 
-    private func refreshData() async {
-        await portfolioStore.fetchPortfolio()
-        await goalsStore.fetchGoals()
-        await fundsStore.fetchRecommendations()
+    // Current portfolio based on view mode
+    private var currentPortfolio: Portfolio {
+        // For now, return individual portfolio
+        // In family mode, this would aggregate family data
+        portfolioStore.portfolio
+    }
+
+    private func refreshAllData() async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                await portfolioStore.fetchPortfolio()
+            }
+            group.addTask {
+                await goalsStore.fetchGoals()
+            }
+            group.addTask {
+                await fundsStore.fetchRecommendations()
+            }
+            group.addTask {
+                await dashboardStore.refreshAllData()
+            }
+            group.addTask {
+                await familyStore.refreshData()
+            }
+        }
     }
 }
 
@@ -100,92 +203,45 @@ struct GreetingHeader: View {
 struct QuickActionsRow: View {
     var body: some View {
         HStack(spacing: 12) {
-            QuickActionButton(
+            HomeQuickActionButton(
                 title: "Invest",
                 icon: "plus.circle.fill",
                 color: AppTheme.primary
             )
 
-            QuickActionButton(
+            HomeQuickActionButton(
                 title: "Withdraw",
                 icon: "arrow.down.circle.fill",
                 color: AppTheme.secondary
+            )
+
+            HomeQuickActionButton(
+                title: "SIP",
+                icon: "repeat.circle.fill",
+                color: AppTheme.success
             )
         }
     }
 }
 
-struct QuickActionButton: View {
+struct HomeQuickActionButton: View {
     let title: String
     let icon: String
     let color: Color
 
     var body: some View {
         Button(action: {}) {
-            HStack {
+            VStack(spacing: 8) {
                 Image(systemName: icon)
+                    .font(.system(size: 24))
                 Text(title)
-                    .fontWeight(.semibold)
+                    .font(.system(size: 12, weight: .semibold))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(color)
-            .foregroundColor(.white)
+            .background(color.opacity(0.1))
+            .foregroundColor(color)
             .cornerRadius(12)
-        }
-    }
-}
-
-// MARK: - Goals Section
-struct GoalsSectionView: View {
-    let goals: [Goal]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("MY GOALS")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(AppTheme.primary)
-                    .tracking(1)
-                Spacer()
-                NavigationLink(destination: GoalsView()) {
-                    Text("See all")
-                        .font(.caption)
-                        .foregroundColor(AppTheme.primary)
-                }
-            }
-
-            ForEach(goals.prefix(2)) { goal in
-                GoalProgressCard(goal: goal)
-            }
-        }
-    }
-}
-
-// MARK: - Recommendations Section
-struct RecommendationsSectionView: View {
-    let recommendations: [FundRecommendation]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("RECOMMENDED FOR YOU")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(AppTheme.primary)
-                    .tracking(1)
-                Spacer()
-                NavigationLink(destination: ExploreView()) {
-                    Text("See all")
-                        .font(.caption)
-                        .foregroundColor(AppTheme.primary)
-                }
-            }
-
-            ForEach(recommendations.prefix(3)) { recommendation in
-                RecommendationCard(recommendation: recommendation)
-            }
         }
     }
 }
@@ -196,4 +252,6 @@ struct RecommendationsSectionView: View {
         .environmentObject(PortfolioStore())
         .environmentObject(GoalsStore())
         .environmentObject(FundsStore())
+        .environmentObject(DashboardStore())
+        .environmentObject(FamilyStore())
 }

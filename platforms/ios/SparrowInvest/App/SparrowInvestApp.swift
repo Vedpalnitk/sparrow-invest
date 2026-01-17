@@ -6,6 +6,8 @@ struct SparrowInvestApp: App {
     @StateObject private var portfolioStore = PortfolioStore()
     @StateObject private var goalsStore = GoalsStore()
     @StateObject private var fundsStore = FundsStore()
+    @StateObject private var dashboardStore = DashboardStore()
+    @StateObject private var familyStore = FamilyStore()
 
     var body: some Scene {
         WindowGroup {
@@ -14,6 +16,8 @@ struct SparrowInvestApp: App {
                 .environmentObject(portfolioStore)
                 .environmentObject(goalsStore)
                 .environmentObject(fundsStore)
+                .environmentObject(dashboardStore)
+                .environmentObject(familyStore)
         }
     }
 }

@@ -5,16 +5,16 @@ struct MainTabView: View {
 
     enum Tab: String, CaseIterable {
         case home = "Home"
-        case goals = "Goals"
-        case invest = "Invest"
+        case investments = "Investments"
+        case aiAnalysis = "AI Analysis"
         case explore = "Explore"
         case profile = "Profile"
 
         var icon: String {
             switch self {
             case .home: return "house.fill"
-            case .goals: return "target"
-            case .invest: return "indianrupeesign.circle.fill"
+            case .investments: return "chart.pie.fill"
+            case .aiAnalysis: return "brain.head.profile"
             case .explore: return "magnifyingglass"
             case .profile: return "person.fill"
             }
@@ -29,17 +29,17 @@ struct MainTabView: View {
                 }
                 .tag(Tab.home)
 
-            GoalsView()
+            InvestmentsView()
                 .tabItem {
-                    Label(Tab.goals.rawValue, systemImage: Tab.goals.icon)
+                    Label(Tab.investments.rawValue, systemImage: Tab.investments.icon)
                 }
-                .tag(Tab.goals)
+                .tag(Tab.investments)
 
-            InvestView()
+            AIAnalysisView()
                 .tabItem {
-                    Label(Tab.invest.rawValue, systemImage: Tab.invest.icon)
+                    Label(Tab.aiAnalysis.rawValue, systemImage: Tab.aiAnalysis.icon)
                 }
-                .tag(Tab.invest)
+                .tag(Tab.aiAnalysis)
 
             ExploreView()
                 .tabItem {
@@ -61,6 +61,5 @@ struct MainTabView: View {
     MainTabView()
         .environmentObject(AuthManager())
         .environmentObject(PortfolioStore())
-        .environmentObject(GoalsStore())
         .environmentObject(FundsStore())
 }
