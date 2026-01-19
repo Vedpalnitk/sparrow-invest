@@ -983,19 +983,7 @@ extension DesignSystemView {
                     .textCase(.uppercase)
 
                 VStack(spacing: 12) {
-                    HStack {
-                        Text("SF Pro Rounded")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                        Spacer()
-                        Text(".rounded")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
-                    }
-                    .padding()
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    RoundedDesignDemo()
                 }
             }
         }
@@ -1034,28 +1022,11 @@ extension DesignSystemView {
                             )
                     }
 
-                    // Glass Button
-                    Button(action: {}) {
-                        Text("Glass Button")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.primary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }
+                    // Glass Button with gradient border
+                    GlassButtonDemo(title: "Glass Button")
 
-                    // Bordered Button
-                    Button(action: {}) {
-                        Text("Secondary Action")
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.blue)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(Color.blue.opacity(0.3), lineWidth: 1.5)
-                            )
-                    }
+                    // Secondary Button with gradient border
+                    SecondaryButtonDemo(title: "Secondary Action")
 
                     // Small Buttons Row
                     HStack(spacing: 12) {
@@ -1068,14 +1039,8 @@ extension DesignSystemView {
                                 .background(.blue, in: Capsule())
                         }
 
-                        Button(action: {}) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(.ultraThinMaterial, in: Capsule())
-                        }
+                        // Small Glass Button with gradient border
+                        SmallGlassButtonDemo(title: "Share", icon: "square.and.arrow.up")
                     }
                 }
             }
@@ -1106,75 +1071,18 @@ extension DesignSystemView {
                     .textCase(.uppercase)
 
                 // Glass Card
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Circle()
-                            .fill(LinearGradient(colors: [.blue, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(width: 44, height: 44)
-                            .overlay {
-                                Image(systemName: "chart.line.uptrend.xyaxis")
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.white)
-                            }
+                ComponentCardDemo(
+                    icon: "chart.line.uptrend.xyaxis",
+                    iconGradient: [.blue, .cyan],
+                    title: "Portfolio Value",
+                    subtitle: "Updated just now",
+                    value: "₹12.4L",
+                    change: "+12.5%",
+                    changeColor: .green
+                )
 
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Portfolio Value")
-                                .font(.system(size: 15, weight: .semibold))
-                            Text("Updated just now")
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                        }
-
-                        Spacer()
-
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("₹12.4L")
-                                .font(.system(size: 17, weight: .bold))
-                            Text("+12.5%")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.green)
-                        }
-                    }
-                }
-                .padding(16)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-
-                // Solid Card
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "target")
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(.orange)
-                            .frame(width: 44, height: 44)
-                            .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Retirement Goal")
-                                .font(.system(size: 15, weight: .semibold))
-                            Text("75% complete")
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                        }
-
-                        Spacer()
-                    }
-
-                    // Progress bar
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(Color(uiColor: .tertiarySystemFill))
-                                .frame(height: 8)
-
-                            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                                .fill(LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing))
-                                .frame(width: geometry.size.width * 0.75, height: 8)
-                        }
-                    }
-                    .frame(height: 8)
-                }
-                .padding(16)
-                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                // Goal Card
+                ComponentGoalCardDemo()
             }
 
             // Form Inputs
@@ -1186,36 +1094,10 @@ extension DesignSystemView {
 
                 VStack(spacing: 12) {
                     // Text Field
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.secondary)
-                        Text("Search funds...")
-                            .foregroundColor(Color(uiColor: .placeholderText))
-                        Spacer()
-                    }
-                    .padding(16)
-                    .background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    SearchFieldDemo()
 
                     // Segmented Control
-                    HStack(spacing: 0) {
-                        ForEach(["1M", "3M", "6M", "1Y", "All"], id: \.self) { period in
-                            Button(action: {}) {
-                                Text(period)
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(period == "1Y" ? .white : .primary)
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
-                                    .background {
-                                        if period == "1Y" {
-                                            Capsule()
-                                                .fill(.blue)
-                                        }
-                                    }
-                            }
-                        }
-                    }
-                    .padding(4)
-                    .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+                    SegmentedControlDemo()
                 }
             }
         }
@@ -1259,35 +1141,7 @@ extension DesignSystemView {
                     .textCase(.uppercase)
 
                 // Nested containers demo
-                VStack(spacing: 16) {
-                    Text("Outer Container (radius: 24)")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-
-                    VStack(spacing: 12) {
-                        Text("Inner Card (radius: 16)")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-
-                        HStack(spacing: 8) {
-                            Text("Button")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(.blue, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-                            Text("radius: 10")
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                }
-                .padding(20)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                ConcentricNestingDemo()
             }
 
             // Spacing System
@@ -1333,6 +1187,7 @@ struct PrincipleCard: View {
     let title: String
     let description: String
     let color: Color
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -1340,7 +1195,7 @@ struct PrincipleCard: View {
                 .font(.system(size: 24, weight: .medium))
                 .foregroundColor(color)
                 .frame(width: 48, height: 48)
-                .background(color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(color.opacity(colorScheme == .dark ? 0.2 : 0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -1355,7 +1210,56 @@ struct PrincipleCard: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 10, x: 0, y: 3)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.06)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
@@ -1363,6 +1267,7 @@ struct FeatureCard: View {
     let icon: String
     let title: String
     let description: String
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 12) {
@@ -1380,7 +1285,56 @@ struct FeatureCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(16)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 10, x: 0, y: 3)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.06)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
@@ -1530,6 +1484,7 @@ struct FontWeightRow: View {
 struct ChipView: View {
     let text: String
     let isSelected: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Text(text)
@@ -1537,13 +1492,66 @@ struct ChipView: View {
             .foregroundColor(isSelected ? .white : .primary)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background {
-                if isSelected {
-                    Capsule().fill(.blue)
-                } else {
-                    Capsule().fill(.ultraThinMaterial)
-                }
-            }
+            .background(chipBackground)
+            .overlay(chipBorder)
+            .shadow(color: chipShadow, radius: 6, x: 0, y: 2)
+    }
+
+    private var chipShadow: Color {
+        if isSelected {
+            return .clear
+        }
+        return colorScheme == .dark ? .clear : .black.opacity(0.04)
+    }
+
+    @ViewBuilder
+    private var chipBackground: some View {
+        if isSelected {
+            Capsule().fill(.blue)
+        } else if colorScheme == .dark {
+            Capsule()
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            Capsule()
+                .fill(Color.white)
+        }
+    }
+
+    @ViewBuilder
+    private var chipBorder: some View {
+        if isSelected {
+            Capsule().stroke(Color.clear, lineWidth: 0)
+        } else {
+            Capsule()
+                .stroke(
+                    colorScheme == .dark
+                        ? LinearGradient(
+                            stops: [
+                                .init(color: .white.opacity(0.4), location: 0),
+                                .init(color: .white.opacity(0.15), location: 0.3),
+                                .init(color: .white.opacity(0.05), location: 0.7),
+                                .init(color: .white.opacity(0.1), location: 1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          )
+                        : LinearGradient(
+                            stops: [
+                                .init(color: .black.opacity(0.1), location: 0),
+                                .init(color: .black.opacity(0.05), location: 0.3),
+                                .init(color: .black.opacity(0.03), location: 0.7),
+                                .init(color: .black.opacity(0.07), location: 1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          ),
+                    lineWidth: 1
+                )
+        }
     }
 }
 
@@ -1594,6 +1602,709 @@ struct SpacingRow: View {
         }
         .padding(12)
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+}
+
+// MARK: - Layout Demo Views
+
+private struct ConcentricNestingDemo: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Outer Container (radius: 24)")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+
+            VStack(spacing: 12) {
+                Text("Inner Card (radius: 16)")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+
+                HStack(spacing: 8) {
+                    Text("Button")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(.blue, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    Text("radius: 10")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .background(Color(uiColor: .tertiarySystemFill), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .padding(20)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 24, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Typography Demo Views
+
+private struct RoundedDesignDemo: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack {
+            Text("SF Pro Rounded")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+            Spacer()
+            Text(".rounded")
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+        }
+        .padding()
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 10, x: 0, y: 3)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.06)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Form Input Demo Views
+
+private struct SearchFieldDemo: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
+            Text("Search funds...")
+                .foregroundColor(Color(uiColor: .placeholderText))
+            Spacer()
+        }
+        .padding(16)
+        .background(fieldBackground)
+        .overlay(fieldBorder)
+        .shadow(color: fieldShadow, radius: 8, x: 0, y: 2)
+    }
+
+    private var fieldShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.04)
+    }
+
+    @ViewBuilder
+    private var fieldBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var fieldBorder: some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+private struct SegmentedControlDemo: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(["1M", "3M", "6M", "1Y", "All"], id: \.self) { period in
+                Button(action: {}) {
+                    Text(period)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(period == "1Y" ? .white : .primary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background {
+                            if period == "1Y" {
+                                Capsule()
+                                    .fill(.blue)
+                            }
+                        }
+                }
+            }
+        }
+        .padding(4)
+        .background(segmentBackground)
+        .overlay(segmentBorder)
+        .shadow(color: segmentShadow, radius: 8, x: 0, y: 2)
+    }
+
+    private var segmentShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.04)
+    }
+
+    @ViewBuilder
+    private var segmentBackground: some View {
+        if colorScheme == .dark {
+            Capsule()
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            Capsule()
+                .fill(Color.white)
+        }
+    }
+
+    private var segmentBorder: some View {
+        Capsule()
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Button Demo Views
+
+private struct GlassButtonDemo: View {
+    let title: String
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: {}) {
+            Text(title)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(buttonBackground)
+                .overlay(buttonBorder)
+        }
+    }
+
+    @ViewBuilder
+    private var buttonBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+        }
+    }
+
+    private var buttonBorder: some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+private struct SecondaryButtonDemo: View {
+    let title: String
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: {}) {
+            Text(title)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.blue)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(buttonBackground)
+                .overlay(buttonBorder)
+        }
+    }
+
+    @ViewBuilder
+    private var buttonBackground: some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(colorScheme == .dark ? Color.blue.opacity(0.1) : Color.blue.opacity(0.05))
+    }
+
+    private var buttonBorder: some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .blue.opacity(0.5), location: 0),
+                            .init(color: .blue.opacity(0.2), location: 0.3),
+                            .init(color: .blue.opacity(0.1), location: 0.7),
+                            .init(color: .blue.opacity(0.3), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .blue.opacity(0.3), location: 0),
+                            .init(color: .blue.opacity(0.15), location: 0.3),
+                            .init(color: .blue.opacity(0.1), location: 0.7),
+                            .init(color: .blue.opacity(0.2), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1.5
+            )
+    }
+}
+
+private struct SmallGlassButtonDemo: View {
+    let title: String
+    let icon: String
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: {}) {
+            Label(title, systemImage: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.primary)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(buttonBackground)
+                .overlay(buttonBorder)
+        }
+    }
+
+    @ViewBuilder
+    private var buttonBackground: some View {
+        if colorScheme == .dark {
+            Capsule()
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    Capsule()
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            Capsule()
+                .fill(Color.white)
+                .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+        }
+    }
+
+    private var buttonBorder: some View {
+        Capsule()
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Component Demo Views
+
+private struct ComponentCardDemo: View {
+    let icon: String
+    let iconGradient: [Color]
+    let title: String
+    let subtitle: String
+    let value: String
+    let change: String
+    let changeColor: Color
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Icon container
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: iconGradient.map { $0.opacity(colorScheme == .dark ? 0.2 : 0.15) },
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 48, height: 48)
+
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: iconGradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.secondary)
+                Text(subtitle)
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(Color(uiColor: .tertiaryLabel))
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.primary)
+                Text(change)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(changeColor)
+            }
+        }
+        .padding(16)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+private struct ComponentGoalCardDemo: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color.orange.opacity(colorScheme == .dark ? 0.2 : 0.15))
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: "house.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("House Down Payment")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.primary)
+                    Text("Target: ₹25L • Dec 2028")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Text("68%")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(.orange)
+            }
+
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.orange.opacity(colorScheme == .dark ? 0.15 : 0.12))
+                        .frame(height: 6)
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [.orange, .yellow],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: geometry.size.width * 0.68, height: 6)
+                }
+            }
+            .frame(height: 6)
+
+            HStack {
+                Text("₹17L saved")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("₹8L to go")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(16)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 

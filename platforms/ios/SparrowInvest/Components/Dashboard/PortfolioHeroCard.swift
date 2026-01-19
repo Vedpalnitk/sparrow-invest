@@ -11,6 +11,7 @@ struct PortfolioHeroCard: View {
     let portfolio: Portfolio
     @Binding var viewMode: PortfolioViewMode
     var familyPortfolio: FamilyPortfolio?
+    @Environment(\.colorScheme) private var colorScheme
 
     private var currentValue: Double {
         viewMode == .family ? (familyPortfolio?.totalValue ?? portfolio.currentValue) : portfolio.currentValue
@@ -60,7 +61,7 @@ struct PortfolioHeroCard: View {
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(
-                    (returns >= 0 ? Color.green : Color.red).opacity(0.12),
+                    (returns >= 0 ? Color.green : Color.red).opacity(colorScheme == .dark ? 0.15 : 0.12),
                     in: Capsule()
                 )
             }
@@ -97,7 +98,56 @@ struct PortfolioHeroCard: View {
             .padding(.top, 8)
         }
         .padding(AppTheme.Spacing.large)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xxLarge, style: .continuous))
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xxLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xxLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xxLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xxLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 
     private var viewModeToggle: some View {
@@ -123,7 +173,10 @@ struct PortfolioHeroCard: View {
             }
         }
         .padding(4)
-        .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+        .background(
+            Capsule()
+                .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color(uiColor: .tertiarySystemFill))
+        )
     }
 }
 

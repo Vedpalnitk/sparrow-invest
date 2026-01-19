@@ -1,27 +1,31 @@
 //
-//  AIAnalysisView.swift
+//  InsightsView.swift (formerly AIAnalysisView)
 //  SparrowInvest
 //
-//  AI-powered portfolio analysis and recommendations
+//  AI-powered portfolio analysis, recommendations and insights
 //
 
 import SwiftUI
 
 struct AIAnalysisView: View {
     @EnvironmentObject var portfolioStore: PortfolioStore
+    @EnvironmentObject var fundsStore: FundsStore
     @State private var isAnalyzing = false
     @State private var selectedTab = 0
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    // AI Analysis Header
+                VStack(spacing: AppTheme.Spacing.large) {
+                    // AI Header
                     AIHeaderCard(isAnalyzing: $isAnalyzing)
+
+                    // AI Recommendations Section (moved from Explore)
+                    AIRecommendationsSection()
 
                     // Analysis Tabs
                     Picker("Analysis", selection: $selectedTab) {
-                        Text("Insights").tag(0)
+                        Text("Analysis").tag(0)
                         Text("Optimize").tag(1)
                         Text("Alerts").tag(2)
                     }
@@ -39,11 +43,162 @@ struct AIAnalysisView: View {
                         EmptyView()
                     }
                 }
-                .padding()
+                .padding(AppTheme.Spacing.medium)
             }
-            .background(AppTheme.background)
-            .navigationTitle("AI Analysis")
+            .background(Color(uiColor: .systemGroupedBackground))
+            .navigationTitle("Insights")
         }
+    }
+}
+
+// MARK: - AI Recommendations (moved from ExploreView)
+
+struct AIRecommendationsSection: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
+            HStack {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(.blue)
+                Text("AI RECOMMENDATIONS")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundColor(.blue)
+                    .tracking(1)
+            }
+
+            Text("Personalized picks based on your profile")
+                .font(.system(size: 14, weight: .light))
+                .foregroundColor(.secondary)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: AppTheme.Spacing.compact) {
+                    ForEach(0..<5, id: \.self) { _ in
+                        RecommendedFundCard()
+                    }
+                }
+            }
+        }
+        .padding(AppTheme.Spacing.medium)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+struct RecommendedFundCard: View {
+    @Environment(\.colorScheme) private var colorScheme
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
+            HStack {
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                    .fill(Color.blue.opacity(0.1))
+                    .frame(width: 40, height: 40)
+                    .overlay(
+                        Text("PP")
+                            .font(.system(size: 11, weight: .light))
+                            .foregroundColor(.blue)
+                    )
+                Spacer()
+                Image(systemName: "heart")
+                    .font(.system(size: 14, weight: .light))
+                    .foregroundColor(Color(uiColor: .tertiaryLabel))
+            }
+
+            Text("Parag Parikh Flexi Cap Fund")
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(.primary)
+                .lineLimit(2)
+
+            Text("Equity - Flexi Cap")
+                .font(.system(size: 12, weight: .light))
+                .foregroundColor(.secondary)
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("3Y Returns")
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundColor(Color(uiColor: .tertiaryLabel))
+                    Text("+18.7%")
+                        .font(.system(size: 16, weight: .light, design: .rounded))
+                        .foregroundColor(.green)
+                }
+                Spacer()
+                Button(action: {}) {
+                    Text("Invest")
+                        .font(.system(size: 12, weight: .regular))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            in: Capsule()
+                        )
+                        .foregroundColor(.white)
+                }
+            }
+        }
+        .padding(AppTheme.Spacing.medium)
+        .frame(width: 180)
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
@@ -51,35 +206,36 @@ struct AIAnalysisView: View {
 
 struct AIHeaderCard: View {
     @Binding var isAnalyzing: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 12) {
+        VStack(spacing: AppTheme.Spacing.medium) {
+            HStack(spacing: AppTheme.Spacing.compact) {
                 // AI Icon
                 ZStack {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [AppTheme.primary, AppTheme.secondary],
+                                colors: [.blue, .cyan],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 56, height: 56)
+                        .frame(width: 52, height: 52)
 
                     Image(systemName: "brain.head.profile")
-                        .font(.title2)
+                        .font(.system(size: 22, weight: .light))
                         .foregroundColor(.white)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Sparrow AI")
-                        .font(.headline)
-                        .foregroundColor(AppTheme.textPrimary)
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(.primary)
 
                     Text("Your intelligent portfolio assistant")
-                        .font(.caption)
-                        .foregroundColor(AppTheme.textSecondary)
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(.secondary)
                 }
 
                 Spacer()
@@ -87,44 +243,90 @@ struct AIHeaderCard: View {
                 // Status Badge
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(AppTheme.success)
-                        .frame(width: 8, height: 8)
+                        .fill(Color.green)
+                        .frame(width: 6, height: 6)
                     Text("Active")
-                        .font(.caption)
-                        .foregroundColor(AppTheme.success)
+                        .font(.system(size: 11, weight: .light))
+                        .foregroundColor(.green)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(AppTheme.success.opacity(0.1))
-                .cornerRadius(12)
+                .background(Color.green.opacity(0.1), in: Capsule())
             }
 
             // Last Analysis
             HStack {
                 Image(systemName: "clock")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textTertiary)
+                    .font(.system(size: 11, weight: .light))
+                    .foregroundColor(Color(uiColor: .tertiaryLabel))
                 Text("Last analyzed: 2 hours ago")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textTertiary)
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(Color(uiColor: .tertiaryLabel))
 
                 Spacer()
 
                 Button(action: { isAnalyzing = true }) {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 11, weight: .light))
                         Text("Refresh")
+                            .font(.system(size: 12, weight: .regular))
                     }
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(AppTheme.primary)
+                    .foregroundColor(.blue)
                 }
             }
         }
-        .padding(20)
-        .background(AppTheme.cardBackground)
-        .cornerRadius(20)
-        .shadow(color: AppTheme.shadowColor, radius: 8, x: 0, y: 4)
+        .padding(AppTheme.Spacing.large)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
@@ -132,11 +334,10 @@ struct AIHeaderCard: View {
 
 struct InsightsSection: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             Text("KEY INSIGHTS")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(AppTheme.primary)
+                .font(.system(size: 11, weight: .regular))
+                .foregroundColor(.blue)
                 .tracking(1)
 
             // Portfolio Health Score
@@ -178,12 +379,13 @@ struct InsightsSection: View {
 
 struct HealthScoreCard: View {
     let score: Int
+    @Environment(\.colorScheme) private var colorScheme
 
     var scoreColor: Color {
         switch score {
-        case 80...100: return AppTheme.success
-        case 60..<80: return AppTheme.warning
-        default: return AppTheme.error
+        case 80...100: return .green
+        case 60..<80: return .orange
+        default: return .red
         }
     }
 
@@ -197,50 +399,54 @@ struct HealthScoreCard: View {
     }
 
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: AppTheme.Spacing.large) {
             // Score Ring
             ZStack {
                 Circle()
-                    .stroke(scoreColor.opacity(0.2), lineWidth: 8)
-                    .frame(width: 80, height: 80)
+                    .stroke(scoreColor.opacity(0.2), lineWidth: 6)
+                    .frame(width: 72, height: 72)
 
                 Circle()
                     .trim(from: 0, to: CGFloat(score) / 100)
-                    .stroke(scoreColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                    .frame(width: 80, height: 80)
+                    .stroke(scoreColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .frame(width: 72, height: 72)
                     .rotationEffect(.degrees(-90))
 
-                VStack(spacing: 2) {
+                VStack(spacing: 0) {
                     Text("\(score)")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(.system(size: 22, weight: .light, design: .rounded))
                         .foregroundColor(scoreColor)
                     Text("/ 100")
-                        .font(.caption2)
-                        .foregroundColor(AppTheme.textTertiary)
+                        .font(.system(size: 10, weight: .light))
+                        .foregroundColor(Color(uiColor: .tertiaryLabel))
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Portfolio Health")
-                    .font(.headline)
-                    .foregroundColor(AppTheme.textPrimary)
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(.primary)
 
                 Text(scoreLabel)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundColor(scoreColor)
 
                 Text("Based on diversification, risk, and returns")
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(.secondary)
             }
 
             Spacer()
         }
-        .padding(20)
-        .background(AppTheme.cardBackground)
-        .cornerRadius(16)
+        .padding(AppTheme.Spacing.large)
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
@@ -251,47 +457,54 @@ struct InsightCard: View {
     let title: String
     let message: String
     let type: InsightType
+    @Environment(\.colorScheme) private var colorScheme
 
     enum InsightType {
         case positive, warning, info
 
         var color: Color {
             switch self {
-            case .positive: return AppTheme.success
-            case .warning: return AppTheme.warning
-            case .info: return AppTheme.primary
+            case .positive: return .green
+            case .warning: return .orange
+            case .info: return .blue
             }
         }
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.compact) {
             ZStack {
                 Circle()
                     .fill(type.color.opacity(0.1))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 36, height: 36)
 
                 Image(systemName: icon)
+                    .font(.system(size: 14, weight: .light))
                     .foregroundColor(type.color)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(AppTheme.textPrimary)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.primary)
 
                 Text(message)
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer()
         }
-        .padding(16)
-        .background(AppTheme.cardBackground)
-        .cornerRadius(12)
+        .padding(AppTheme.Spacing.medium)
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
@@ -299,11 +512,10 @@ struct InsightCard: View {
 
 struct OptimizationSection: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             Text("OPTIMIZATION SUGGESTIONS")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(AppTheme.primary)
+                .font(.system(size: 11, weight: .regular))
+                .foregroundColor(.blue)
                 .tracking(1)
 
             OptimizationCard(
@@ -335,49 +547,59 @@ struct OptimizationCard: View {
     let description: String
     let action: String
     let impact: String
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
             Text(title)
-                .font(.headline)
-                .foregroundColor(AppTheme.textPrimary)
+                .font(.system(size: 15, weight: .regular))
+                .foregroundColor(.primary)
 
             Text(description)
-                .font(.subheadline)
-                .foregroundColor(AppTheme.textSecondary)
+                .font(.system(size: 13, weight: .light))
+                .foregroundColor(.secondary)
 
             HStack {
                 // Impact badge
                 HStack(spacing: 4) {
                     Image(systemName: "sparkles")
-                        .font(.caption)
+                        .font(.system(size: 10, weight: .light))
                     Text(impact)
-                        .font(.caption)
-                        .fontWeight(.medium)
+                        .font(.system(size: 11, weight: .regular))
                 }
-                .foregroundColor(AppTheme.success)
+                .foregroundColor(.green)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(AppTheme.success.opacity(0.1))
-                .cornerRadius(8)
+                .background(Color.green.opacity(0.1), in: Capsule())
 
                 Spacer()
 
                 Button(action: {}) {
                     Text(action)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(AppTheme.primary)
-                        .cornerRadius(8)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
+                        .background(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
+                        )
                 }
             }
         }
-        .padding(16)
-        .background(AppTheme.cardBackground)
-        .cornerRadius(16)
+        .padding(AppTheme.Spacing.medium)
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
@@ -385,11 +607,10 @@ struct OptimizationCard: View {
 
 struct AlertsSection: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             Text("ACTIVE ALERTS")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(AppTheme.primary)
+                .font(.system(size: 11, weight: .regular))
+                .foregroundColor(.blue)
                 .tracking(1)
 
             AlertCard(
@@ -415,28 +636,6 @@ struct AlertsSection: View {
                 time: "3 months",
                 type: .warning
             )
-
-            // Empty state for no alerts
-            if false {
-                VStack(spacing: 12) {
-                    Image(systemName: "bell.slash")
-                        .font(.largeTitle)
-                        .foregroundColor(AppTheme.textTertiary)
-
-                    Text("No active alerts")
-                        .font(.headline)
-                        .foregroundColor(AppTheme.textSecondary)
-
-                    Text("We'll notify you when something needs your attention")
-                        .font(.caption)
-                        .foregroundColor(AppTheme.textTertiary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 40)
-                .background(AppTheme.cardBackground)
-                .cornerRadius(16)
-            }
         }
     }
 }
@@ -447,56 +646,64 @@ struct AlertCard: View {
     let message: String
     let time: String
     let type: AlertType
+    @Environment(\.colorScheme) private var colorScheme
 
     enum AlertType {
         case info, warning, critical
 
         var color: Color {
             switch self {
-            case .info: return AppTheme.primary
-            case .warning: return AppTheme.warning
-            case .critical: return AppTheme.error
+            case .info: return .blue
+            case .warning: return .orange
+            case .critical: return .red
             }
         }
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: AppTheme.Spacing.compact) {
             ZStack {
                 Circle()
                     .fill(type.color.opacity(0.1))
-                    .frame(width: 40, height: 40)
+                    .frame(width: 36, height: 36)
 
                 Image(systemName: icon)
+                    .font(.system(size: 14, weight: .light))
                     .foregroundColor(type.color)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(AppTheme.textPrimary)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.primary)
 
                     Spacer()
 
                     Text(time)
-                        .font(.caption)
-                        .foregroundColor(AppTheme.textTertiary)
+                        .font(.system(size: 11, weight: .light))
+                        .foregroundColor(Color(uiColor: .tertiaryLabel))
                 }
 
                 Text(message)
-                    .font(.caption)
-                    .foregroundColor(AppTheme.textSecondary)
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(16)
-        .background(AppTheme.cardBackground)
-        .cornerRadius(12)
+        .padding(AppTheme.Spacing.medium)
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(type.color.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .stroke(
+                    colorScheme == .dark
+                        ? type.color.opacity(0.4)
+                        : type.color.opacity(0.3),
+                    lineWidth: 1
+                )
         )
     }
 }
@@ -506,4 +713,5 @@ struct AlertCard: View {
 #Preview {
     AIAnalysisView()
         .environmentObject(PortfolioStore())
+        .environmentObject(FundsStore())
 }

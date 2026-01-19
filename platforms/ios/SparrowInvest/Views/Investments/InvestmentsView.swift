@@ -106,6 +106,7 @@ struct InvestmentsView: View {
 struct PortfolioSelectorButton: View {
     let selectedPortfolio: PortfolioOption
     let onTap: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: onTap) {
@@ -133,9 +134,53 @@ struct PortfolioSelectorButton: View {
             }
             .padding(.horizontal, AppTheme.Spacing.medium)
             .padding(.vertical, AppTheme.Spacing.compact)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+            .background(selectorBackground)
+            .overlay(selectorBorder)
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var selectorBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(.ultraThinMaterial)
+        }
+    }
+
+    private var selectorBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
@@ -143,6 +188,7 @@ struct PortfolioSelectorButton: View {
 
 struct InvestmentTabSelector: View {
     @Binding var selectedTab: InvestmentTab
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: 0) {
@@ -167,7 +213,12 @@ struct InvestmentTabSelector: View {
             }
         }
         .padding(.vertical, AppTheme.Spacing.small)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous))
+        .background(
+            colorScheme == .dark
+                ? AnyShapeStyle(Color.white.opacity(0.08))
+                : AnyShapeStyle(.ultraThinMaterial),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+        )
     }
 }
 
@@ -294,6 +345,7 @@ struct SIPStatCard: View {
     let value: String
     let icon: String
     let color: Color
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
@@ -311,7 +363,56 @@ struct SIPStatCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(AppTheme.Spacing.medium)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
@@ -319,6 +420,7 @@ struct SIPStatCard: View {
 
 struct InvestmentSIPCard: View {
     let sip: SIP
+    @Environment(\.colorScheme) private var colorScheme
 
     private var nextDateFormatted: String {
         let formatter = DateFormatter()
@@ -380,7 +482,14 @@ struct InvestmentSIPCard: View {
             }
         }
         .padding(AppTheme.Spacing.medium)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
@@ -426,6 +535,7 @@ struct TransactionsTabContent: View {
 
 struct TransactionCard: View {
     let transaction: Transaction
+    @Environment(\.colorScheme) private var colorScheme
 
     private var dateFormatted: String {
         let formatter = DateFormatter()
@@ -505,7 +615,14 @@ struct TransactionCard: View {
             }
         }
         .padding(AppTheme.Spacing.medium)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
@@ -565,6 +682,8 @@ struct PortfolioPickerSheet: View {
 // MARK: - Empty States
 
 struct InvestmentsEmptySIPsView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: "repeat.circle")
@@ -582,11 +701,20 @@ struct InvestmentsEmptySIPsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
 struct EmptyTransactionsView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: "list.bullet.rectangle")
@@ -604,7 +732,14 @@ struct EmptyTransactionsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
@@ -612,6 +747,7 @@ struct EmptyTransactionsView: View {
 
 struct InvestmentSummaryCard: View {
     let portfolio: Portfolio
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
@@ -646,7 +782,56 @@ struct InvestmentSummaryCard: View {
             }
         }
         .padding(AppTheme.Spacing.large)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous))
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
@@ -719,6 +904,7 @@ struct FilterPill: View {
 
 struct HoldingCard: View {
     let holding: Holding
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.compact) {
@@ -788,11 +974,20 @@ struct HoldingCard: View {
             .frame(height: 4)
         }
         .padding(AppTheme.Spacing.medium)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 
 struct EmptyHoldingsView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: "chart.pie")
@@ -810,7 +1005,14 @@ struct EmptyHoldingsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
+            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
+        )
     }
 }
 

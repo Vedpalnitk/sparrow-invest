@@ -83,21 +83,58 @@ Use for: Main section containers, hero cards, dashboard widgets.
 
 | Property | Light Mode | Dark Mode |
 |----------|------------|-----------|
-| Background | `.regularMaterial` | `.ultraThinMaterial` |
-| Border | None | `white.opacity(0.1)` gradient |
-| Shadow | None (material provides depth) | None |
-| Corner Radius | `24pt` (xxLarge) | `24pt` |
-| Padding | `20pt` (large) | `20pt` |
+| Background | `Color.white` | `Color.black.opacity(0.4)` + `.ultraThinMaterial` |
+| Border | Gradient with `black.opacity(0.08→0.02→0.06)` | Gradient with `white.opacity(0.4→0.05→0.1)` |
+| Shadow | `black.opacity(0.08)`, radius 12, y: 4 | None |
+| Corner Radius | `20pt` (xLarge) or `24pt` (xxLarge) | Same |
+| Padding | `16pt` (medium) or `20pt` (large) | Same |
 
 ```swift
-// Light & Dark Mode (adapts automatically)
-.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+@ViewBuilder
+private var cardBackground: some View {
+    if colorScheme == .dark {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .fill(Color.black.opacity(0.4))
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+    } else {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .fill(Color.white)
+    }
+}
 
-// Dark mode with glass border (optional)
-.overlay(
-    RoundedRectangle(cornerRadius: 24, style: .continuous)
-        .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-)
+private var cardBorder: some View {
+    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+        .stroke(
+            colorScheme == .dark
+                ? LinearGradient(
+                    stops: [
+                        .init(color: .white.opacity(0.4), location: 0),
+                        .init(color: .white.opacity(0.15), location: 0.3),
+                        .init(color: .white.opacity(0.05), location: 0.7),
+                        .init(color: .white.opacity(0.1), location: 1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                  )
+                : LinearGradient(
+                    stops: [
+                        .init(color: .black.opacity(0.08), location: 0),
+                        .init(color: .black.opacity(0.04), location: 0.3),
+                        .init(color: .black.opacity(0.02), location: 0.7),
+                        .init(color: .black.opacity(0.06), location: 1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                  ),
+            lineWidth: 1
+        )
+}
+
+// Optional shadow for light mode
+.shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.08), radius: 12, x: 0, y: 4)
 ```
 
 ---
@@ -253,30 +290,208 @@ ZStack {
 
 ### 7. Segmented Control / Toggle
 
-Use for: View mode toggle (Individual/Family), tab selection.
+Use for: View mode toggle (Individual/Family), tab selection, period selectors.
 
 | Property | Light Mode | Dark Mode |
 |----------|------------|-----------|
-| Track Background | `tertiarySystemFill` | `white.opacity(0.08)` |
+| Track Background | `Color.white` | `Color.black.opacity(0.4)` + `.ultraThinMaterial` |
+| Border | Gradient `black.opacity(0.1→0.03→0.07)` | Gradient `white.opacity(0.4→0.05→0.1)` |
+| Shadow | `black.opacity(0.04)`, radius 8, y: 2 | None |
 | Active Segment | `Color.blue` | `Color.blue` |
 | Shape | Capsule | Capsule |
 
 ```swift
-HStack(spacing: 4) {
-    ForEach(options) { option in
-        Text(option.title)
-            .foregroundColor(isSelected ? .white : .secondary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background {
-                if isSelected {
-                    Capsule().fill(Color.blue)
+HStack(spacing: 0) {
+    ForEach(options, id: \.self) { option in
+        Button(action: {}) {
+            Text(option)
+                .foregroundColor(isSelected ? .white : .primary)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background {
+                    if isSelected {
+                        Capsule().fill(.blue)
+                    }
                 }
-            }
+        }
     }
 }
 .padding(4)
-.background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+.background(segmentBackground)
+.overlay(segmentBorder)
+.shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.04), radius: 8, x: 0, y: 2)
+
+@ViewBuilder
+private var segmentBackground: some View {
+    if colorScheme == .dark {
+        Capsule()
+            .fill(Color.black.opacity(0.4))
+            .background(Capsule().fill(.ultraThinMaterial))
+    } else {
+        Capsule().fill(Color.white)
+    }
+}
+
+private var segmentBorder: some View {
+    Capsule()
+        .stroke(
+            colorScheme == .dark
+                ? LinearGradient(
+                    stops: [
+                        .init(color: .white.opacity(0.4), location: 0),
+                        .init(color: .white.opacity(0.15), location: 0.3),
+                        .init(color: .white.opacity(0.05), location: 0.7),
+                        .init(color: .white.opacity(0.1), location: 1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                  )
+                : LinearGradient(
+                    stops: [
+                        .init(color: .black.opacity(0.1), location: 0),
+                        .init(color: .black.opacity(0.05), location: 0.3),
+                        .init(color: .black.opacity(0.03), location: 0.7),
+                        .init(color: .black.opacity(0.07), location: 1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                  ),
+            lineWidth: 1
+        )
+}
+```
+
+---
+
+### 8. Glass Buttons
+
+Use for: Secondary actions, glass-style buttons.
+
+| Property | Light Mode | Dark Mode |
+|----------|------------|-----------|
+| Background | `Color.white` | `Color.black.opacity(0.4)` + `.ultraThinMaterial` |
+| Border | Gradient `black.opacity(0.1→0.03→0.07)` | Gradient `white.opacity(0.4→0.05→0.1)` |
+| Shadow | `black.opacity(0.06)`, radius 8, y: 2 | None |
+| Corner Radius | 14pt (rounded rect) or Capsule | Same |
+
+```swift
+Button(action: {}) {
+    Text("Glass Button")
+        .font(.system(size: 17, weight: .semibold))
+        .foregroundColor(.primary)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(buttonBackground)
+        .overlay(buttonBorder)
+}
+
+@ViewBuilder
+private var buttonBackground: some View {
+    if colorScheme == .dark {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Color.black.opacity(0.4))
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+    } else {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Color.white)
+            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+    }
+}
+```
+
+---
+
+### 9. Pills & Chips
+
+Use for: Filter chips, tag pills, selection chips.
+
+| Property | Light Mode (unselected) | Dark Mode (unselected) |
+|----------|-------------------------|------------------------|
+| Background | `Color.white` | `Color.black.opacity(0.4)` + `.ultraThinMaterial` |
+| Border | Gradient `black.opacity(0.1→0.03→0.07)` | Gradient `white.opacity(0.4→0.05→0.1)` |
+| Shadow | `black.opacity(0.04)`, radius 6, y: 2 | None |
+| Shape | Capsule | Capsule |
+
+| Property | Selected State |
+|----------|----------------|
+| Background | Solid `.blue` |
+| Border | None |
+| Text Color | `.white` |
+| Shadow | None |
+
+```swift
+Text(text)
+    .font(.system(size: 14, weight: .semibold))
+    .foregroundColor(isSelected ? .white : .primary)
+    .padding(.horizontal, 16)
+    .padding(.vertical, 10)
+    .background(chipBackground)
+    .overlay(chipBorder)
+    .shadow(color: chipShadow, radius: 6, x: 0, y: 2)
+
+private var chipShadow: Color {
+    if isSelected { return .clear }
+    return colorScheme == .dark ? .clear : .black.opacity(0.04)
+}
+
+@ViewBuilder
+private var chipBackground: some View {
+    if isSelected {
+        Capsule().fill(.blue)
+    } else if colorScheme == .dark {
+        Capsule()
+            .fill(Color.black.opacity(0.4))
+            .background(Capsule().fill(.ultraThinMaterial))
+    } else {
+        Capsule().fill(Color.white)
+    }
+}
+```
+
+---
+
+### 10. Text Fields / Search Inputs
+
+Use for: Search bars, text inputs, form fields.
+
+| Property | Light Mode | Dark Mode |
+|----------|------------|-----------|
+| Background | `Color.white` | `Color.black.opacity(0.4)` + `.ultraThinMaterial` |
+| Border | Gradient `black.opacity(0.1→0.03→0.07)` | Gradient `white.opacity(0.4→0.05→0.1)` |
+| Shadow | `black.opacity(0.04)`, radius 8, y: 2 | None |
+| Corner Radius | 14pt | Same |
+| Padding | 16pt | Same |
+
+```swift
+HStack {
+    Image(systemName: "magnifyingglass")
+        .foregroundColor(.secondary)
+    Text("Search funds...")
+        .foregroundColor(Color(uiColor: .placeholderText))
+    Spacer()
+}
+.padding(16)
+.background(fieldBackground)
+.overlay(fieldBorder)
+.shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.04), radius: 8, x: 0, y: 2)
+
+@ViewBuilder
+private var fieldBackground: some View {
+    if colorScheme == .dark {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Color.black.opacity(0.4))
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(.ultraThinMaterial)
+            )
+    } else {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Color.white)
+    }
+}
 ```
 
 ---

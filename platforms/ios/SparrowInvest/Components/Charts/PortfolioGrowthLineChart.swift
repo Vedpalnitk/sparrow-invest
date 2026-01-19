@@ -12,6 +12,7 @@ struct PortfolioGrowthLineChart: View {
     let history: PortfolioHistory
     @Binding var selectedPeriod: HistoryPeriod
     var onPeriodChange: ((HistoryPeriod) -> Void)?
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var selectedPoint: PortfolioHistoryPoint?
 
@@ -154,7 +155,56 @@ struct PortfolioGrowthLineChart: View {
             }
         }
         .padding(AppTheme.Spacing.medium)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous))
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 
     private var periodSelector: some View {
@@ -187,7 +237,10 @@ struct PortfolioGrowthLineChart: View {
             }
         }
         .padding(4)
-        .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+        .background(
+            colorScheme == .dark ? Color.white.opacity(0.08) : Color(uiColor: .tertiarySystemFill),
+            in: Capsule()
+        )
     }
 
     private func formatAxisDate(_ date: Date) -> String {
