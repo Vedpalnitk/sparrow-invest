@@ -201,4 +201,105 @@ class FamilyStore: ObservableObject {
     var totalHoldings: Int {
         familyPortfolio.members.reduce(0) { $0 + $1.holdings }
     }
+
+    // MARK: - Asset Allocation
+
+    /// Combined family asset allocation (sum of all linked members)
+    var familyAssetAllocation: AssetAllocation {
+        let linked = linkedMembers
+        guard !linked.isEmpty else {
+            return AssetAllocation(equity: 0, debt: 0, hybrid: 0, gold: 0, other: 0)
+        }
+
+        // Sum up allocations from all linked members
+        var totalEquity: Double = 0
+        var totalDebt: Double = 0
+        var totalHybrid: Double = 0
+        var totalGold: Double = 0
+        var totalOther: Double = 0
+
+        for member in linked {
+            if let allocation = memberAssetAllocations[member.id] {
+                totalEquity += allocation.equity
+                totalDebt += allocation.debt
+                totalHybrid += allocation.hybrid
+                totalGold += allocation.gold
+                totalOther += allocation.other
+            }
+        }
+
+        return AssetAllocation(
+            equity: totalEquity,
+            debt: totalDebt,
+            hybrid: totalHybrid,
+            gold: totalGold,
+            other: totalOther
+        )
+    }
+
+    /// Asset allocation for each family member (mock data)
+    var memberAssetAllocations: [String: AssetAllocation] {
+        var allocations: [String: AssetAllocation] = [:]
+
+        for member in familyPortfolio.members {
+            // Generate allocation based on member's portfolio value and relationship
+            let allocation = generateMockAllocation(for: member)
+            allocations[member.id] = allocation
+        }
+
+        return allocations
+    }
+
+    private func generateMockAllocation(for member: FamilyMember) -> AssetAllocation {
+        let total = member.portfolioValue
+
+        // Different allocation profiles based on relationship
+        switch member.relationship {
+        case .myself:
+            // Balanced growth portfolio
+            return AssetAllocation(
+                equity: total * 0.60,
+                debt: total * 0.25,
+                hybrid: total * 0.10,
+                gold: total * 0.05,
+                other: 0
+            )
+        case .spouse:
+            // Moderate portfolio
+            return AssetAllocation(
+                equity: total * 0.50,
+                debt: total * 0.30,
+                hybrid: total * 0.12,
+                gold: total * 0.08,
+                other: 0
+            )
+        case .child:
+            // Aggressive growth for long horizon
+            return AssetAllocation(
+                equity: total * 0.75,
+                debt: total * 0.10,
+                hybrid: total * 0.10,
+                gold: total * 0.05,
+                other: 0
+            )
+        case .parent:
+            // Conservative portfolio
+            return AssetAllocation(
+                equity: total * 0.30,
+                debt: total * 0.50,
+                hybrid: total * 0.10,
+                gold: total * 0.10,
+                other: 0
+            )
+        case .sibling, .other:
+            // Balanced portfolio
+            return AssetAllocation(
+                equity: total * 0.55,
+                debt: total * 0.30,
+                hybrid: total * 0.10,
+                gold: total * 0.05,
+                other: 0
+            )
+        }
+    }
 }

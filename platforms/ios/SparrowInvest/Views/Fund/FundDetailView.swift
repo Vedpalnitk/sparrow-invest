@@ -71,8 +71,7 @@ struct FundDetailView: View {
                     }
                 }
                 .padding()
-                .background(AppTheme.cardBackground)
-                .cornerRadius(16)
+                .glassCardStyle(cornerRadius: AppTheme.CornerRadius.large)
                 .padding(.horizontal)
 
                 // Fund Details
@@ -91,8 +90,7 @@ struct FundDetailView: View {
                     DetailRow(label: "Min Lump Sum", value: fund.minLumpSum.currencyFormatted)
                 }
                 .padding()
-                .background(AppTheme.cardBackground)
-                .cornerRadius(16)
+                .glassCardStyle(cornerRadius: AppTheme.CornerRadius.large)
                 .padding(.horizontal)
 
                 // Risk Rating
@@ -107,8 +105,7 @@ struct FundDetailView: View {
                         RiskRatingView(rating: rating)
                     }
                     .padding()
-                    .background(AppTheme.cardBackground)
-                    .cornerRadius(16)
+                    .glassCardStyle(cornerRadius: AppTheme.CornerRadius.large)
                     .padding(.horizontal)
                 }
 
@@ -142,13 +139,8 @@ struct FundDetailView: View {
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(AppTheme.cardBackground)
+                        .glassCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
                         .foregroundColor(AppTheme.primary)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(AppTheme.primary, lineWidth: 1)
-                        )
                 }
             }
             .padding()
@@ -182,8 +174,7 @@ struct ReturnTile: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(AppTheme.inputBackground)
-        .cornerRadius(12)
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
     }
 }
 

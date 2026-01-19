@@ -7,6 +7,11 @@ struct HomeView: View {
     @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var dashboardStore: DashboardStore
     @EnvironmentObject var familyStore: FamilyStore
+    @Environment(AnalysisProfileStore.self) private var analysisStore
+
+    // Sheet states for AI Analysis
+    @State private var showProfileSetup = false
+    @State private var showPortfolioInput = false
 
     var body: some View {
         NavigationStack {
@@ -25,17 +30,18 @@ struct HomeView: View {
                     // Quick Actions
                     QuickActionsRow()
 
-                    // Portfolio Health Score
-                    PortfolioHealthTile(
-                        healthScore: portfolioStore.portfolioHealth,
-                        onTapAnalysis: {
-                            // Navigate to AI Analysis
-                        }
+                    // AI Analysis Quick Access
+                    AIAnalysisQuickAccessCard(
+                        onCreateProfile: { showProfileSetup = true },
+                        onCreatePortfolio: { showPortfolioInput = true }
                     )
 
-                    // Asset Allocation Pie Chart
+                    // Asset Allocation Pie Chart with Portfolio Filter
                     AssetAllocationPieChart(
-                        allocation: currentPortfolio.assetAllocation
+                        allocation: currentPortfolio.assetAllocation,
+                        familyAllocation: familyStore.familyAssetAllocation,
+                        familyMembers: familyStore.familyPortfolio.members,
+                        memberAllocations: familyStore.memberAssetAllocations
                     )
 
                     // Portfolio Growth Line Chart
@@ -136,6 +142,12 @@ struct HomeView: View {
             .refreshable {
                 await refreshAllData()
             }
+            .sheet(isPresented: $showProfileSetup) {
+                InvestorProfileSetupView()
+            }
+            .sheet(isPresented: $showPortfolioInput) {
+                PortfolioInputView()
+            }
         }
     }
 
@@ -225,6 +237,7 @@ struct HomeQuickActionButton: View {
     let title: String
     let icon: String
     let color: Color
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: {}) {
@@ -238,8 +251,206 @@ struct HomeQuickActionButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous))
+            .background(buttonBackground)
+            .overlay(buttonBorder)
+            .shadow(color: buttonShadow, radius: 8, x: 0, y: 2)
         }
+    }
+
+    private var buttonShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.06)
+    }
+
+    @ViewBuilder
+    private var buttonBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var buttonBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - AI Analysis Quick Access Card
+
+struct AIAnalysisQuickAccessCard: View {
+    let onCreateProfile: () -> Void
+    let onCreatePortfolio: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            // Header
+            HStack {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
+                        .fill(Color.purple.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "brain.head.profile")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.purple)
+                }
+
+                Text("AI Portfolio Analysis")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(.primary)
+
+                Spacer()
+            }
+
+            Text("Set up your investor profile and portfolio to get personalized AI-powered insights and recommendations.")
+                .font(.system(size: 13, weight: .light))
+                .foregroundColor(.secondary)
+                .lineLimit(2)
+
+            // Action Buttons
+            HStack(spacing: AppTheme.Spacing.compact) {
+                AIAnalysisActionButton(
+                    title: "Create Profile",
+                    icon: "person.crop.circle.badge.plus",
+                    color: .blue,
+                    action: onCreateProfile
+                )
+
+                AIAnalysisActionButton(
+                    title: "Create Portfolio",
+                    icon: "chart.pie.fill",
+                    color: .green,
+                    action: onCreatePortfolio
+                )
+            }
+        }
+        .padding(AppTheme.Spacing.medium)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+struct AIAnalysisActionButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(color)
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.primary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(buttonBackground)
+            .overlay(buttonBorder)
+        }
+    }
+
+    @ViewBuilder
+    private var buttonBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(color.opacity(0.15))
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(color.opacity(0.08))
+        }
+    }
+
+    private var buttonBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? color.opacity(0.3)
+                    : color.opacity(0.2),
+                lineWidth: 1
+            )
     }
 }
 
@@ -251,4 +462,5 @@ struct HomeQuickActionButton: View {
         .environmentObject(FundsStore())
         .environmentObject(DashboardStore())
         .environmentObject(FamilyStore())
+        .environment(AnalysisProfileStore())
 }

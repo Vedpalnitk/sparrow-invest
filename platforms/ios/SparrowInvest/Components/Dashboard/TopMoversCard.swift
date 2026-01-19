@@ -12,6 +12,7 @@ struct TopMoversCard: View {
     let losers: [Holding]
 
     @State private var selectedTab: MoverTab = .gainers
+    @Environment(\.colorScheme) private var colorScheme
 
     enum MoverTab: String, CaseIterable {
         case gainers = "Top Gainers"
@@ -52,7 +53,9 @@ struct TopMoversCard: View {
                 }
             }
             .padding(4)
-            .background(Color(uiColor: .tertiarySystemFill), in: Capsule())
+            .background(tabBackground)
+            .overlay(tabBorder)
+            .shadow(color: tabShadow, radius: 8, x: 0, y: 2)
 
             // Holdings List
             let holdings = selectedTab == .gainers ? gainers : losers
@@ -77,13 +80,110 @@ struct TopMoversCard: View {
             }
         }
         .padding(AppTheme.Spacing.medium)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous))
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    // MARK: - Card Styling
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.10), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+
+    // MARK: - Tab Styling
+
+    private var tabShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.04)
+    }
+
+    @ViewBuilder
+    private var tabBackground: some View {
+        if colorScheme == .dark {
+            Capsule()
+                .fill(Color.black.opacity(0.4))
+                .background(Capsule().fill(.ultraThinMaterial))
+        } else {
+            Capsule().fill(Color.white)
+        }
+    }
+
+    private var tabBorder: some View {
+        Capsule()
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
 struct MoverRow: View {
     let holding: Holding
     let isGainer: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack(spacing: 12) {
@@ -128,10 +228,51 @@ struct MoverRow: View {
             }
         }
         .padding(10)
-        .background(
-            Color(uiColor: .tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
-        )
+        .background(rowBackground)
+        .overlay(rowBorder)
+        .shadow(color: rowShadow, radius: 8, x: 0, y: 2)
+    }
+
+    private var rowShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.04)
+    }
+
+    @ViewBuilder
+    private var rowBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var rowBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.25), location: 0),
+                            .init(color: .white.opacity(0.1), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.15), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.12), location: 0),
+                            .init(color: .black.opacity(0.06), location: 0.5),
+                            .init(color: .black.opacity(0.10), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 

@@ -157,9 +157,7 @@ struct InvestOptionCard: View {
                     .foregroundColor(AppTheme.textTertiary)
             }
             .padding()
-            .background(AppTheme.cardBackground)
-            .cornerRadius(16)
-            .shadow(color: AppTheme.shadowColor, radius: 4, x: 0, y: 2)
+            .glassCardStyle(cornerRadius: AppTheme.CornerRadius.large)
         }
         .buttonStyle(.plain)
     }
@@ -201,8 +199,7 @@ struct QuickPickFundCard: View {
             }
         }
         .padding()
-        .background(AppTheme.cardBackground)
-        .cornerRadius(12)
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
     }
 }
 
@@ -262,8 +259,7 @@ struct EmptySIPsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)
-        .background(AppTheme.cardBackground)
-        .cornerRadius(12)
+        .glassCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
     }
 }
 
@@ -288,8 +284,7 @@ struct SIPCard: View {
                 .foregroundColor(AppTheme.primary)
         }
         .padding()
-        .background(AppTheme.cardBackground)
-        .cornerRadius(12)
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
     }
 }
 
@@ -306,8 +301,7 @@ struct UpcomingSIPCalendar: View {
                     .foregroundColor(AppTheme.textSecondary)
             }
             .padding()
-            .background(AppTheme.cardBackground)
-            .cornerRadius(8)
+            .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.small)
         }
     }
 }

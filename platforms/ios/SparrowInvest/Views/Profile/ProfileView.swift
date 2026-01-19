@@ -491,10 +491,9 @@ struct AppearanceSection: View {
                         }
                     }
                     .padding(4)
-                    .background(
-                        Capsule()
-                            .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color(uiColor: .tertiarySystemFill))
-                    )
+                    .background(pickerBackground)
+                    .overlay(pickerBorder)
+                    .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.04), radius: 8, x: 0, y: 2)
                 }
                 .padding(AppTheme.Spacing.medium)
             }
@@ -502,6 +501,45 @@ struct AppearanceSection: View {
             .overlay(sectionBorder)
             .shadow(color: sectionShadow, radius: 12, x: 0, y: 4)
         }
+    }
+
+    @ViewBuilder
+    private var pickerBackground: some View {
+        if colorScheme == .dark {
+            Capsule()
+                .fill(Color.black.opacity(0.4))
+                .background(Capsule().fill(.ultraThinMaterial))
+        } else {
+            Capsule().fill(Color.white)
+        }
+    }
+
+    private var pickerBorder: some View {
+        Capsule()
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 
     @ViewBuilder

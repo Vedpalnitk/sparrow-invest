@@ -6,7 +6,7 @@ struct MainTabView: View {
     enum Tab: String, CaseIterable {
         case home = "Home"
         case investments = "Investments"
-        case aiAnalysis = "AI Analysis"
+        case insights = "Insights"
         case explore = "Explore"
         case profile = "Profile"
 
@@ -14,7 +14,7 @@ struct MainTabView: View {
             switch self {
             case .home: return "house.fill"
             case .investments: return "chart.pie.fill"
-            case .aiAnalysis: return "brain.head.profile"
+            case .insights: return "brain.head.profile"
             case .explore: return "magnifyingglass"
             case .profile: return "person.fill"
             }
@@ -37,9 +37,9 @@ struct MainTabView: View {
 
             AIAnalysisView()
                 .tabItem {
-                    Label(Tab.aiAnalysis.rawValue, systemImage: Tab.aiAnalysis.icon)
+                    Label(Tab.insights.rawValue, systemImage: Tab.insights.icon)
                 }
-                .tag(Tab.aiAnalysis)
+                .tag(Tab.insights)
 
             ExploreView()
                 .tabItem {

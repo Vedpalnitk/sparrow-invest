@@ -87,8 +87,7 @@ struct GoalDetailView: View {
                     }
                 }
                 .padding()
-                .background(AppTheme.cardBackground)
-                .cornerRadius(20)
+                .glassCardStyle(cornerRadius: AppTheme.CornerRadius.xLarge)
                 .padding(.horizontal)
 
                 // Monthly SIP
@@ -153,8 +152,7 @@ struct GoalDetailView: View {
                     }
                 }
                 .padding()
-                .background(AppTheme.cardBackground)
-                .cornerRadius(16)
+                .glassCardStyle(cornerRadius: AppTheme.CornerRadius.large)
                 .padding(.horizontal)
 
                 // Actions
@@ -180,13 +178,8 @@ struct GoalDetailView: View {
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(AppTheme.cardBackground)
+                        .glassCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
                         .foregroundColor(AppTheme.textPrimary)
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(AppTheme.cardBorder, lineWidth: 1)
-                        )
                     }
                 }
                 .padding(.horizontal)
@@ -241,8 +234,7 @@ struct LinkedFundRow: View {
             }
         }
         .padding()
-        .background(AppTheme.inputBackground)
-        .cornerRadius(12)
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
     }
 }
 

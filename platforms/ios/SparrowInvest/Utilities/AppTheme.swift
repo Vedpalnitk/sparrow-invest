@@ -143,7 +143,126 @@ enum AppTheme {
     }
 }
 
-// MARK: - Glass Card Modifier
+// MARK: - Glass Card Modifier (Primary Section Containers)
+
+struct GlassCardModifier: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+    var cornerRadius: CGFloat = AppTheme.CornerRadius.xLarge
+    var shadowRadius: CGFloat = 12
+
+    func body(content: Content) -> some View {
+        content
+            .background(cardBackground)
+            .overlay(cardBorder)
+            .shadow(color: cardShadow, radius: shadowRadius, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - List Item Card Modifier (Nested Rows/Items)
+
+struct ListItemCardModifier: ViewModifier {
+    @Environment(\.colorScheme) private var colorScheme
+    var cornerRadius: CGFloat = AppTheme.CornerRadius.medium
+    var shadowRadius: CGFloat = 8
+
+    func body(content: Content) -> some View {
+        content
+            .background(cardBackground)
+            .overlay(cardBorder)
+            .shadow(color: cardShadow, radius: shadowRadius, x: 0, y: 2)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.04)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+        } else {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.25), location: 0),
+                            .init(color: .white.opacity(0.1), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.15), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.12), location: 0),
+                            .init(color: .black.opacity(0.06), location: 0.5),
+                            .init(color: .black.opacity(0.10), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Legacy Glass Card (deprecated, use GlassCardModifier instead)
 
 struct GlassCard: ViewModifier {
     var cornerRadius: CGFloat = AppTheme.CornerRadius.xLarge
@@ -168,6 +287,17 @@ struct SolidCard: ViewModifier {
 }
 
 extension View {
+    /// Primary glass card for section containers - white in light mode, frosted glass in dark mode
+    func glassCardStyle(cornerRadius: CGFloat = AppTheme.CornerRadius.xLarge, shadowRadius: CGFloat = 12) -> some View {
+        modifier(GlassCardModifier(cornerRadius: cornerRadius, shadowRadius: shadowRadius))
+    }
+
+    /// List item card for nested rows - subtle styling with smaller shadow
+    func listItemCardStyle(cornerRadius: CGFloat = AppTheme.CornerRadius.medium, shadowRadius: CGFloat = 8) -> some View {
+        modifier(ListItemCardModifier(cornerRadius: cornerRadius, shadowRadius: shadowRadius))
+    }
+
+    // Legacy methods (deprecated)
     func glassCard(cornerRadius: CGFloat = AppTheme.CornerRadius.xLarge, material: Material = .regularMaterial) -> some View {
         modifier(GlassCard(cornerRadius: cornerRadius, material: material))
     }

@@ -45,6 +45,8 @@
 		88AA3322ECDB2823FE4D8923 /* PortfolioSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D75E755F3FBF62413A8561E /* PortfolioSummaryCard.swift */; };
 		8ABB4B12C33AE029EFFBB595 /* AdvisorCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41823A2F7C3F455CED97F8D6 /* AdvisorCard.swift */; };
 		8C482AA36123B6BC33FA8111 /* AuthFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCF5E15870E01B843DB223A /* AuthFlow.swift */; };
+		8F9330DDB516A962E86E1DE7 /* InvestorProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = E590526CDDDB16746DA954CB /* InvestorProfile.swift */; };
+		905D7D835E342C85F5305B95 /* PortfolioInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E149BCD4CDC9E796EC5BBD0 /* PortfolioInputView.swift */; };
 		94794CD412631F2CF5CB15F1 /* SIPDashboardCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 136BC543CA3082E221D0C69F /* SIPDashboardCard.swift */; };
 		96184E59889EA7BCBC6EAE85 /* RecommendationCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF4945F63111BA9C3DE48F8F /* RecommendationCard.swift */; };
 		99051AA8680071FE485F3F55 /* TopMoversCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3C896EE6CDA97E5C0F92162 /* TopMoversCard.swift */; };
@@ -52,8 +54,10 @@
 		9B25ABE30B86649A41EEAF88 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63FE4C4EC1A962C87EBFB1D3 /* APIService.swift */; };
 		A06491CD983CF529F4C90448 /* DashboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8515CA989D6D98012A5CEE8 /* DashboardStore.swift */; };
 		A3B655A47E975B7446E6C623 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 192497C6D44ED6C628BC26DC /* Assets.xcassets */; };
+		A6655899FF458712D9827DDF /* AnalysisProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC954C92CED2E6D24B883547 /* AnalysisProfileStore.swift */; };
 		AAE4D7DEE5B6E4BEE25561B9 /* AIAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77A5BC264D382DB6F3D6E0A /* AIAnalysisView.swift */; };
 		AB3F4CE5885157DE62A81306 /* Advisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67F1C58CB8647740C12D2158 /* Advisor.swift */; };
+		C0076D43CA0E187FFBE1323A /* InvestorProfileSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 715F47B451F6E521DC177A7A /* InvestorProfileSetupView.swift */; };
 		C1709B3F74B3FB3E3AB5726E /* Goal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7380E6B1A413B37E48AD9C9F /* Goal.swift */; };
 		C3976A20D954EDCFDC7D6CBB /* SparrowInvestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE68635B79B792801AEA5E1F /* SparrowInvestApp.swift */; };
 		C8C79F7EAE1AD738A5ED7256 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A171747B3C83B0C6F2E26B1 /* AppTheme.swift */; };
@@ -101,10 +105,12 @@
 		63FE4C4EC1A962C87EBFB1D3 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		67F1C58CB8647740C12D2158 /* Advisor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Advisor.swift; sourceTree = "<group>"; };
 		6DC334B3EF6AF2FC3CC44A9F /* GoalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsView.swift; sourceTree = "<group>"; };
+		715F47B451F6E521DC177A7A /* InvestorProfileSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestorProfileSetupView.swift; sourceTree = "<group>"; };
 		7380E6B1A413B37E48AD9C9F /* Goal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Goal.swift; sourceTree = "<group>"; };
 		86E3CFB28E2A25E1B2B7C7FB /* SparrowInvest.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SparrowInvest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		88F1AAAE9FDA55E0BC7F0BB7 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
 		8B61997269D50E439C6B1CF1 /* Fund.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Fund.swift; sourceTree = "<group>"; };
+		8E149BCD4CDC9E796EC5BBD0 /* PortfolioInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioInputView.swift; sourceTree = "<group>"; };
 		9033E8B53C851DE218872CBE /* Points.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Points.swift; sourceTree = "<group>"; };
 		90CE83DDEB6FA67760871546 /* Family.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Family.swift; sourceTree = "<group>"; };
 		9BCE3ACDEA9521EF6FC710F2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -125,7 +131,9 @@
 		D7FA67BBD6AE6C69BA79ADB3 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		D9EF2638A28F758CC8416D86 /* AdvisorStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvisorStore.swift; sourceTree = "<group>"; };
 		DB7C43C08E9C48CE9D079C82 /* PortfolioStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioStore.swift; sourceTree = "<group>"; };
+		DC954C92CED2E6D24B883547 /* AnalysisProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisProfileStore.swift; sourceTree = "<group>"; };
 		DDB65EF8A1DC237465DE9070 /* FamilyPortfolioCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyPortfolioCard.swift; sourceTree = "<group>"; };
+		E590526CDDDB16746DA954CB /* InvestorProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestorProfile.swift; sourceTree = "<group>"; };
 		E71D8061B92701C1914916DB /* RecentTransactionsCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentTransactionsCard.swift; sourceTree = "<group>"; };
 		E8515CA989D6D98012A5CEE8 /* DashboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardStore.swift; sourceTree = "<group>"; };
 		EE68635B79B792801AEA5E1F /* SparrowInvestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SparrowInvestApp.swift; sourceTree = "<group>"; };
@@ -272,6 +280,7 @@
 				90CE83DDEB6FA67760871546 /* Family.swift */,
 				8B61997269D50E439C6B1CF1 /* Fund.swift */,
 				7380E6B1A413B37E48AD9C9F /* Goal.swift */,
+				E590526CDDDB16746DA954CB /* InvestorProfile.swift */,
 				3197B3C5879BC02E8FC7560D /* MarketData.swift */,
 				9033E8B53C851DE218872CBE /* Points.swift */,
 				14C54EBBAFBF75A9FDB6F7DA /* Portfolio.swift */,
@@ -327,6 +336,7 @@
 			isa = PBXGroup;
 			children = (
 				D9EF2638A28F758CC8416D86 /* AdvisorStore.swift */,
+				DC954C92CED2E6D24B883547 /* AnalysisProfileStore.swift */,
 				63FE4C4EC1A962C87EBFB1D3 /* APIService.swift */,
 				59B08FBEA4CF8BB0756F5047 /* AppearanceManager.swift */,
 				02AB581C952921610FD18046 /* AuthManager.swift */,
@@ -389,6 +399,8 @@
 			isa = PBXGroup;
 			children = (
 				C77A5BC264D382DB6F3D6E0A /* AIAnalysisView.swift */,
+				715F47B451F6E521DC177A7A /* InvestorProfileSetupView.swift */,
+				8E149BCD4CDC9E796EC5BBD0 /* PortfolioInputView.swift */,
 			);
 			path = AIAnalysis;
 			sourceTree = "<group>";
@@ -489,6 +501,7 @@
 				386394252BB78AD1A2FB472B /* AdvisorDetailView.swift in Sources */,
 				81BF02BD1F133D3F8875BD9D /* AdvisorStore.swift in Sources */,
 				87FD7AEA70DD9D780E98AF57 /* AdvisorsView.swift in Sources */,
+				A6655899FF458712D9827DDF /* AnalysisProfileStore.swift in Sources */,
 				C8C79F7EAE1AD738A5ED7256 /* AppTheme.swift in Sources */,
 				6BEA6D98CB32FCB05FF38965 /* AppearanceManager.swift in Sources */,
 				040771B460F2DD1C312E66DD /* AssetAllocationPieChart.swift in Sources */,
@@ -515,6 +528,8 @@
 				EFA032D5D116FCCFAB2A4DE3 /* HomeView.swift in Sources */,
 				3B127A7A60C74B6E3BA2E61F /* InvestView.swift in Sources */,
 				3C793929613B6F3338125FDB /* InvestmentsView.swift in Sources */,
+				8F9330DDB516A962E86E1DE7 /* InvestorProfile.swift in Sources */,
+				C0076D43CA0E187FFBE1323A /* InvestorProfileSetupView.swift in Sources */,
 				678B056672884E10103DB918 /* MainTabView.swift in Sources */,
 				1700A9DE89FCA8E89F90CB8A /* MarketData.swift in Sources */,
 				4DC900FBB95A9D4BDE0B701D /* MarketOverviewCard.swift in Sources */,
@@ -527,6 +542,7 @@
 				884BF8462BEE61892ED7CB56 /* PortfolioHealthTile.swift in Sources */,
 				FB1654DCF220555FD38D6F51 /* PortfolioHeroCard.swift in Sources */,
 				FA03DF4E1929F0D1E046D300 /* PortfolioHistory.swift in Sources */,
+				905D7D835E342C85F5305B95 /* PortfolioInputView.swift in Sources */,
 				431593E23AC04C6B224533D3 /* PortfolioStore.swift in Sources */,
 				88AA3322ECDB2823FE4D8923 /* PortfolioSummaryCard.swift in Sources */,
 				D43ECAC8194C6FB9ACE9028D /* ProfileView.swift in Sources */,

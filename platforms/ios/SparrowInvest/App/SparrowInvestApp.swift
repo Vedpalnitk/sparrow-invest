@@ -12,6 +12,9 @@ struct SparrowInvestApp: App {
     @StateObject private var advisorStore = AdvisorStore()
     @StateObject private var appearanceManager = AppearanceManager()
 
+    // Observable stores (Swift 5.9+ @Observable)
+    @State private var analysisProfileStore = AnalysisProfileStore()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -24,6 +27,7 @@ struct SparrowInvestApp: App {
                 .environmentObject(pointsStore)
                 .environmentObject(advisorStore)
                 .environmentObject(appearanceManager)
+                .environment(analysisProfileStore)
                 .preferredColorScheme(appearanceManager.preferredColorScheme)
         }
     }

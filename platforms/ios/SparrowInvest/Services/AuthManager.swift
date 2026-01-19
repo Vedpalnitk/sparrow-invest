@@ -28,8 +28,7 @@ class AuthManager: ObservableObject {
         // For development - auto-login with mock user
         #if DEBUG
         if !isAuthenticated {
-            // Uncomment to auto-login for testing
-            // mockLogin()
+            mockLogin()
         }
         #endif
     }

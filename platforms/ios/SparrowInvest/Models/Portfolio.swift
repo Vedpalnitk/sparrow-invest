@@ -141,6 +141,34 @@ struct Holding: Codable, Identifiable {
             }
         }
     }
+
+    /// Convert holding to Fund for detail view
+    func toFund() -> Fund {
+        Fund(
+            id: fundCode,
+            schemeCode: Int(fundCode) ?? 0,
+            schemeName: fundName,
+            category: category,
+            assetClass: assetClass.rawValue,
+            nav: currentNav,
+            navDate: Date(),
+            returns: FundReturns(
+                oneMonth: nil,
+                threeMonth: nil,
+                sixMonth: nil,
+                oneYear: returnsPercentage,
+                threeYear: nil,
+                fiveYear: nil
+            ),
+            aum: nil,
+            expenseRatio: nil,
+            riskRating: nil,
+            minSIP: 500,
+            minLumpSum: 1000,
+            fundManager: nil,
+            fundHouse: nil
+        )
+    }
 }
 
 struct SIP: Codable, Identifiable {

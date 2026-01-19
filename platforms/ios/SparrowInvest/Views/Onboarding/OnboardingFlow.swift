@@ -214,6 +214,7 @@ struct OptionButton: View {
     let text: String
     let isSelected: Bool
     let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: action) {
@@ -228,17 +229,36 @@ struct OptionButton: View {
                 }
             }
             .padding()
-            .background(
-                isSelected
-                    ? AnyShapeStyle(AppTheme.primaryGradient)
-                    : AnyShapeStyle(AppTheme.cardBackground)
-            )
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(optionBackground)
+            .overlay(optionBorder)
+            .shadow(color: isSelected ? .clear : (colorScheme == .dark ? .clear : .black.opacity(0.04)), radius: 8, x: 0, y: 2)
         }
+    }
+
+    @ViewBuilder
+    private var optionBackground: some View {
+        if isSelected {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(AppTheme.primaryGradient)
+        } else if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var optionBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+            .stroke(
+                isSelected
+                    ? Color.clear
+                    : (colorScheme == .dark
+                        ? Color.white.opacity(0.08)
+                        : Color.black.opacity(0.06)),
+                lineWidth: isSelected ? 0 : 0.5
+            )
     }
 }
 
@@ -289,9 +309,7 @@ struct PersonaResultView: View {
                 .cornerRadius(16)
             }
             .padding()
-            .background(AppTheme.cardBackground)
-            .cornerRadius(24)
-            .shadow(color: AppTheme.shadowColor, radius: 16, x: 0, y: 8)
+            .glassCardStyle(cornerRadius: AppTheme.CornerRadius.xxLarge, shadowRadius: 16)
             .padding(.horizontal)
 
             Spacer()
@@ -488,6 +506,7 @@ struct GoalTemplateCard: View {
     let category: GoalCategory
     let isSelected: Bool
     let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Button(action: action) {
@@ -502,13 +521,36 @@ struct GoalTemplateCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(isSelected ? AnyShapeStyle(AppTheme.primaryGradient) : AnyShapeStyle(AppTheme.cardBackground))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.clear : AppTheme.cardBorder, lineWidth: 1)
-            )
+            .background(templateBackground)
+            .overlay(templateBorder)
+            .shadow(color: isSelected ? .clear : (colorScheme == .dark ? .clear : .black.opacity(0.04)), radius: 8, x: 0, y: 2)
         }
+    }
+
+    @ViewBuilder
+    private var templateBackground: some View {
+        if isSelected {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(AppTheme.primaryGradient)
+        } else if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var templateBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+            .stroke(
+                isSelected
+                    ? Color.clear
+                    : (colorScheme == .dark
+                        ? Color.white.opacity(0.08)
+                        : Color.black.opacity(0.06)),
+                lineWidth: isSelected ? 0 : 0.5
+            )
     }
 }
 

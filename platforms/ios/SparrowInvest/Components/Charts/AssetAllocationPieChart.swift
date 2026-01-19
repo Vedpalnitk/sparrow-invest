@@ -16,40 +16,101 @@ struct AllocationSlice: Identifiable {
     let color: Color
 }
 
+// Portfolio filter option for asset allocation
+struct PortfolioFilterOption: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let shortName: String
+    let color: Color
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    static func == (lhs: PortfolioFilterOption, rhs: PortfolioFilterOption) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    static let individual = PortfolioFilterOption(id: "individual", name: "My Portfolio", shortName: "Mine", color: .blue)
+    static let family = PortfolioFilterOption(id: "family", name: "Family Portfolio", shortName: "Family", color: .purple)
+}
+
 struct AssetAllocationPieChart: View {
     let allocation: AssetAllocation
+    var familyAllocation: AssetAllocation?
+    var familyMembers: [FamilyMember]
+    var memberAllocations: [String: AssetAllocation]
     @Environment(\.colorScheme) private var colorScheme
+    @State private var selectedFilter: PortfolioFilterOption = .individual
+
+    // Computed filter options based on available data
+    private var filterOptions: [PortfolioFilterOption] {
+        var options: [PortfolioFilterOption] = [.individual]
+
+        // Add family option if family data exists
+        if familyAllocation != nil || !familyMembers.isEmpty {
+            options.append(.family)
+        }
+
+        // Add individual family members
+        for member in familyMembers where member.relationship != .myself {
+            options.append(PortfolioFilterOption(
+                id: member.id,
+                name: member.name,
+                shortName: String(member.name.prefix(8)),
+                color: member.relationship.color
+            ))
+        }
+
+        return options
+    }
+
+    // Current allocation based on selected filter
+    private var currentAllocation: AssetAllocation {
+        switch selectedFilter.id {
+        case "individual":
+            return allocation
+        case "family":
+            return familyAllocation ?? allocation
+        default:
+            // Check if it's a family member
+            if let memberAlloc = memberAllocations[selectedFilter.id] {
+                return memberAlloc
+            }
+            return allocation
+        }
+    }
 
     private var slices: [AllocationSlice] {
         [
             AllocationSlice(
                 name: "Equity",
-                value: allocation.equity,
-                percentage: allocation.equityPercentage,
+                value: currentAllocation.equity,
+                percentage: currentAllocation.equityPercentage,
                 color: .blue
             ),
             AllocationSlice(
                 name: "Debt",
-                value: allocation.debt,
-                percentage: allocation.debtPercentage,
+                value: currentAllocation.debt,
+                percentage: currentAllocation.debtPercentage,
                 color: .green
             ),
             AllocationSlice(
                 name: "Hybrid",
-                value: allocation.hybrid,
-                percentage: allocation.hybridPercentage,
+                value: currentAllocation.hybrid,
+                percentage: currentAllocation.hybridPercentage,
                 color: .purple
             ),
             AllocationSlice(
                 name: "Gold",
-                value: allocation.gold,
-                percentage: allocation.goldPercentage,
+                value: currentAllocation.gold,
+                percentage: currentAllocation.goldPercentage,
                 color: .orange
             ),
             AllocationSlice(
                 name: "Other",
-                value: allocation.other,
-                percentage: allocation.otherPercentage,
+                value: currentAllocation.other,
+                percentage: currentAllocation.otherPercentage,
                 color: .gray
             )
         ].filter { $0.value > 0 }
@@ -57,12 +118,37 @@ struct AssetAllocationPieChart: View {
 
     @State private var selectedSlice: AllocationSlice?
 
+    // Initialize with default values for backward compatibility
+    init(
+        allocation: AssetAllocation,
+        familyAllocation: AssetAllocation? = nil,
+        familyMembers: [FamilyMember] = [],
+        memberAllocations: [String: AssetAllocation] = [:]
+    ) {
+        self.allocation = allocation
+        self.familyAllocation = familyAllocation
+        self.familyMembers = familyMembers
+        self.memberAllocations = memberAllocations
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            // Header
-            Text("Asset Allocation")
-                .font(.system(size: 16, weight: .regular))
-                .foregroundColor(.primary)
+            // Header with Filter
+            HStack {
+                Text("Asset Allocation")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                // Portfolio Filter (only show if there are multiple options)
+                if filterOptions.count > 1 {
+                    PortfolioFilterPicker(
+                        options: filterOptions,
+                        selected: $selectedFilter
+                    )
+                }
+            }
 
             HStack(spacing: AppTheme.Spacing.large) {
                 // Pie Chart
@@ -89,7 +175,7 @@ struct AssetAllocationPieChart: View {
                                 Text("Total")
                                     .font(.system(size: 12, weight: .light))
                                     .foregroundColor(.secondary)
-                                Text(allocation.total.compactCurrencyFormatted)
+                                Text(currentAllocation.total.compactCurrencyFormatted)
                                     .font(.system(size: 16, weight: .light, design: .rounded))
                                     .foregroundColor(.primary)
                             }
@@ -176,10 +262,10 @@ struct AssetAllocationPieChart: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.08), location: 0),
-                            .init(color: .black.opacity(0.04), location: 0.3),
-                            .init(color: .black.opacity(0.02), location: 0.7),
-                            .init(color: .black.opacity(0.06), location: 1)
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -189,13 +275,106 @@ struct AssetAllocationPieChart: View {
     }
 }
 
+// MARK: - Portfolio Filter Picker
+
+struct PortfolioFilterPicker: View {
+    let options: [PortfolioFilterOption]
+    @Binding var selected: PortfolioFilterOption
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isExpanded = false
+
+    var body: some View {
+        Menu {
+            ForEach(options) { option in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selected = option
+                    }
+                } label: {
+                    HStack {
+                        Circle()
+                            .fill(option.color)
+                            .frame(width: 8, height: 8)
+                        Text(option.name)
+                        if selected.id == option.id {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(selected.color)
+                    .frame(width: 8, height: 8)
+                Text(selected.shortName)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.primary)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(filterBackground)
+            .overlay(filterBorder)
+        }
+    }
+
+    @ViewBuilder
+    private var filterBackground: some View {
+        if colorScheme == .dark {
+            Capsule()
+                .fill(Color.white.opacity(0.08))
+        } else {
+            Capsule()
+                .fill(Color(uiColor: .tertiarySystemFill))
+        }
+    }
+
+    private var filterBorder: some View {
+        Capsule()
+            .stroke(
+                colorScheme == .dark
+                    ? Color.white.opacity(0.15)
+                    : Color.black.opacity(0.08),
+                lineWidth: 0.5
+            )
+    }
+}
+
 #Preview {
-    AssetAllocationPieChart(allocation: AssetAllocation(
-        equity: 800000,
-        debt: 300000,
-        hybrid: 150000,
-        gold: 50000,
-        other: 0
-    ))
+    VStack(spacing: 20) {
+        // Single portfolio (no filter shown)
+        AssetAllocationPieChart(allocation: AssetAllocation(
+            equity: 800000,
+            debt: 300000,
+            hybrid: 150000,
+            gold: 50000,
+            other: 0
+        ))
+
+        // With family data (filter shown)
+        AssetAllocationPieChart(
+            allocation: AssetAllocation(
+                equity: 800000,
+                debt: 300000,
+                hybrid: 150000,
+                gold: 50000,
+                other: 0
+            ),
+            familyAllocation: AssetAllocation(
+                equity: 1500000,
+                debt: 500000,
+                hybrid: 300000,
+                gold: 100000,
+                other: 50000
+            ),
+            familyMembers: [
+                FamilyMember(name: "Rahul Sharma", relationship: .spouse, portfolioValue: 500000),
+                FamilyMember(name: "Ananya Sharma", relationship: .child, portfolioValue: 200000)
+            ]
+        )
+    }
     .padding()
 }

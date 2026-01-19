@@ -138,10 +138,10 @@ struct PortfolioHeroCard: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.08), location: 0),
-                            .init(color: .black.opacity(0.04), location: 0.3),
-                            .init(color: .black.opacity(0.02), location: 0.7),
-                            .init(color: .black.opacity(0.06), location: 1)
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -173,10 +173,52 @@ struct PortfolioHeroCard: View {
             }
         }
         .padding(4)
-        .background(
+        .background(toggleBackground)
+        .overlay(toggleBorder)
+        .shadow(color: toggleShadow, radius: 8, x: 0, y: 2)
+    }
+
+    private var toggleShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.04)
+    }
+
+    @ViewBuilder
+    private var toggleBackground: some View {
+        if colorScheme == .dark {
             Capsule()
-                .fill(colorScheme == .dark ? Color.white.opacity(0.08) : Color(uiColor: .tertiarySystemFill))
-        )
+                .fill(Color.black.opacity(0.4))
+                .background(Capsule().fill(.ultraThinMaterial))
+        } else {
+            Capsule().fill(Color.white)
+        }
+    }
+
+    private var toggleBorder: some View {
+        Capsule()
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 

@@ -74,14 +74,14 @@ struct QuickAccessCard: View {
         if colorScheme == .dark {
             // Glass effect for dark mode
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(
+                .fill(Color.black.opacity(0.4))
+                .background(
                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-                        .fill(Color.white.opacity(0.05))
+                        .fill(.ultraThinMaterial)
                 )
         } else {
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-                .fill(cardBackgroundColor)
+                .fill(Color.white)
         }
     }
 

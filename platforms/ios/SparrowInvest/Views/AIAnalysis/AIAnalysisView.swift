@@ -10,15 +10,33 @@ import SwiftUI
 struct AIAnalysisView: View {
     @EnvironmentObject var portfolioStore: PortfolioStore
     @EnvironmentObject var fundsStore: FundsStore
+    @Environment(AnalysisProfileStore.self) var analysisStore
     @State private var isAnalyzing = false
     @State private var selectedTab = 0
+    @State private var showProfileSetup = false
+    @State private var showPortfolioInput = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.large) {
                     // AI Header
-                    AIHeaderCard(isAnalyzing: $isAnalyzing)
+                    AIHeaderCard(isAnalyzing: $isAnalyzing, lastAnalysisDate: analysisStore.lastAnalysisDate)
+
+                    // Profile & Portfolio Setup Section (shows when setup needed)
+                    if !analysisStore.isReadyForAnalysis {
+                        AnalysisSetupSection(
+                            showProfileSetup: $showProfileSetup,
+                            showPortfolioInput: $showPortfolioInput
+                        )
+                    } else {
+                        // Quick Status Cards when setup is complete
+                        ProfilePortfolioStatusSection(
+                            analysisStore: analysisStore,
+                            showProfileSetup: $showProfileSetup,
+                            showPortfolioInput: $showPortfolioInput
+                        )
+                    }
 
                     // AI Recommendations Section (moved from Explore)
                     AIRecommendationsSection()
@@ -34,7 +52,7 @@ struct AIAnalysisView: View {
                     // Content based on tab
                     switch selectedTab {
                     case 0:
-                        InsightsSection()
+                        InsightsSection(healthScore: analysisStore.portfolioHealthScore)
                     case 1:
                         OptimizationSection()
                     case 2:
@@ -47,6 +65,12 @@ struct AIAnalysisView: View {
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Insights")
+            .sheet(isPresented: $showProfileSetup) {
+                InvestorProfileSetupView()
+            }
+            .sheet(isPresented: $showPortfolioInput) {
+                PortfolioInputView()
+            }
         }
     }
 }
@@ -121,10 +145,10 @@ struct AIRecommendationsSection: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.08), location: 0),
-                            .init(color: .black.opacity(0.04), location: 0.3),
-                            .init(color: .black.opacity(0.02), location: 0.7),
-                            .init(color: .black.opacity(0.06), location: 1)
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -191,14 +215,7 @@ struct RecommendedFundCard: View {
         }
         .padding(AppTheme.Spacing.medium)
         .frame(width: 180)
-        .background(
-            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
-        )
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.large)
     }
 }
 
@@ -206,7 +223,17 @@ struct RecommendedFundCard: View {
 
 struct AIHeaderCard: View {
     @Binding var isAnalyzing: Bool
+    var lastAnalysisDate: Date?
     @Environment(\.colorScheme) private var colorScheme
+
+    private var lastAnalysisText: String {
+        guard let date = lastAnalysisDate else {
+            return "Not analyzed yet"
+        }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return "Last analyzed: \(formatter.localizedString(for: date, relativeTo: Date()))"
+    }
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
@@ -259,7 +286,7 @@ struct AIHeaderCard: View {
                 Image(systemName: "clock")
                     .font(.system(size: 11, weight: .light))
                     .foregroundColor(Color(uiColor: .tertiaryLabel))
-                Text("Last analyzed: 2 hours ago")
+                Text(lastAnalysisText)
                     .font(.system(size: 12, weight: .light))
                     .foregroundColor(Color(uiColor: .tertiaryLabel))
 
@@ -317,10 +344,10 @@ struct AIHeaderCard: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.08), location: 0),
-                            .init(color: .black.opacity(0.04), location: 0.3),
-                            .init(color: .black.opacity(0.02), location: 0.7),
-                            .init(color: .black.opacity(0.06), location: 1)
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -333,6 +360,8 @@ struct AIHeaderCard: View {
 // MARK: - Insights Section
 
 struct InsightsSection: View {
+    var healthScore: Int = 0
+
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             Text("KEY INSIGHTS")
@@ -341,7 +370,7 @@ struct InsightsSection: View {
                 .tracking(1)
 
             // Portfolio Health Score
-            HealthScoreCard(score: 78)
+            HealthScoreCard(score: healthScore > 0 ? healthScore : 78)
 
             // Insight Cards
             InsightCard(
@@ -439,14 +468,7 @@ struct HealthScoreCard: View {
             Spacer()
         }
         .padding(AppTheme.Spacing.large)
-        .background(
-            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
-        )
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.large, shadowRadius: 10)
     }
 }
 
@@ -497,14 +519,7 @@ struct InsightCard: View {
             Spacer()
         }
         .padding(AppTheme.Spacing.medium)
-        .background(
-            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
-        )
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
     }
 }
 
@@ -592,14 +607,7 @@ struct OptimizationCard: View {
             }
         }
         .padding(AppTheme.Spacing.medium)
-        .background(
-            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear, lineWidth: 0.5)
-        )
+        .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.large)
     }
 }
 
@@ -692,19 +700,320 @@ struct AlertCard: View {
             }
         }
         .padding(AppTheme.Spacing.medium)
-        .background(
-            colorScheme == .dark ? Color.white.opacity(0.06) : Color(uiColor: .tertiarySystemFill),
-            in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-        )
-        .overlay(
+        .background(alertBackground)
+        .overlay(alertBorder)
+        .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.04), radius: 8, x: 0, y: 2)
+    }
+
+    @ViewBuilder
+    private var alertBackground: some View {
+        if colorScheme == .dark {
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-                .stroke(
-                    colorScheme == .dark
-                        ? type.color.opacity(0.4)
-                        : type.color.opacity(0.3),
-                    lineWidth: 1
+                .fill(Color.white.opacity(0.06))
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var alertBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? type.color.opacity(0.4)
+                    : type.color.opacity(0.3),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Analysis Setup Section
+
+struct AnalysisSetupSection: View {
+    @Binding var showProfileSetup: Bool
+    @Binding var showPortfolioInput: Bool
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            HStack {
+                Image(systemName: "gearshape.2")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(.orange)
+                Text("SETUP REQUIRED")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundColor(.orange)
+                    .tracking(1)
+            }
+
+            Text("Complete your profile and portfolio setup for personalized AI insights")
+                .font(.system(size: 14, weight: .light))
+                .foregroundColor(.secondary)
+
+            VStack(spacing: AppTheme.Spacing.compact) {
+                // Profile Setup Card
+                SetupOptionCard(
+                    icon: "person.text.rectangle",
+                    iconColor: .blue,
+                    title: "Create Investor Profile",
+                    subtitle: "Set your risk tolerance, goals, and preferences",
+                    action: { showProfileSetup = true }
                 )
-        )
+
+                // Portfolio Input Card
+                SetupOptionCard(
+                    icon: "briefcase",
+                    iconColor: .green,
+                    title: "Add Portfolio Holdings",
+                    subtitle: "Enter or import your current investments",
+                    action: { showPortfolioInput = true }
+                )
+            }
+        }
+        .padding(AppTheme.Spacing.medium)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+struct SetupOptionCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let subtitle: String
+    let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: AppTheme.Spacing.compact) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
+                        .fill(iconColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 18, weight: .light))
+                        .foregroundColor(iconColor)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.primary)
+
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(Color(uiColor: .tertiaryLabel))
+            }
+            .padding(AppTheme.Spacing.compact)
+            .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Profile Portfolio Status Section
+
+struct ProfilePortfolioStatusSection: View {
+    let analysisStore: AnalysisProfileStore
+    @Binding var showProfileSetup: Bool
+    @Binding var showPortfolioInput: Bool
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+            HStack {
+                Image(systemName: "checkmark.shield")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(.green)
+                Text("ANALYSIS READY")
+                    .font(.system(size: 11, weight: .regular))
+                    .foregroundColor(.green)
+                    .tracking(1)
+            }
+
+            HStack(spacing: AppTheme.Spacing.compact) {
+                // Profile Status Card
+                StatusCard(
+                    icon: "person.text.rectangle",
+                    iconColor: analysisStore.hasCompleteProfile ? .blue : .gray,
+                    title: "Profile",
+                    status: analysisStore.hasCompleteProfile ? (analysisStore.investorProfile?.name ?? "Set up") : "Not set",
+                    isComplete: analysisStore.hasCompleteProfile,
+                    action: { showProfileSetup = true }
+                )
+
+                // Portfolio Status Card
+                StatusCard(
+                    icon: "briefcase",
+                    iconColor: analysisStore.hasPortfolioData ? .green : .gray,
+                    title: "Portfolio",
+                    status: analysisStore.hasPortfolioData ? "\(analysisStore.analysisPortfolio?.holdings.count ?? 0) holdings" : "Not set",
+                    isComplete: analysisStore.hasPortfolioData,
+                    action: { showPortfolioInput = true }
+                )
+            }
+        }
+        .padding(AppTheme.Spacing.medium)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.xLarge, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+struct StatusCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let status: String
+    let isComplete: Bool
+    let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+                HStack {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
+                            .fill(iconColor.opacity(0.15))
+                            .frame(width: 32, height: 32)
+
+                        Image(systemName: icon)
+                            .font(.system(size: 14, weight: .light))
+                            .foregroundColor(iconColor)
+                    }
+
+                    Spacer()
+
+                    if isComplete {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundColor(.green)
+                    } else {
+                        Image(systemName: "plus.circle")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(uiColor: .tertiaryLabel))
+                    }
+                }
+
+                Text(title)
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundColor(.secondary)
+
+                Text(status)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+            }
+            .padding(AppTheme.Spacing.compact)
+            .frame(maxWidth: .infinity)
+            .listItemCardStyle(cornerRadius: AppTheme.CornerRadius.medium)
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -714,4 +1023,5 @@ struct AlertCard: View {
     AIAnalysisView()
         .environmentObject(PortfolioStore())
         .environmentObject(FundsStore())
+        .environment(AnalysisProfileStore())
 }

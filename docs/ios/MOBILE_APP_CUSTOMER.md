@@ -836,3 +836,52 @@ Success (T+1/T+3 credit info)
 | Goal Progress | Goal Update 🎯 | You're 62% towards your Home goal! ₹3.1L of ₹5L saved. |
 | Market Alert | Portfolio Update | Your portfolio is down 3.2% today. Stay invested for long term gains. |
 | Rebalance | Rebalancing Suggested | Your equity allocation has drifted to 78%. Consider rebalancing. |
+
+---
+
+## Appendix D: Native iOS App (SwiftUI)
+
+The app has been migrated to a native SwiftUI implementation for better performance and iOS integration.
+
+### Tech Stack
+| Component | Technology |
+|-----------|------------|
+| Framework | SwiftUI |
+| Minimum iOS | 17.0 |
+| State Management | @Observable stores (ObservableObject) |
+| Storage | UserDefaults |
+| Project Generation | XcodeGen |
+
+### Build Commands
+```bash
+# Generate Xcode project
+cd platforms/ios && xcodegen generate
+
+# Build for simulator
+xcodebuild -project SparrowInvest.xcodeproj -scheme SparrowInvest -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2' build
+
+# Install and run on simulator
+xcrun simctl install "iPhone 17 Pro" build/Build/Products/Debug-iphonesimulator/SparrowInvest.app
+xcrun simctl launch "iPhone 17 Pro" com.sparrowinvest.app
+```
+
+### Project Structure
+```
+platforms/ios/SparrowInvest/
+├── App/                    # App entry point
+├── Models/                 # Data models (Points, Advisor, etc.)
+├── Views/                  # SwiftUI views by feature
+│   ├── Home/
+│   ├── Explore/           # Points, Advisors views
+│   ├── Investments/
+│   ├── Goals/
+│   └── Profile/
+├── Components/            # Reusable UI components
+│   ├── Cards/
+│   ├── Charts/
+│   ├── Dashboard/
+│   └── Explore/          # QuickAccessCard, AdvisorCard
+├── Services/             # State stores (PointsStore, AdvisorStore)
+├── Utilities/            # AppTheme, helpers
+└── Resources/            # Assets, Info.plist
+```

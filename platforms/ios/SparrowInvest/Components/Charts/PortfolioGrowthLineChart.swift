@@ -195,10 +195,10 @@ struct PortfolioGrowthLineChart: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.08), location: 0),
-                            .init(color: .black.opacity(0.04), location: 0.3),
-                            .init(color: .black.opacity(0.02), location: 0.7),
-                            .init(color: .black.opacity(0.06), location: 1)
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -237,10 +237,48 @@ struct PortfolioGrowthLineChart: View {
             }
         }
         .padding(4)
-        .background(
-            colorScheme == .dark ? Color.white.opacity(0.08) : Color(uiColor: .tertiarySystemFill),
-            in: Capsule()
-        )
+        .background(selectorBackground)
+        .overlay(selectorBorder)
+        .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.04), radius: 8, x: 0, y: 2)
+    }
+
+    @ViewBuilder
+    private var selectorBackground: some View {
+        if colorScheme == .dark {
+            Capsule()
+                .fill(Color.black.opacity(0.4))
+                .background(Capsule().fill(.ultraThinMaterial))
+        } else {
+            Capsule()
+                .fill(Color.white)
+        }
+    }
+
+    private var selectorBorder: some View {
+        Capsule()
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.12), location: 0),
+                            .init(color: .black.opacity(0.06), location: 0.5),
+                            .init(color: .black.opacity(0.10), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 
     private func formatAxisDate(_ date: Date) -> String {
