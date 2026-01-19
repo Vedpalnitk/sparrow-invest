@@ -466,31 +466,27 @@ struct AppearanceSection: View {
                     Spacer()
 
                     // Segmented picker for appearance modes
-                    HStack(spacing: 4) {
+                    HStack(spacing: 2) {
                         ForEach(AppearanceMode.allCases, id: \.self) { mode in
                             Button {
                                 appearanceManager.setMode(mode)
                             } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: mode.icon)
-                                        .font(.system(size: 11))
-                                    Text(mode.rawValue)
-                                        .font(.system(size: 11, weight: .medium))
-                                }
-                                .foregroundColor(appearanceManager.currentMode == mode ? .white : .secondary)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background {
-                                    if appearanceManager.currentMode == mode {
-                                        Capsule()
-                                            .fill(Color.blue)
+                                Text(mode.rawValue)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(appearanceManager.currentMode == mode ? .white : .secondary)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background {
+                                        if appearanceManager.currentMode == mode {
+                                            Capsule()
+                                                .fill(Color.blue)
+                                        }
                                     }
-                                }
                             }
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(4)
+                    .padding(3)
                     .background(pickerBackground)
                     .overlay(pickerBorder)
                     .shadow(color: colorScheme == .dark ? .clear : .black.opacity(0.04), radius: 8, x: 0, y: 2)

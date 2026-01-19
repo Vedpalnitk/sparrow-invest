@@ -6,6 +6,7 @@ class AuthManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var hasCompletedOnboarding = false
     @Published var hasSeenWelcome = false
+    @Published var isGuestUser = false
     @Published var user: User?
     @Published var isLoading = false
 
@@ -13,7 +14,29 @@ class AuthManager: ObservableObject {
     private let authKey = "isAuthenticated"
     private let onboardingKey = "hasCompletedOnboarding"
     private let welcomeKey = "hasSeenWelcome"
+    private let guestKey = "isGuestUser"
     private let userKey = "currentUser"
+
+    /// Profile completion percentage (0-100)
+    var profileCompletion: Int {
+        guard let user = user else { return 0 }
+        var completed = 0
+        let total = 7
+
+        if !user.firstName.isEmpty { completed += 1 }
+        if !user.lastName.isEmpty { completed += 1 }
+        if !user.email.isEmpty { completed += 1 }
+        if !user.phone.isEmpty { completed += 1 }
+        if user.panNumber != nil { completed += 1 }
+        if user.kycStatus == .verified { completed += 1 }
+        if user.riskProfile != nil { completed += 1 }
+
+        return Int((Double(completed) / Double(total)) * 100)
+    }
+
+    var isProfileComplete: Bool {
+        profileCompletion >= 100
+    }
 
     init() {
         loadStoredAuth()
@@ -23,6 +46,7 @@ class AuthManager: ObservableObject {
         isAuthenticated = userDefaults.bool(forKey: authKey)
         hasCompletedOnboarding = userDefaults.bool(forKey: onboardingKey)
         hasSeenWelcome = userDefaults.bool(forKey: welcomeKey)
+        isGuestUser = userDefaults.bool(forKey: guestKey)
 
         if let userData = userDefaults.data(forKey: userKey) {
             user = try? JSONDecoder().decode(User.self, from: userData)
@@ -35,6 +59,31 @@ class AuthManager: ObservableObject {
         //     mockLogin()
         // }
         // #endif
+    }
+
+    /// Continue as guest without phone verification
+    func continueAsGuest() {
+        let guestUser = User(
+            id: UUID().uuidString,
+            firstName: "",
+            lastName: "",
+            email: "",
+            phone: "",
+            panNumber: nil,
+            kycStatus: .pending,
+            riskProfile: nil,
+            createdAt: Date()
+        )
+
+        self.user = guestUser
+        self.isAuthenticated = true
+        self.isGuestUser = true
+        self.hasCompletedOnboarding = true
+
+        userDefaults.set(true, forKey: authKey)
+        userDefaults.set(true, forKey: guestKey)
+        userDefaults.set(true, forKey: onboardingKey)
+        saveAuth()
     }
 
     func completeWelcome() {
@@ -93,11 +142,13 @@ class AuthManager: ObservableObject {
         isAuthenticated = false
         hasCompletedOnboarding = false
         hasSeenWelcome = false
+        isGuestUser = false
         user = nil
 
         userDefaults.removeObject(forKey: authKey)
         userDefaults.removeObject(forKey: onboardingKey)
         userDefaults.removeObject(forKey: welcomeKey)
+        userDefaults.removeObject(forKey: guestKey)
         userDefaults.removeObject(forKey: userKey)
     }
 

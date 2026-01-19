@@ -22,6 +22,14 @@ struct HomeView: View {
                     // Greeting
                     GreetingHeader(name: authManager.user?.firstName ?? "Investor")
 
+                    // Profile Completion Prompt (show until 100% complete)
+                    if !authManager.isProfileComplete {
+                        ProfileCompletionCard(
+                            completion: authManager.profileCompletion,
+                            isGuest: authManager.isGuestUser
+                        )
+                    }
+
                     // Portfolio Hero Card with Individual/Family Toggle
                     PortfolioHeroCard(
                         portfolio: portfolioStore.portfolio,
@@ -237,6 +245,300 @@ struct GreetingHeader: View {
             Spacer()
         }
         .padding(.top, 8)
+    }
+}
+
+// MARK: - Profile Completion Card
+
+struct ProfileCompletionCard: View {
+    let completion: Int
+    let isGuest: Bool
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var showProfileSheet = false
+
+    var body: some View {
+        Button(action: { showProfileSheet = true }) {
+            HStack(spacing: AppTheme.Spacing.medium) {
+                // Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
+                        .fill(Color.orange.opacity(colorScheme == .dark ? 0.15 : 0.1))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: isGuest ? "person.crop.circle.badge.exclamationmark" : "person.crop.circle.badge.checkmark")
+                        .font(.system(size: 20))
+                        .foregroundColor(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(isGuest ? "Complete your profile" : "Profile \(completion)% complete")
+                        .font(AppTheme.Typography.headline(16))
+                        .foregroundColor(AppTheme.textPrimary)
+
+                    Text(isGuest ? "Add your details to unlock all features" : "Complete your profile to get personalized recommendations")
+                        .font(AppTheme.Typography.caption(12))
+                        .foregroundColor(AppTheme.textSecondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                // Progress or Arrow
+                if !isGuest {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.orange.opacity(0.2), lineWidth: 3)
+                            .frame(width: 36, height: 36)
+
+                        Circle()
+                            .trim(from: 0, to: CGFloat(completion) / 100)
+                            .stroke(Color.orange, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .frame(width: 36, height: 36)
+                            .rotationEffect(.degrees(-90))
+
+                        Text("\(completion)%")
+                            .font(.system(size: 9, weight: .semibold))
+                            .foregroundColor(.orange)
+                    }
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(AppTheme.textTertiary)
+                }
+            }
+            .padding(AppTheme.Spacing.medium)
+            .background(cardBackground)
+            .overlay(cardBorder)
+            .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $showProfileSheet) {
+            NavigationStack {
+                ProfileCompletionSheet()
+            }
+            .presentationDetents([.large])
+        }
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                LinearGradient(
+                    stops: [
+                        .init(color: Color.orange.opacity(0.3), location: 0),
+                        .init(color: Color.orange.opacity(0.1), location: 0.5),
+                        .init(color: Color.orange.opacity(0.2), location: 1)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Profile Completion Sheet
+
+struct ProfileCompletionSheet: View {
+    @EnvironmentObject var authManager: AuthManager
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: AppTheme.Spacing.large) {
+                // Header
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.orange.opacity(0.15))
+                            .frame(width: 80, height: 80)
+
+                        Image(systemName: "person.crop.circle.badge.checkmark")
+                            .font(.system(size: 36))
+                            .foregroundColor(.orange)
+                    }
+
+                    Text("Complete Your Profile")
+                        .font(AppTheme.Typography.headline(20))
+                        .foregroundColor(AppTheme.textPrimary)
+
+                    Text("Fill in these details to unlock personalized recommendations and full app features.")
+                        .font(AppTheme.Typography.body())
+                        .foregroundColor(AppTheme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
+                .padding(.top, 20)
+
+                // Progress
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("Profile Completion")
+                            .font(AppTheme.Typography.caption())
+                            .foregroundColor(AppTheme.textSecondary)
+                        Spacer()
+                        Text("\(authManager.profileCompletion)%")
+                            .font(AppTheme.Typography.accent(14))
+                            .foregroundColor(.orange)
+                    }
+
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.orange.opacity(0.2))
+                                .frame(height: 8)
+
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.orange)
+                                .frame(width: geometry.size.width * CGFloat(authManager.profileCompletion) / 100, height: 8)
+                        }
+                    }
+                    .frame(height: 8)
+                }
+                .padding(.horizontal)
+
+                // Checklist
+                VStack(spacing: 12) {
+                    ProfileCheckItem(
+                        title: "Phone Number",
+                        isComplete: !(authManager.user?.phone.isEmpty ?? true),
+                        icon: "phone.fill"
+                    )
+                    ProfileCheckItem(
+                        title: "Name",
+                        isComplete: !(authManager.user?.firstName.isEmpty ?? true) && !(authManager.user?.lastName.isEmpty ?? true),
+                        icon: "person.fill"
+                    )
+                    ProfileCheckItem(
+                        title: "Email",
+                        isComplete: !(authManager.user?.email.isEmpty ?? true),
+                        icon: "envelope.fill"
+                    )
+                    ProfileCheckItem(
+                        title: "PAN Number",
+                        isComplete: authManager.user?.panNumber != nil,
+                        icon: "creditcard.fill"
+                    )
+                    ProfileCheckItem(
+                        title: "KYC Verification",
+                        isComplete: authManager.user?.kycStatus == .verified,
+                        icon: "checkmark.shield.fill"
+                    )
+                    ProfileCheckItem(
+                        title: "Risk Profile",
+                        isComplete: authManager.user?.riskProfile != nil,
+                        icon: "chart.bar.fill"
+                    )
+                }
+                .padding()
+                .background(sectionBackground)
+                .overlay(sectionBorder)
+                .padding(.horizontal)
+
+                Spacer(minLength: 40)
+            }
+        }
+        .background(AppTheme.background)
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Done") { dismiss() }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var sectionBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var sectionBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.3), location: 0),
+                            .init(color: .white.opacity(0.1), location: 0.5),
+                            .init(color: .white.opacity(0.2), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.5),
+                            .init(color: .black.opacity(0.08), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+struct ProfileCheckItem: View {
+    let title: String
+    let isComplete: Bool
+    let icon: String
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill((isComplete ? Color.green : Color.orange).opacity(colorScheme == .dark ? 0.15 : 0.1))
+                    .frame(width: 36, height: 36)
+
+                Image(systemName: icon)
+                    .font(.system(size: 14))
+                    .foregroundColor(isComplete ? .green : .orange)
+            }
+
+            Text(title)
+                .font(AppTheme.Typography.body())
+                .foregroundColor(AppTheme.textPrimary)
+
+            Spacer()
+
+            Image(systemName: isComplete ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 20))
+                .foregroundColor(isComplete ? .green : Color(uiColor: .tertiaryLabel))
+        }
+        .padding(.vertical, 4)
     }
 }
 
