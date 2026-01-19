@@ -61,7 +61,7 @@ struct SIPDashboardCard: View {
             // Stats Grid
             HStack(spacing: 0) {
                 // Active SIPs
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(spacing: 4) {
                     HStack(spacing: 6) {
                         Image(systemName: "repeat.circle.fill")
                             .font(.system(size: 14))
@@ -74,13 +74,13 @@ struct SIPDashboardCard: View {
                         .font(.system(size: 22, weight: .light, design: .rounded))
                         .foregroundColor(.primary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity)
 
                 Divider()
                     .frame(height: 44)
 
                 // Monthly Amount
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(spacing: 4) {
                     HStack(spacing: 6) {
                         Image(systemName: "indianrupeesign.circle.fill")
                             .font(.system(size: 14))
@@ -93,13 +93,13 @@ struct SIPDashboardCard: View {
                         .font(.system(size: 16, weight: .light, design: .rounded))
                         .foregroundColor(.primary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity)
 
                 Divider()
                     .frame(height: 44)
 
                 // Next SIP
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(spacing: 4) {
                     HStack(spacing: 6) {
                         Image(systemName: "calendar.badge.clock")
                             .font(.system(size: 14))
@@ -112,7 +112,7 @@ struct SIPDashboardCard: View {
                         .font(.system(size: 16, weight: .light, design: .rounded))
                         .foregroundColor(.primary)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity)
             }
 
             // Upcoming SIPs List

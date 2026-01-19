@@ -22,7 +22,7 @@ class NavigationStore: ObservableObject {
         var icon: String {
             switch self {
             case .home: return "house.fill"
-            case .investments: return "chart.line.uptrend.xyaxis"
+            case .investments: return "chart.pie"
             case .insights: return "sparkles"
             case .explore: return "magnifyingglass"
             case .profile: return "person.fill"
