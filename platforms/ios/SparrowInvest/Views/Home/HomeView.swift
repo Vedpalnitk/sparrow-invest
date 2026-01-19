@@ -91,16 +91,6 @@ struct HomeView: View {
                         }
                     )
 
-                    // Family Portfolio (only show in family mode or if has family members)
-                    if dashboardStore.viewMode == .family || !familyStore.familyPortfolio.members.isEmpty {
-                        FamilyPortfolioCard(
-                            familyPortfolio: familyStore.familyPortfolio,
-                            onMemberTap: { member in
-                                familyStore.selectMember(member)
-                            }
-                        )
-                    }
-
                     // SIP Dashboard
                     SIPDashboardCard(activeSIPs: portfolioStore.activeSIPs)
 
