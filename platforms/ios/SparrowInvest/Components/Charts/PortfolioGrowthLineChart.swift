@@ -10,11 +10,70 @@ import Charts
 
 struct PortfolioGrowthLineChart: View {
     let history: PortfolioHistory
+    var familyHistory: PortfolioHistory?
+    var familyMembers: [FamilyMember]
+    var memberHistories: [String: PortfolioHistory]
     @Binding var selectedPeriod: HistoryPeriod
     var onPeriodChange: ((HistoryPeriod) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
 
     @State private var selectedPoint: PortfolioHistoryPoint?
+    @State private var selectedFilter: PortfolioFilterOption = .individual
+
+    // Computed filter options based on available data
+    private var filterOptions: [PortfolioFilterOption] {
+        var options: [PortfolioFilterOption] = [.individual]
+
+        // Add family option if family data exists
+        if familyHistory != nil || !familyMembers.isEmpty {
+            options.append(.family)
+        }
+
+        // Add individual family members
+        for member in familyMembers where member.relationship != .myself {
+            options.append(PortfolioFilterOption(
+                id: member.id,
+                name: member.name,
+                shortName: String(member.name.prefix(8)),
+                color: member.relationship.color
+            ))
+        }
+
+        return options
+    }
+
+    // Current history based on selected filter
+    private var currentHistory: PortfolioHistory {
+        switch selectedFilter.id {
+        case "individual":
+            return history
+        case "family":
+            return familyHistory ?? history
+        default:
+            // Check if it's a family member
+            if let memberHist = memberHistories[selectedFilter.id] {
+                return memberHist
+            }
+            return history
+        }
+    }
+
+    // Initialize with default values for backward compatibility
+    init(
+        history: PortfolioHistory,
+        familyHistory: PortfolioHistory? = nil,
+        familyMembers: [FamilyMember] = [],
+        memberHistories: [String: PortfolioHistory] = [:],
+        selectedPeriod: Binding<HistoryPeriod>,
+        onPeriodChange: ((HistoryPeriod) -> Void)? = nil
+    ) {
+        self.history = history
+        self.familyHistory = familyHistory
+        self.familyMembers = familyMembers
+        self.memberHistories = memberHistories
+        self._selectedPeriod = selectedPeriod
+        self.onPeriodChange = onPeriodChange
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
@@ -37,10 +96,10 @@ struct PortfolioGrowthLineChart: View {
                         }
                     } else {
                         HStack(spacing: 8) {
-                            Text(history.periodReturn >= 0 ? "+" : "")
-                            Text("\(String(format: "%.1f", history.periodReturn))%")
+                            Text(currentHistory.periodReturn >= 0 ? "+" : "")
+                            Text("\(String(format: "%.1f", currentHistory.periodReturn))%")
                                 .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(history.periodReturn >= 0 ? .green : .red)
+                                .foregroundColor(currentHistory.periodReturn >= 0 ? .green : .red)
                             Text("in \(selectedPeriod.rawValue)")
                                 .font(.system(size: 12, weight: .light))
                                 .foregroundColor(.secondary)
@@ -49,13 +108,21 @@ struct PortfolioGrowthLineChart: View {
                 }
 
                 Spacer()
+
+                // Portfolio Filter (only show if there are multiple options)
+                if filterOptions.count > 1 {
+                    PortfolioFilterPicker(
+                        options: filterOptions,
+                        selected: $selectedFilter
+                    )
+                }
             }
 
             // Period Selector
             periodSelector
 
             // Chart
-            if history.dataPoints.isEmpty {
+            if currentHistory.dataPoints.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "chart.line.uptrend.xyaxis")
                         .font(.system(size: 32))
@@ -68,7 +135,7 @@ struct PortfolioGrowthLineChart: View {
                 .frame(height: 180)
             } else {
                 Chart {
-                    ForEach(history.dataPoints) { point in
+                    ForEach(currentHistory.dataPoints) { point in
                         // Area fill
                         AreaMark(
                             x: .value("Date", point.date),
@@ -105,7 +172,10 @@ struct PortfolioGrowthLineChart: View {
                         .symbolSize(80)
                     }
                 }
-                .chartYScale(domain: history.minValue * 0.95...history.maxValue * 1.05)
+                .chartYScale(domain: currentHistory.minValue * 0.95...currentHistory.maxValue * 1.05)
+                .chartPlotStyle { plotArea in
+                    plotArea.clipped()
+                }
                 .chartXAxis {
                     AxisMarks(values: .automatic(desiredCount: 5)) { value in
                         AxisValueLabel {
@@ -138,7 +208,7 @@ struct PortfolioGrowthLineChart: View {
                                     .onChanged { value in
                                         let x = value.location.x
                                         if let date: Date = proxy.value(atX: x) {
-                                            if let closest = history.dataPoints.min(by: {
+                                            if let closest = currentHistory.dataPoints.min(by: {
                                                 abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date))
                                             }) {
                                                 selectedPoint = closest
@@ -195,10 +265,10 @@ struct PortfolioGrowthLineChart: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.15), location: 0),
-                            .init(color: .black.opacity(0.08), location: 0.3),
-                            .init(color: .black.opacity(0.05), location: 0.7),
-                            .init(color: .black.opacity(0.12), location: 1)
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -270,9 +340,10 @@ struct PortfolioGrowthLineChart: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.12), location: 0),
-                            .init(color: .black.opacity(0.06), location: 0.5),
-                            .init(color: .black.opacity(0.10), location: 1)
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing

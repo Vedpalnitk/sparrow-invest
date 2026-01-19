@@ -40,6 +40,7 @@
 		781396D69B7D8EFC8A9351A3 /* Portfolio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C54EBBAFBF75A9FDB6F7DA /* Portfolio.swift */; };
 		81BF02BD1F133D3F8875BD9D /* AdvisorStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EF2638A28F758CC8416D86 /* AdvisorStore.swift */; };
 		8317EDD5286309C1172473DD /* QuickAccessCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BD357E9C6A75BEF5DA9540A /* QuickAccessCard.swift */; };
+		84E06B2DDAC735D32B3948A1 /* NavigationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2E3C6B64D4A954061E121D /* NavigationStore.swift */; };
 		87FD7AEA70DD9D780E98AF57 /* AdvisorsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC41E2FCF2CCFE87039FEAFA /* AdvisorsView.swift */; };
 		884BF8462BEE61892ED7CB56 /* PortfolioHealthTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46B452AAF55161F0393546CB /* PortfolioHealthTile.swift */; };
 		88AA3322ECDB2823FE4D8923 /* PortfolioSummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D75E755F3FBF62413A8561E /* PortfolioSummaryCard.swift */; };
@@ -121,6 +122,7 @@
 		B378BD11713FEEFA3AE6B496 /* DesignSystemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystemView.swift; sourceTree = "<group>"; };
 		B3C896EE6CDA97E5C0F92162 /* TopMoversCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopMoversCard.swift; sourceTree = "<group>"; };
 		B741CB3ED2710E516F453EEF /* FamilyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyStore.swift; sourceTree = "<group>"; };
+		BB2E3C6B64D4A954061E121D /* NavigationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationStore.swift; sourceTree = "<group>"; };
 		C52BCD25940072C33EB5CC1E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		C66B1A2B6C6F61025DF6C196 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
 		C77A5BC264D382DB6F3D6E0A /* AIAnalysisView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAnalysisView.swift; sourceTree = "<group>"; };
@@ -344,6 +346,7 @@
 				B741CB3ED2710E516F453EEF /* FamilyStore.swift */,
 				D07F37B3AFB8C1C2F158BC0C /* FundsStore.swift */,
 				0B063AC3CF043531B02505AA /* GoalsStore.swift */,
+				BB2E3C6B64D4A954061E121D /* NavigationStore.swift */,
 				407F2F4FB314CE006027EA51 /* PointsStore.swift */,
 				DB7C43C08E9C48CE9D079C82 /* PortfolioStore.swift */,
 			);
@@ -533,6 +536,7 @@
 				678B056672884E10103DB918 /* MainTabView.swift in Sources */,
 				1700A9DE89FCA8E89F90CB8A /* MarketData.swift in Sources */,
 				4DC900FBB95A9D4BDE0B701D /* MarketOverviewCard.swift in Sources */,
+				84E06B2DDAC735D32B3948A1 /* NavigationStore.swift in Sources */,
 				4069A3FAD2633DE22A1E0B5F /* OnboardingFlow.swift in Sources */,
 				215E60769076E33FAE46D0E6 /* Points.swift in Sources */,
 				4DE352777FD9631F5E54223D /* PointsStore.swift in Sources */,

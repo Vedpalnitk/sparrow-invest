@@ -13,6 +13,7 @@ class FamilyStore: ObservableObject {
     @Published var familyPortfolio: FamilyPortfolio = .empty
     @Published var selectedMemberId: String?
     @Published var isLoading: Bool = false
+    @Published var memberHoldings: [String: [Holding]] = [:]
 
     init() {
         loadMockData()
@@ -137,6 +138,54 @@ class FamilyStore: ObservableObject {
         }
     }
 
+    // MARK: - Holdings Management
+
+    func addHolding(_ holding: Holding, to memberId: String) {
+        if memberHoldings[memberId] == nil {
+            memberHoldings[memberId] = []
+        }
+        memberHoldings[memberId]?.append(holding)
+        recalculateMemberPortfolio(memberId: memberId)
+    }
+
+    func removeHolding(_ holdingId: String, from memberId: String) {
+        memberHoldings[memberId]?.removeAll { $0.id == holdingId }
+        recalculateMemberPortfolio(memberId: memberId)
+    }
+
+    func updateHolding(_ holding: Holding, for memberId: String) {
+        if let index = memberHoldings[memberId]?.firstIndex(where: { $0.id == holding.id }) {
+            memberHoldings[memberId]?[index] = holding
+            recalculateMemberPortfolio(memberId: memberId)
+        }
+    }
+
+    func getHoldings(for memberId: String) -> [Holding] {
+        memberHoldings[memberId] ?? []
+    }
+
+    private func recalculateMemberPortfolio(memberId: String) {
+        guard let index = familyPortfolio.members.firstIndex(where: { $0.id == memberId }) else { return }
+
+        let holdings = memberHoldings[memberId] ?? []
+        let totalValue = holdings.reduce(0) { $0 + $1.currentValue }
+        let totalInvested = holdings.reduce(0) { $0 + $1.investedAmount }
+        let totalReturns = totalValue - totalInvested
+        let returnsPercentage = totalInvested > 0 ? (totalReturns / totalInvested) * 100 : 0
+
+        var updatedMember = familyPortfolio.members[index]
+        updatedMember.portfolioValue = totalValue
+        updatedMember.investedAmount = totalInvested
+        updatedMember.returns = totalReturns
+        updatedMember.returnsPercentage = returnsPercentage
+        updatedMember.holdings = holdings.count
+        updatedMember.isLinked = holdings.count > 0
+
+        var updatedMembers = familyPortfolio.members
+        updatedMembers[index] = updatedMember
+        recalculateFamilyPortfolio(with: updatedMembers)
+    }
+
     private func recalculateFamilyPortfolio(with members: [FamilyMember]) {
         let linkedMembers = members.filter { $0.isLinked }
         let totalValue = linkedMembers.reduce(0) { $0 + $1.portfolioValue }
@@ -200,6 +249,67 @@ class FamilyStore: ObservableObject {
 
     var totalHoldings: Int {
         familyPortfolio.members.reduce(0) { $0 + $1.holdings }
+    }
+
+    // MARK: - Portfolio History
+
+    /// Combined family portfolio history
+    var familyPortfolioHistory: PortfolioHistory {
+        // For now, return a scaled version of the mock data
+        // In production, this would aggregate actual member histories
+        let baseHistory = generateMockHistory(
+            endValue: familyPortfolio.totalValue,
+            returnPercentage: familyPortfolio.returnsPercentage
+        )
+        return baseHistory
+    }
+
+    /// Portfolio history for each family member
+    var memberPortfolioHistories: [String: PortfolioHistory] {
+        var histories: [String: PortfolioHistory] = [:]
+
+        for member in familyPortfolio.members {
+            histories[member.id] = generateMockHistory(
+                endValue: member.portfolioValue,
+                returnPercentage: member.returnsPercentage
+            )
+        }
+
+        return histories
+    }
+
+    private func generateMockHistory(endValue: Double, returnPercentage: Double) -> PortfolioHistory {
+        let calendar = Calendar.current
+        let today = Date()
+
+        // Generate 12 months of data points
+        var dataPoints: [PortfolioHistoryPoint] = []
+        let startValue = endValue / (1 + returnPercentage / 100)
+        let startInvested = startValue * 0.85 // Assume invested was slightly less
+
+        for monthsAgo in (0...11).reversed() {
+            guard let date = calendar.date(byAdding: .month, value: -monthsAgo, to: today) else { continue }
+
+            // Linear interpolation with some noise
+            let progress = Double(11 - monthsAgo) / 11.0
+            let baseValue = startValue + (endValue - startValue) * progress
+            let noise = Double.random(in: -0.02...0.02)
+            let value = baseValue * (1 + noise)
+
+            // Invested amount grows linearly (simulating regular SIPs)
+            let invested = startInvested + (endValue * 0.80 - startInvested) * progress
+
+            dataPoints.append(PortfolioHistoryPoint(
+                date: date,
+                value: value,
+                invested: invested
+            ))
+        }
+
+        return PortfolioHistory(
+            dataPoints: dataPoints,
+            period: .oneYear
+        )
     }
 
     // MARK: - Asset Allocation

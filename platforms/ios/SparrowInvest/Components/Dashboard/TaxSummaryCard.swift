@@ -184,10 +184,10 @@ struct TaxSummaryCard: View {
                       )
                     : LinearGradient(
                         stops: [
-                            .init(color: .black.opacity(0.15), location: 0),
-                            .init(color: .black.opacity(0.08), location: 0.3),
-                            .init(color: .black.opacity(0.05), location: 0.7),
-                            .init(color: .black.opacity(0.10), location: 1)
+                            .init(color: .black.opacity(0.08), location: 0),
+                            .init(color: .black.opacity(0.04), location: 0.3),
+                            .init(color: .black.opacity(0.02), location: 0.7),
+                            .init(color: .black.opacity(0.06), location: 1)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing

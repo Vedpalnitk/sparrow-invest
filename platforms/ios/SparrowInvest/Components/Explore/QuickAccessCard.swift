@@ -90,7 +90,12 @@ struct QuickAccessCard: View {
             .stroke(
                 colorScheme == .dark
                     ? LinearGradient(
-                        colors: [Color.white.opacity(0.3), Color.white.opacity(0.1)],
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                       )

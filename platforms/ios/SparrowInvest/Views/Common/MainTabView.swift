@@ -1,57 +1,39 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @State private var selectedTab: Tab = .home
-
-    enum Tab: String, CaseIterable {
-        case home = "Home"
-        case investments = "Investments"
-        case insights = "Insights"
-        case explore = "Explore"
-        case profile = "Profile"
-
-        var icon: String {
-            switch self {
-            case .home: return "house.fill"
-            case .investments: return "chart.pie.fill"
-            case .insights: return "brain.head.profile"
-            case .explore: return "magnifyingglass"
-            case .profile: return "person.fill"
-            }
-        }
-    }
+    @EnvironmentObject var navigationStore: NavigationStore
 
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView(selection: $navigationStore.selectedTab) {
             HomeView()
                 .tabItem {
-                    Label(Tab.home.rawValue, systemImage: Tab.home.icon)
+                    Label(NavigationStore.Tab.home.rawValue, systemImage: NavigationStore.Tab.home.icon)
                 }
-                .tag(Tab.home)
+                .tag(NavigationStore.Tab.home)
 
             InvestmentsView()
                 .tabItem {
-                    Label(Tab.investments.rawValue, systemImage: Tab.investments.icon)
+                    Label(NavigationStore.Tab.investments.rawValue, systemImage: NavigationStore.Tab.investments.icon)
                 }
-                .tag(Tab.investments)
+                .tag(NavigationStore.Tab.investments)
 
             AIAnalysisView()
                 .tabItem {
-                    Label(Tab.insights.rawValue, systemImage: Tab.insights.icon)
+                    Label(NavigationStore.Tab.insights.rawValue, systemImage: NavigationStore.Tab.insights.icon)
                 }
-                .tag(Tab.insights)
+                .tag(NavigationStore.Tab.insights)
 
             ExploreView()
                 .tabItem {
-                    Label(Tab.explore.rawValue, systemImage: Tab.explore.icon)
+                    Label(NavigationStore.Tab.explore.rawValue, systemImage: NavigationStore.Tab.explore.icon)
                 }
-                .tag(Tab.explore)
+                .tag(NavigationStore.Tab.explore)
 
             ProfileView()
                 .tabItem {
-                    Label(Tab.profile.rawValue, systemImage: Tab.profile.icon)
+                    Label(NavigationStore.Tab.profile.rawValue, systemImage: NavigationStore.Tab.profile.icon)
                 }
-                .tag(Tab.profile)
+                .tag(NavigationStore.Tab.profile)
         }
         .tint(AppTheme.primary)
     }
@@ -59,6 +41,7 @@ struct MainTabView: View {
 
 #Preview {
     MainTabView()
+        .environmentObject(NavigationStore())
         .environmentObject(AuthManager())
         .environmentObject(PortfolioStore())
         .environmentObject(FundsStore())

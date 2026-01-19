@@ -40,6 +40,7 @@ struct AssetAllocationPieChart: View {
     var familyAllocation: AssetAllocation?
     var familyMembers: [FamilyMember]
     var memberAllocations: [String: AssetAllocation]
+    var onTap: ((PortfolioFilterOption) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
     @State private var selectedFilter: PortfolioFilterOption = .individual
 
@@ -123,104 +124,122 @@ struct AssetAllocationPieChart: View {
         allocation: AssetAllocation,
         familyAllocation: AssetAllocation? = nil,
         familyMembers: [FamilyMember] = [],
-        memberAllocations: [String: AssetAllocation] = [:]
+        memberAllocations: [String: AssetAllocation] = [:],
+        onTap: ((PortfolioFilterOption) -> Void)? = nil
     ) {
         self.allocation = allocation
         self.familyAllocation = familyAllocation
         self.familyMembers = familyMembers
         self.memberAllocations = memberAllocations
+        self.onTap = onTap
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
-            // Header with Filter
-            HStack {
-                Text("Asset Allocation")
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(.primary)
+        Button {
+            onTap?(selectedFilter)
+        } label: {
+            VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
+                // Header with Filter
+                HStack {
+                    Text("Asset Allocation")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(.primary)
 
-                Spacer()
+                    Spacer()
 
-                // Portfolio Filter (only show if there are multiple options)
-                if filterOptions.count > 1 {
-                    PortfolioFilterPicker(
-                        options: filterOptions,
-                        selected: $selectedFilter
-                    )
-                }
-            }
-
-            HStack(spacing: AppTheme.Spacing.large) {
-                // Pie Chart
-                ZStack {
-                    Chart(slices) { slice in
-                        SectorMark(
-                            angle: .value("Value", slice.value),
-                            innerRadius: .ratio(0.6),
-                            angularInset: 2
+                    // Portfolio Filter (only show if there are multiple options)
+                    if filterOptions.count > 1 {
+                        PortfolioFilterPicker(
+                            options: filterOptions,
+                            selected: $selectedFilter
                         )
-                        .foregroundStyle(slice.color)
-                        .opacity(selectedSlice?.id == slice.id ? 1.0 : 0.9)
                     }
-                    .chartBackground { _ in
-                        VStack(spacing: 2) {
-                            if let selected = selectedSlice {
-                                Text(selected.name)
-                                    .font(.system(size: 12, weight: .light))
-                                    .foregroundColor(.secondary)
-                                Text("\(Int(selected.percentage))%")
-                                    .font(.system(size: 20, weight: .light, design: .rounded))
-                                    .foregroundColor(selected.color)
-                            } else {
-                                Text("Total")
-                                    .font(.system(size: 12, weight: .light))
-                                    .foregroundColor(.secondary)
-                                Text(currentAllocation.total.compactCurrencyFormatted)
-                                    .font(.system(size: 16, weight: .light, design: .rounded))
-                                    .foregroundColor(.primary)
-                            }
-                        }
-                    }
-                    .frame(width: 140, height: 140)
                 }
 
-                // Legend
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(slices) { slice in
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(slice.color)
-                                .frame(width: 10, height: 10)
-
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text(slice.name)
-                                    .font(.system(size: 13, weight: .light))
-                                    .foregroundColor(.primary)
-
-                                Text(slice.value.compactCurrencyFormatted)
-                                    .font(.system(size: 11, weight: .regular))
-                                    .foregroundColor(.secondary)
-                            }
-
-                            Spacer()
-
-                            Text("\(Int(slice.percentage))%")
-                                .font(.system(size: 13, weight: .regular, design: .rounded))
-                                .foregroundColor(slice.color)
+                HStack(spacing: AppTheme.Spacing.large) {
+                    // Pie Chart
+                    ZStack {
+                        Chart(slices) { slice in
+                            SectorMark(
+                                angle: .value("Value", slice.value),
+                                innerRadius: .ratio(0.6),
+                                angularInset: 2
+                            )
+                            .foregroundStyle(slice.color)
+                            .opacity(selectedSlice?.id == slice.id ? 1.0 : 0.9)
                         }
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                if selectedSlice?.id == slice.id {
-                                    selectedSlice = nil
+                        .chartBackground { _ in
+                            VStack(spacing: 2) {
+                                if let selected = selectedSlice {
+                                    Text(selected.name)
+                                        .font(.system(size: 12, weight: .light))
+                                        .foregroundColor(.secondary)
+                                    Text("\(Int(selected.percentage))%")
+                                        .font(.system(size: 20, weight: .light, design: .rounded))
+                                        .foregroundColor(selected.color)
                                 } else {
-                                    selectedSlice = slice
+                                    Text("Total")
+                                        .font(.system(size: 12, weight: .light))
+                                        .foregroundColor(.secondary)
+                                    Text(currentAllocation.total.compactCurrencyFormatted)
+                                        .font(.system(size: 16, weight: .light, design: .rounded))
+                                        .foregroundColor(.primary)
+                                }
+                            }
+                        }
+                        .frame(width: 140, height: 140)
+                    }
+
+                    // Legend
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(slices) { slice in
+                            HStack(spacing: 8) {
+                                Circle()
+                                    .fill(slice.color)
+                                    .frame(width: 10, height: 10)
+
+                                VStack(alignment: .leading, spacing: 0) {
+                                    Text(slice.name)
+                                        .font(.system(size: 13, weight: .light))
+                                        .foregroundColor(.primary)
+
+                                    Text(slice.value.compactCurrencyFormatted)
+                                        .font(.system(size: 11, weight: .regular))
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Text("\(Int(slice.percentage))%")
+                                    .font(.system(size: 13, weight: .regular, design: .rounded))
+                                    .foregroundColor(slice.color)
+                            }
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    if selectedSlice?.id == slice.id {
+                                        selectedSlice = nil
+                                    } else {
+                                        selectedSlice = slice
+                                    }
                                 }
                             }
                         }
                     }
                 }
+
+                // Tap indicator
+                HStack {
+                    Spacer()
+                    Text("View Holdings")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(.blue)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .regular))
+                        .foregroundColor(.blue)
+                }
             }
         }
+        .buttonStyle(.plain)
         .padding(AppTheme.Spacing.medium)
         .background(cardBackground)
         .overlay(cardBorder)

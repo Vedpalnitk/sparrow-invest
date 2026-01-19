@@ -33,6 +33,7 @@ struct ExploreView: View {
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Explore")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: WatchlistView()) {
@@ -198,16 +199,49 @@ struct CategoryCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(
-                color.opacity(colorScheme == .dark ? 0.15 : 0.1),
-                in: RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-                    .stroke(colorScheme == .dark ? color.opacity(0.2) : Color.clear, lineWidth: 0.5)
-            )
+            .background(categoryBackground)
+            .overlay(categoryBorder)
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var categoryBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(color.opacity(0.15))
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                .fill(color.opacity(0.08))
+        }
+    }
+
+    private var categoryBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 

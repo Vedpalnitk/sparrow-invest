@@ -15,19 +15,33 @@ enum InvestmentTab: String, CaseIterable {
     case transactions = "Transactions"
 }
 
-// MARK: - Portfolio Option for Selector
+// MARK: - Portfolio Selection Mode
 
-struct PortfolioOption: Identifiable, Hashable {
-    let id: String
-    let name: String
-    let value: Double
+enum PortfolioSelectionMode: Equatable {
+    case myPortfolio
+    case familyMember(FamilyMember)
 
-    static let mockPortfolios: [PortfolioOption] = [
-        PortfolioOption(id: "1", name: "My Portfolio", value: 245680),
-        PortfolioOption(id: "2", name: "Wife's Portfolio", value: 189450),
-        PortfolioOption(id: "3", name: "Kids Education", value: 85000),
-        PortfolioOption(id: "4", name: "Retirement Fund", value: 520000)
-    ]
+    var id: String {
+        switch self {
+        case .myPortfolio:
+            return "my_portfolio"
+        case .familyMember(let member):
+            return member.id
+        }
+    }
+
+    var name: String {
+        switch self {
+        case .myPortfolio:
+            return "My Portfolio"
+        case .familyMember(let member):
+            return member.name
+        }
+    }
+
+    static func == (lhs: PortfolioSelectionMode, rhs: PortfolioSelectionMode) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 // MARK: - Main View
@@ -35,24 +49,71 @@ struct PortfolioOption: Identifiable, Hashable {
 struct InvestmentsView: View {
     @EnvironmentObject var portfolioStore: PortfolioStore
     @EnvironmentObject var fundsStore: FundsStore
+    @EnvironmentObject var familyStore: FamilyStore
     @State private var selectedTab: InvestmentTab = .portfolio
-    @State private var selectedPortfolio: PortfolioOption = PortfolioOption.mockPortfolios[0]
+    @State private var selectedMode: PortfolioSelectionMode = .myPortfolio
     @State private var showPortfolioPicker = false
+    @State private var showAddHolding = false
+    @State private var showAddFamilyMember = false
     @State private var selectedFilter: Holding.AssetClass? = nil
+
+    private var currentPortfolioValue: Double {
+        switch selectedMode {
+        case .myPortfolio:
+            return portfolioStore.portfolio.totalValue
+        case .familyMember(let member):
+            return member.portfolioValue
+        }
+    }
+
+    private var currentHoldings: [Holding] {
+        switch selectedMode {
+        case .myPortfolio:
+            return portfolioStore.holdings
+        case .familyMember(let member):
+            return familyStore.getHoldings(for: member.id)
+        }
+    }
 
     var filteredHoldings: [Holding] {
         if let filter = selectedFilter {
-            return portfolioStore.holdings.filter { $0.assetClass == filter }
+            return currentHoldings.filter { $0.assetClass == filter }
         }
-        return portfolioStore.holdings
+        return currentHoldings
+    }
+
+    private var currentPortfolio: Portfolio {
+        switch selectedMode {
+        case .myPortfolio:
+            return portfolioStore.portfolio
+        case .familyMember(let member):
+            let holdings = familyStore.getHoldings(for: member.id)
+            let totalValue = holdings.reduce(0) { $0 + $1.currentValue }
+            let totalInvested = holdings.reduce(0) { $0 + $1.investedAmount }
+            let totalReturns = totalValue - totalInvested
+            let returnsPercentage = totalInvested > 0 ? (totalReturns / totalInvested) * 100 : 0
+
+            return Portfolio(
+                totalValue: totalValue,
+                totalInvested: totalInvested,
+                totalReturns: totalReturns,
+                returnsPercentage: returnsPercentage,
+                todayChange: 0,
+                todayChangePercentage: 0,
+                xirr: member.xirr,
+                assetAllocation: familyStore.memberAssetAllocations[member.id] ?? AssetAllocation(equity: 0, debt: 0, hybrid: 0, gold: 0, other: 0),
+                holdings: holdings
+            )
+        }
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Portfolio Selector
-                PortfolioSelectorButton(
-                    selectedPortfolio: selectedPortfolio,
+                PortfolioMemberSelectorButton(
+                    selectedMode: selectedMode,
+                    portfolioValue: currentPortfolioValue,
                     onTap: { showPortfolioPicker = true }
                 )
                 .padding(.horizontal, AppTheme.Spacing.medium)
@@ -69,9 +130,18 @@ struct InvestmentsView: View {
                         switch selectedTab {
                         case .portfolio:
                             PortfolioTabContent(
-                                portfolio: portfolioStore.portfolio,
+                                portfolio: currentPortfolio,
                                 holdings: filteredHoldings,
-                                selectedFilter: $selectedFilter
+                                selectedFilter: $selectedFilter,
+                                canEdit: selectedMode != .myPortfolio,
+                                onAddHolding: {
+                                    showAddHolding = true
+                                },
+                                onDeleteHolding: { holding in
+                                    if case .familyMember(let member) = selectedMode {
+                                        familyStore.removeHolding(holding.id, from: member.id)
+                                    }
+                                }
                             )
                         case .sips:
                             SIPsTabContent(sips: portfolioStore.activeSIPs)
@@ -86,46 +156,96 @@ struct InvestmentsView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Investments")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if case .familyMember = selectedMode, selectedTab == .portfolio {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            showAddHolding = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                    }
+                }
+            }
             .refreshable {
                 await portfolioStore.fetchPortfolio()
+                await familyStore.refreshData()
             }
             .sheet(isPresented: $showPortfolioPicker) {
-                PortfolioPickerSheet(
-                    portfolios: PortfolioOption.mockPortfolios,
-                    selectedPortfolio: $selectedPortfolio,
-                    isPresented: $showPortfolioPicker
+                FamilyPortfolioPickerSheet(
+                    familyMembers: familyStore.familyPortfolio.members,
+                    selectedMode: $selectedMode,
+                    isPresented: $showPortfolioPicker,
+                    onAddMember: {
+                        showPortfolioPicker = false
+                        showAddFamilyMember = true
+                    }
                 )
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $showAddHolding) {
+                if case .familyMember(let member) = selectedMode {
+                    FamilyMemberAddHoldingView(memberId: member.id)
+                }
+            }
+            .sheet(isPresented: $showAddFamilyMember) {
+                AddFamilyMemberSheet()
             }
         }
     }
 }
 
-// MARK: - Portfolio Selector Button
+// MARK: - Portfolio Member Selector Button
 
-struct PortfolioSelectorButton: View {
-    let selectedPortfolio: PortfolioOption
+struct PortfolioMemberSelectorButton: View {
+    let selectedMode: PortfolioSelectionMode
+    let portfolioValue: Double
     let onTap: () -> Void
     @Environment(\.colorScheme) private var colorScheme
 
+    private var relationshipColor: Color {
+        switch selectedMode {
+        case .myPortfolio:
+            return .blue
+        case .familyMember(let member):
+            return member.relationship.color
+        }
+    }
+
     var body: some View {
         Button(action: onTap) {
-            HStack {
+            HStack(spacing: AppTheme.Spacing.compact) {
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(relationshipColor.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                    if case .familyMember(let member) = selectedMode {
+                        Text(member.name.prefix(1).uppercased())
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(relationshipColor)
+                    } else {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(relationshipColor)
+                    }
+                }
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text("VIEWING")
                         .font(.system(size: 10, weight: .regular))
                         .foregroundColor(.secondary)
                         .tracking(1)
 
-                    Text(selectedPortfolio.name)
+                    Text(selectedMode.name)
                         .font(.system(size: 16, weight: .light))
                         .foregroundColor(.primary)
                 }
 
                 Spacer()
 
-                Text(selectedPortfolio.value.currencyFormatted)
+                Text(portfolioValue.currencyFormatted)
                     .font(.system(size: 14, weight: .light, design: .rounded))
                     .foregroundColor(.blue)
 
@@ -278,6 +398,11 @@ struct PortfolioTabContent: View {
     let portfolio: Portfolio
     let holdings: [Holding]
     @Binding var selectedFilter: Holding.AssetClass?
+    var canEdit: Bool = false
+    var onAddHolding: (() -> Void)?
+    var onDeleteHolding: ((Holding) -> Void)?
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: AppTheme.Spacing.large) {
@@ -297,23 +422,282 @@ struct PortfolioTabContent: View {
 
                     Spacer()
 
-                    Text("\(holdings.count) funds")
-                        .font(.system(size: 12, weight: .light))
-                        .foregroundColor(.secondary)
+                    if canEdit {
+                        Button {
+                            onAddHolding?()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 12))
+                                Text("Add")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .foregroundColor(.blue)
+                        }
+                    } else {
+                        Text("\(holdings.count) funds")
+                            .font(.system(size: 12, weight: .light))
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 if holdings.isEmpty {
-                    EmptyHoldingsView()
+                    if canEdit {
+                        EditableEmptyHoldingsView(onAddHolding: onAddHolding)
+                    } else {
+                        EmptyHoldingsView()
+                    }
                 } else {
                     ForEach(holdings) { holding in
-                        NavigationLink(destination: FundDetailView(fund: holding.toFund())) {
-                            HoldingCard(holding: holding)
+                        if canEdit {
+                            EditableHoldingCard(
+                                holding: holding,
+                                onDelete: {
+                                    onDeleteHolding?(holding)
+                                }
+                            )
+                        } else {
+                            NavigationLink(destination: FundDetailView(fund: holding.toFund())) {
+                                HoldingCard(holding: holding)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
         }
+    }
+}
+
+// MARK: - Editable Holding Card
+
+struct EditableHoldingCard: View {
+    let holding: Holding
+    var onDelete: (() -> Void)?
+
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var showDeleteConfirm = false
+
+    var body: some View {
+        VStack(spacing: AppTheme.Spacing.compact) {
+            HStack(alignment: .top, spacing: AppTheme.Spacing.compact) {
+                // Fund Icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                        .fill(holding.assetClass.color.opacity(0.1))
+                        .frame(width: 48, height: 48)
+
+                    Text(holding.fundName.prefix(2).uppercased())
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundColor(holding.assetClass.color)
+                }
+
+                // Fund Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(holding.fundName)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+
+                    HStack(spacing: 6) {
+                        Text(holding.category)
+                            .font(.system(size: 12, weight: .light))
+                            .foregroundColor(.secondary)
+
+                        Text("•")
+                            .foregroundColor(Color(uiColor: .tertiaryLabel))
+
+                        Text("\(String(format: "%.3f", holding.units)) units")
+                            .font(.system(size: 12, weight: .light))
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                // Returns
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(holding.currentValue.currencyFormatted)
+                        .font(.system(size: 14, weight: .light))
+                        .foregroundColor(.primary)
+
+                    HStack(spacing: 2) {
+                        Image(systemName: holding.returns >= 0 ? "arrow.up.right" : "arrow.down.right")
+                            .font(.system(size: 10, weight: .regular))
+                        Text(holding.returnsPercentage.percentFormatted)
+                            .font(.system(size: 12, weight: .regular))
+                    }
+                    .foregroundColor(holding.returns >= 0 ? .green : .red)
+                }
+
+                // Delete button
+                Button {
+                    showDeleteConfirm = true
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 14))
+                        .foregroundColor(.red.opacity(0.7))
+                        .padding(8)
+                }
+            }
+        }
+        .padding(AppTheme.Spacing.medium)
+        .background(cardBackground)
+        .overlay(cardBorder)
+        .shadow(color: cardShadow, radius: 12, x: 0, y: 4)
+        .confirmationDialog("Delete Holding", isPresented: $showDeleteConfirm) {
+            Button("Delete", role: .destructive) {
+                onDelete?()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Are you sure you want to delete this holding?")
+        }
+    }
+
+    private var cardShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
+// MARK: - Editable Empty Holdings View
+
+struct EditableEmptyHoldingsView: View {
+    var onAddHolding: (() -> Void)?
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        VStack(spacing: AppTheme.Spacing.medium) {
+            Image(systemName: "chart.pie")
+                .font(.system(size: 48, weight: .ultraLight))
+                .foregroundColor(Color(uiColor: .tertiaryLabel))
+
+            Text("No holdings yet")
+                .font(.system(size: 16, weight: .light))
+                .foregroundColor(.secondary)
+
+            Text("Add mutual fund holdings to track this portfolio")
+                .font(.system(size: 14, weight: .light))
+                .foregroundColor(Color(uiColor: .tertiaryLabel))
+                .multilineTextAlignment(.center)
+
+            Button {
+                onAddHolding?()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add First Holding")
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        colors: [.blue, .cyan],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    in: Capsule()
+                )
+            }
+            .padding(.top, 8)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
+        .background(emptyBackground)
+        .overlay(emptyBorder)
+        .shadow(color: emptyShadow, radius: 12, x: 0, y: 4)
+    }
+
+    private var emptyShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.08)
+    }
+
+    @ViewBuilder
+    private var emptyBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var emptyBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.15), location: 0),
+                            .init(color: .black.opacity(0.08), location: 0.3),
+                            .init(color: .black.opacity(0.05), location: 0.7),
+                            .init(color: .black.opacity(0.12), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
     }
 }
 
@@ -760,59 +1144,6 @@ struct TransactionCard: View {
                       ),
                 lineWidth: 1
             )
-    }
-}
-
-// MARK: - Portfolio Picker Sheet
-
-struct PortfolioPickerSheet: View {
-    let portfolios: [PortfolioOption]
-    @Binding var selectedPortfolio: PortfolioOption
-    @Binding var isPresented: Bool
-
-    var body: some View {
-        NavigationStack {
-            List {
-                ForEach(portfolios) { portfolio in
-                    Button(action: {
-                        selectedPortfolio = portfolio
-                        isPresented = false
-                    }) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(portfolio.name)
-                                    .font(.system(size: 16, weight: .light))
-                                    .foregroundColor(.primary)
-
-                                Text(portfolio.value.currencyFormatted)
-                                    .font(.system(size: 14, weight: .light, design: .rounded))
-                                    .foregroundColor(.secondary)
-                            }
-
-                            Spacer()
-
-                            if selectedPortfolio.id == portfolio.id {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-            }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Select Portfolio")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        isPresented = false
-                    }
-                    .font(.system(size: 16, weight: .regular))
-                }
-            }
-        }
     }
 }
 
@@ -1374,10 +1705,232 @@ struct EmptyHoldingsView: View {
     }
 }
 
+// MARK: - Family Portfolio Picker Sheet
+
+struct FamilyPortfolioPickerSheet: View {
+    let familyMembers: [FamilyMember]
+    @Binding var selectedMode: PortfolioSelectionMode
+    @Binding var isPresented: Bool
+    var onAddMember: (() -> Void)?
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: AppTheme.Spacing.medium) {
+                    // My Portfolio Option
+                    PortfolioOptionRow(
+                        name: "My Portfolio",
+                        relationship: nil,
+                        isSelected: selectedMode == .myPortfolio,
+                        onTap: {
+                            selectedMode = .myPortfolio
+                            isPresented = false
+                        }
+                    )
+
+                    // Family Members Section
+                    if !familyMembers.isEmpty {
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
+                            Text("FAMILY MEMBERS")
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundColor(.secondary)
+                                .tracking(0.5)
+                                .padding(.top, AppTheme.Spacing.small)
+
+                            ForEach(familyMembers) { member in
+                                PortfolioOptionRow(
+                                    name: member.name,
+                                    relationship: member.relationship,
+                                    value: member.portfolioValue,
+                                    holdingsCount: member.holdings,
+                                    isSelected: selectedMode.id == member.id,
+                                    onTap: {
+                                        selectedMode = .familyMember(member)
+                                        isPresented = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // Add Family Member Button
+                    Button {
+                        onAddMember?()
+                    } label: {
+                        HStack(spacing: 8) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.blue.opacity(0.15))
+                                    .frame(width: 40, height: 40)
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(.blue)
+                            }
+
+                            Text("Add Family Member")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.blue)
+
+                            Spacer()
+                        }
+                        .padding(AppTheme.Spacing.compact)
+                        .background(addMemberBackground)
+                        .overlay(addMemberBorder)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, AppTheme.Spacing.small)
+                }
+                .padding(AppTheme.Spacing.medium)
+            }
+            .background(Color(uiColor: .systemGroupedBackground))
+            .navigationTitle("Select Portfolio")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        isPresented = false
+                    }
+                    .font(.system(size: 16, weight: .regular))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var addMemberBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.blue.opacity(0.1))
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.blue.opacity(0.05))
+        }
+    }
+
+    private var addMemberBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(Color.blue.opacity(0.2), lineWidth: 1)
+    }
+}
+
+// MARK: - Portfolio Option Row
+
+struct PortfolioOptionRow: View {
+    let name: String
+    var relationship: FamilyRelationship?
+    var value: Double = 0
+    var holdingsCount: Int = 0
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var displayColor: Color {
+        relationship?.color ?? .blue
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: AppTheme.Spacing.compact) {
+                // Avatar
+                ZStack {
+                    Circle()
+                        .fill(displayColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    if let relationship = relationship {
+                        Text(name.prefix(1).uppercased())
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(displayColor)
+                    } else {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(displayColor)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.primary)
+
+                    if let relationship = relationship {
+                        HStack(spacing: 6) {
+                            Text(relationship.displayName)
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundColor(.secondary)
+
+                            if holdingsCount > 0 {
+                                Text("•")
+                                    .foregroundColor(Color(uiColor: .tertiaryLabel))
+                                Text("\(holdingsCount) holdings")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                Spacer()
+
+                if value > 0 {
+                    Text(value.currencyFormatted)
+                        .font(.system(size: 14, weight: .light, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.blue)
+                }
+            }
+            .padding(AppTheme.Spacing.compact)
+            .background(rowBackground)
+            .overlay(rowBorder)
+            .shadow(color: rowShadow, radius: 8, x: 0, y: 2)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var rowShadow: Color {
+        colorScheme == .dark ? .clear : .black.opacity(0.06)
+    }
+
+    @ViewBuilder
+    private var rowBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.white)
+        }
+    }
+
+    private var rowBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                isSelected
+                    ? Color.blue.opacity(0.5)
+                    : (colorScheme == .dark
+                        ? Color.white.opacity(0.1)
+                        : Color.black.opacity(0.08)),
+                lineWidth: isSelected ? 2 : 1
+            )
+    }
+}
+
 // MARK: - Preview
 
 #Preview {
     InvestmentsView()
         .environmentObject(PortfolioStore())
         .environmentObject(FundsStore())
+        .environmentObject(FamilyStore())
 }
