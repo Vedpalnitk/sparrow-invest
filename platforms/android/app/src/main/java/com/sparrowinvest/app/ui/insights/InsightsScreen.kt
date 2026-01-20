@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -75,7 +76,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.sparrowinvest.app.data.model.ActionItem
 import com.sparrowinvest.app.data.model.ActionPriority
 import com.sparrowinvest.app.data.model.ActionType
+import com.sparrowinvest.app.data.model.FamilyMember
 import com.sparrowinvest.app.ui.components.PrimaryButton
+import com.sparrowinvest.app.ui.components.SegmentedControl
 import com.sparrowinvest.app.ui.components.formatCompactCurrency
 import com.sparrowinvest.app.ui.theme.CardBackgroundDark
 import com.sparrowinvest.app.ui.theme.CardBackgroundLight
@@ -104,6 +107,10 @@ fun InsightsScreen(
     val actionItems by viewModel.actionItems.collectAsState()
     val insightCards by viewModel.insightCards.collectAsState()
     val lastAnalyzedDate by viewModel.lastAnalyzedDate.collectAsState()
+    val portfolioViewMode by viewModel.portfolioViewMode.collectAsState()
+    val familyPortfolio by viewModel.familyPortfolio.collectAsState()
+    val selectedFamilyMember by viewModel.selectedFamilyMember.collectAsState()
+    val analysisRequirements by viewModel.analysisRequirements.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -112,16 +119,44 @@ fun InsightsScreen(
             .statusBarsPadding(),
         contentPadding = PaddingValues(bottom = Spacing.xLarge)
     ) {
-        // Header
+        // Header with Portfolio Selector
         item {
-            InsightsHeader(lastAnalyzedDate = lastAnalyzedDate)
+            InsightsHeader(
+                lastAnalyzedDate = lastAnalyzedDate,
+                portfolioViewMode = portfolioViewMode,
+                onViewModeChange = { viewModel.setPortfolioViewMode(it) }
+            )
+        }
+
+        // Family Member Selector (only in family mode)
+        if (portfolioViewMode == PortfolioViewMode.FAMILY) {
+            item {
+                familyPortfolio?.let { family ->
+                    FamilyMemberSelector(
+                        members = family.members,
+                        selectedMember = selectedFamilyMember,
+                        onMemberSelected = { viewModel.selectFamilyMember(it) }
+                    )
+                }
+            }
+        }
+
+        // Requirements Status Indicators
+        item {
+            RequirementsStatusCard(
+                hasProfile = analysisRequirements.hasProfile,
+                hasHoldings = analysisRequirements.hasHoldings,
+                portfolioViewMode = portfolioViewMode,
+                selectedMemberName = selectedFamilyMember?.name
+            )
         }
 
         // AI Analysis Card
         item {
             AIAnalysisHeader(
                 onAnalyze = { viewModel.analyzePortfolio() },
-                isLoading = uiState is InsightsUiState.Analyzing
+                isLoading = uiState is InsightsUiState.Analyzing,
+                canAnalyze = analysisRequirements.canRunAnalysis
             )
             Spacer(modifier = Modifier.height(Spacing.medium))
         }
@@ -242,42 +277,232 @@ fun InsightsScreen(
 }
 
 @Composable
-private fun InsightsHeader(lastAnalyzedDate: String?) {
-    Row(
+private fun InsightsHeader(
+    lastAnalyzedDate: String?,
+    portfolioViewMode: PortfolioViewMode,
+    onViewModeChange: (PortfolioViewMode) -> Unit
+) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.medium, vertical = Spacing.compact),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = Spacing.medium, vertical = Spacing.compact)
     ) {
-        Column {
-            Text(
-                text = "AI Insights",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-            )
-            lastAnalyzedDate?.let {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
                 Text(
-                    text = "Last analyzed: $it",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "AI Insights",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Bold
+                )
+                lastAnalyzedDate?.let {
+                    Text(
+                        text = "Last analyzed: $it",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = Primary,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
 
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Primary.copy(alpha = 0.1f)),
-            contentAlignment = Alignment.Center
+        Spacer(modifier = Modifier.height(Spacing.compact))
+
+        // Portfolio View Mode Selector
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.AutoAwesome,
-                contentDescription = null,
-                tint = Primary,
-                modifier = Modifier.size(20.dp)
+            SegmentedControl(
+                options = listOf(PortfolioViewMode.INDIVIDUAL, PortfolioViewMode.FAMILY),
+                selectedOption = portfolioViewMode,
+                onOptionSelected = onViewModeChange,
+                optionLabel = { mode ->
+                    when (mode) {
+                        PortfolioViewMode.INDIVIDUAL -> "Individual"
+                        PortfolioViewMode.FAMILY -> "Family"
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FamilyMemberSelector(
+    members: List<FamilyMember>,
+    selectedMember: FamilyMember?,
+    onMemberSelected: (FamilyMember?) -> Unit
+) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = Spacing.medium),
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+    ) {
+        // "All" option
+        item {
+            val isSelected = selectedMember == null
+            FamilyMemberChip(
+                text = "All",
+                isSelected = isSelected,
+                color = Primary,
+                onClick = { onMemberSelected(null) }
+            )
+        }
+
+        items(members) { member ->
+            val isSelected = selectedMember?.id == member.id
+            FamilyMemberChip(
+                text = member.name.split(" ").first(),
+                isSelected = isSelected,
+                color = Color(member.relationship.color),
+                onClick = { onMemberSelected(member) }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(Spacing.compact))
+}
+
+@Composable
+private fun FamilyMemberChip(
+    text: String,
+    isSelected: Boolean,
+    color: Color,
+    onClick: () -> Unit
+) {
+    val isDark = isSystemInDarkTheme()
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) color else if (isDark) CardBackgroundDark else CardBackgroundLight,
+        label = "chipBackground"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface,
+        label = "chipText"
+    )
+
+    Box(
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(backgroundColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = Spacing.medium, vertical = Spacing.small)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            color = textColor
+        )
+    }
+}
+
+@Composable
+private fun RequirementsStatusCard(
+    hasProfile: Boolean,
+    hasHoldings: Boolean,
+    portfolioViewMode: PortfolioViewMode,
+    selectedMemberName: String?
+) {
+    val isDark = isSystemInDarkTheme()
+    val shape = RoundedCornerShape(CornerRadius.large)
+    val backgroundColor = if (isDark) CardBackgroundDark else CardBackgroundLight
+
+    val targetLabel = when {
+        portfolioViewMode == PortfolioViewMode.INDIVIDUAL -> "Your portfolio"
+        selectedMemberName != null -> "$selectedMemberName's portfolio"
+        else -> "Family portfolio"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Spacing.medium, vertical = Spacing.small)
+            .clip(shape)
+            .background(backgroundColor)
+            .padding(Spacing.compact)
+    ) {
+        Text(
+            text = "Analysis Target: $targetLabel",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.small))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+        ) {
+            // Profile Status
+            RequirementItem(
+                label = "Profile",
+                isComplete = hasProfile,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Holdings Status
+            RequirementItem(
+                label = "Holdings",
+                isComplete = hasHoldings,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(Spacing.small))
+}
+
+@Composable
+private fun RequirementItem(
+    label: String,
+    isComplete: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val statusColor = if (isComplete) Success else Warning
+    val statusIcon = if (isComplete) Icons.Default.CheckCircle else Icons.Default.Warning
+    val statusText = if (isComplete) "Ready" else "Required"
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+    ) {
+        Icon(
+            imageVector = statusIcon,
+            contentDescription = null,
+            tint = statusColor,
+            modifier = Modifier.size(18.dp)
+        )
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.labelMedium,
+                color = statusColor,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -286,7 +511,8 @@ private fun InsightsHeader(lastAnalyzedDate: String?) {
 @Composable
 private fun AIAnalysisHeader(
     onAnalyze: () -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
+    canAnalyze: Boolean
 ) {
     val isDark = isSystemInDarkTheme()
     val shape = RoundedCornerShape(CornerRadius.xLarge)
@@ -328,7 +554,11 @@ private fun AIAnalysisHeader(
                 .clip(RoundedCornerShape(CornerRadius.medium))
                 .background(
                     Brush.linearGradient(
-                        colors = listOf(Primary, Color(0xFF8B5CF6))
+                        colors = if (canAnalyze) {
+                            listOf(Primary, Color(0xFF8B5CF6))
+                        } else {
+                            listOf(Color.Gray.copy(alpha = 0.5f), Color.Gray.copy(alpha = 0.3f))
+                        }
                     )
                 ),
             contentAlignment = Alignment.Center
@@ -351,18 +581,46 @@ private fun AIAnalysisHeader(
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Get personalized insights powered by AI",
+                text = if (canAnalyze) {
+                    "Get personalized insights powered by AI"
+                } else {
+                    "Complete requirements to run analysis"
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        PrimaryButton(
-            text = if (isLoading) "" else "Analyze",
-            onClick = onAnalyze,
-            isLoading = isLoading,
-            fullWidth = false
-        )
+        // Compact pill button
+        Box(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(
+                    if (canAnalyze && !isLoading) {
+                        Brush.linearGradient(colors = listOf(Primary, Color(0xFF8B5CF6)))
+                    } else {
+                        Brush.linearGradient(colors = listOf(Color.Gray.copy(alpha = 0.4f), Color.Gray.copy(alpha = 0.3f)))
+                    }
+                )
+                .clickable(enabled = canAnalyze && !isLoading, onClick = onAnalyze)
+                .padding(horizontal = Spacing.medium, vertical = Spacing.small),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Analyze",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
     }
 }
 

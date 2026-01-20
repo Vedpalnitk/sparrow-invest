@@ -6,10 +6,15 @@ import com.sparrowinvest.app.core.network.ApiResult
 import com.sparrowinvest.app.data.model.ActionItem
 import com.sparrowinvest.app.data.model.ActionPriority
 import com.sparrowinvest.app.data.model.ActionType
+import com.sparrowinvest.app.data.model.AssetAllocation
 import com.sparrowinvest.app.data.model.ClassifyHolding
 import com.sparrowinvest.app.data.model.ClassifyRequest
 import com.sparrowinvest.app.data.model.ClassifyResponse
+import com.sparrowinvest.app.data.model.FamilyMember
+import com.sparrowinvest.app.data.model.FamilyPortfolio
+import com.sparrowinvest.app.data.model.Holding
 import com.sparrowinvest.app.data.model.PortfolioAnalysis
+import com.sparrowinvest.app.data.model.Relationship
 import com.sparrowinvest.app.data.model.RiskAssessment
 import com.sparrowinvest.app.data.repository.PortfolioRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -59,6 +64,20 @@ enum class InsightType {
     GOAL_PROGRESS
 }
 
+enum class PortfolioViewMode {
+    INDIVIDUAL,
+    FAMILY
+}
+
+// Status requirements for analysis
+data class AnalysisRequirements(
+    val hasProfile: Boolean = false,
+    val hasHoldings: Boolean = false
+) {
+    val canRunAnalysis: Boolean
+        get() = hasProfile && hasHoldings
+}
+
 @HiltViewModel
 class InsightsViewModel @Inject constructor(
     private val portfolioRepository: PortfolioRepository
@@ -82,9 +101,31 @@ class InsightsViewModel @Inject constructor(
     private val _lastAnalyzedDate = MutableStateFlow<String?>(null)
     val lastAnalyzedDate: StateFlow<String?> = _lastAnalyzedDate.asStateFlow()
 
+    // Portfolio view mode
+    private val _portfolioViewMode = MutableStateFlow(PortfolioViewMode.INDIVIDUAL)
+    val portfolioViewMode: StateFlow<PortfolioViewMode> = _portfolioViewMode.asStateFlow()
+
+    // Family portfolio data
+    private val _familyPortfolio = MutableStateFlow<FamilyPortfolio?>(null)
+    val familyPortfolio: StateFlow<FamilyPortfolio?> = _familyPortfolio.asStateFlow()
+
+    // Selected family member for analysis
+    private val _selectedFamilyMember = MutableStateFlow<FamilyMember?>(null)
+    val selectedFamilyMember: StateFlow<FamilyMember?> = _selectedFamilyMember.asStateFlow()
+
+    // Holdings for analysis
+    private val _holdings = MutableStateFlow<List<Holding>>(emptyList())
+    val holdings: StateFlow<List<Holding>> = _holdings.asStateFlow()
+
+    // Analysis requirements status
+    private val _analysisRequirements = MutableStateFlow(AnalysisRequirements())
+    val analysisRequirements: StateFlow<AnalysisRequirements> = _analysisRequirements.asStateFlow()
+
     init {
         // Load cached analysis if available
         loadCachedAnalysis()
+        // Load portfolio data
+        loadPortfolioData()
     }
 
     private fun loadCachedAnalysis() {
@@ -92,39 +133,224 @@ class InsightsViewModel @Inject constructor(
         // For demo, we'll show the idle state
     }
 
+    private fun loadPortfolioData() {
+        viewModelScope.launch {
+            // Load holdings (mock data)
+            _holdings.value = createMockHoldings()
+
+            // Load family portfolio (mock data)
+            _familyPortfolio.value = createMockFamilyPortfolio()
+
+            // Update requirements based on current state
+            updateAnalysisRequirements()
+        }
+    }
+
+    fun setPortfolioViewMode(mode: PortfolioViewMode) {
+        _portfolioViewMode.value = mode
+        if (mode == PortfolioViewMode.INDIVIDUAL) {
+            _selectedFamilyMember.value = null
+        }
+        // Reset analysis when switching modes
+        _uiState.value = InsightsUiState.Idle
+        _analysisResult.value = null
+        updateAnalysisRequirements()
+    }
+
+    fun selectFamilyMember(member: FamilyMember?) {
+        _selectedFamilyMember.value = member
+        // Reset analysis when selecting different member
+        _uiState.value = InsightsUiState.Idle
+        _analysisResult.value = null
+        updateAnalysisRequirements()
+    }
+
+    private fun updateAnalysisRequirements() {
+        val viewMode = _portfolioViewMode.value
+        val selectedMember = _selectedFamilyMember.value
+        val holdings = _holdings.value
+        val familyPortfolio = _familyPortfolio.value
+
+        val hasProfile = when (viewMode) {
+            PortfolioViewMode.INDIVIDUAL -> true // Individual profile always available for demo
+            PortfolioViewMode.FAMILY -> {
+                if (selectedMember == null) {
+                    // "All" selected - check if family has at least one member with profile
+                    familyPortfolio?.members?.isNotEmpty() == true
+                } else {
+                    // Specific member selected - assume profile exists
+                    true
+                }
+            }
+        }
+
+        val hasHoldings = when (viewMode) {
+            PortfolioViewMode.INDIVIDUAL -> holdings.isNotEmpty()
+            PortfolioViewMode.FAMILY -> {
+                // For family, check if selected member or family has holdings
+                familyPortfolio?.totalValue?.let { it > 0 } == true
+            }
+        }
+
+        _analysisRequirements.value = AnalysisRequirements(
+            hasProfile = hasProfile,
+            hasHoldings = hasHoldings
+        )
+    }
+
+    private fun createMockHoldings(): List<Holding> {
+        return listOf(
+            Holding(
+                id = "1",
+                fundCode = "122639",
+                fundName = "Parag Parikh Flexi Cap Fund",
+                category = "Flexi Cap",
+                assetClass = "equity",
+                units = 1250.45,
+                averageNav = 65.50,
+                currentNav = 78.45,
+                investedAmount = 81904.0,
+                currentValue = 98110.0,
+                returns = 16206.0,
+                returnsPercentage = 19.78,
+                dayChange = 245.0,
+                dayChangePercentage = 0.25
+            ),
+            Holding(
+                id = "2",
+                fundCode = "112090",
+                fundName = "HDFC Mid-Cap Opportunities",
+                category = "Mid Cap",
+                assetClass = "equity",
+                units = 850.25,
+                averageNav = 95.20,
+                currentNav = 112.35,
+                investedAmount = 80923.0,
+                currentValue = 95526.0,
+                returns = 14603.0,
+                returnsPercentage = 18.01,
+                dayChange = -120.0,
+                dayChangePercentage = -0.12
+            ),
+            Holding(
+                id = "3",
+                fundCode = "120465",
+                fundName = "ICICI Prudential Corporate Bond",
+                category = "Corporate Bond",
+                assetClass = "debt",
+                units = 2500.0,
+                averageNav = 22.50,
+                currentNav = 24.10,
+                investedAmount = 56250.0,
+                currentValue = 60250.0,
+                returns = 4000.0,
+                returnsPercentage = 7.11,
+                dayChange = 50.0,
+                dayChangePercentage = 0.08
+            ),
+            Holding(
+                id = "4",
+                fundCode = "118551",
+                fundName = "Axis Bluechip Fund",
+                category = "Large Cap",
+                assetClass = "equity",
+                units = 620.0,
+                averageNav = 48.50,
+                currentNav = 52.18,
+                investedAmount = 30070.0,
+                currentValue = 32352.0,
+                returns = 2282.0,
+                returnsPercentage = 7.59,
+                dayChange = 85.0,
+                dayChangePercentage = 0.26
+            ),
+            Holding(
+                id = "5",
+                fundCode = "135781",
+                fundName = "SBI Gold Fund",
+                category = "Gold",
+                assetClass = "gold",
+                units = 750.0,
+                averageNav = 12.80,
+                currentNav = 14.24,
+                investedAmount = 9600.0,
+                currentValue = 10680.0,
+                returns = 1080.0,
+                returnsPercentage = 11.25,
+                dayChange = 42.0,
+                dayChangePercentage = 0.39
+            )
+        )
+    }
+
+    private fun createMockFamilyPortfolio(): FamilyPortfolio {
+        return FamilyPortfolio(
+            id = "family_1",
+            name = "Family Portfolio",
+            members = listOf(
+                FamilyMember(
+                    id = "1",
+                    name = "Rahul Sharma",
+                    relationship = Relationship.SELF,
+                    portfolioValue = 245680.0,
+                    contribution = 45.0
+                ),
+                FamilyMember(
+                    id = "2",
+                    name = "Priya Sharma",
+                    relationship = Relationship.SPOUSE,
+                    portfolioValue = 185420.0,
+                    contribution = 34.0
+                ),
+                FamilyMember(
+                    id = "3",
+                    name = "Arun Sharma",
+                    relationship = Relationship.PARENT,
+                    portfolioValue = 115230.0,
+                    contribution = 21.0
+                )
+            ),
+            totalValue = 546330.0,
+            totalInvested = 498750.0,
+            totalReturns = 47580.0,
+            returnsPercentage = 9.54,
+            assetAllocation = AssetAllocation(
+                equity = 320000.0,
+                debt = 145000.0,
+                hybrid = 51330.0,
+                gold = 30000.0,
+                other = 0.0
+            )
+        )
+    }
+
     fun analyzePortfolio() {
+        // Check if analysis can run
+        if (!_analysisRequirements.value.canRunAnalysis) {
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = InsightsUiState.Analyzing
 
+            // Get holdings based on view mode
+            val holdingsToAnalyze = when (_portfolioViewMode.value) {
+                PortfolioViewMode.INDIVIDUAL -> _holdings.value
+                PortfolioViewMode.FAMILY -> {
+                    // For family mode, use the mock holdings (in real app, would fetch member-specific holdings)
+                    _holdings.value
+                }
+            }
+
             // Create request with portfolio holdings
             val request = ClassifyRequest(
-                holdings = listOf(
+                holdings = holdingsToAnalyze.map { holding ->
                     ClassifyHolding(
-                        fundName = "Parag Parikh Flexi Cap Fund",
-                        schemeCode = 122639,
-                        currentValue = 98110.0
-                    ),
-                    ClassifyHolding(
-                        fundName = "HDFC Mid-Cap Opportunities",
-                        schemeCode = 112090,
-                        currentValue = 95526.0
-                    ),
-                    ClassifyHolding(
-                        fundName = "ICICI Prudential Corporate Bond",
-                        schemeCode = 120465,
-                        currentValue = 60250.0
-                    ),
-                    ClassifyHolding(
-                        fundName = "Axis Bluechip Fund",
-                        schemeCode = 118551,
-                        currentValue = 32352.0
-                    ),
-                    ClassifyHolding(
-                        fundName = "SBI Gold Fund",
-                        schemeCode = 135781,
-                        currentValue = 10680.0
+                        fundName = holding.fundName,
+                        schemeCode = holding.fundCode.toIntOrNull(),
+                        currentValue = holding.currentValue
                     )
-                ),
+                },
                 riskProfile = "Moderate"
             )
 
