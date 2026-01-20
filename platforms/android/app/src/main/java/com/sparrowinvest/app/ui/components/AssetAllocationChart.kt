@@ -170,7 +170,7 @@ private fun DonutChart(
         var startAngle = -90f
 
         allocationList.forEach { (assetClass, value) ->
-            val sweepAngle = (value / total * 360f) * animatedProgress
+            val sweepAngle = ((value / total * 360f) * animatedProgress).toFloat()
 
             drawArc(
                 color = Color(assetClass.color),
