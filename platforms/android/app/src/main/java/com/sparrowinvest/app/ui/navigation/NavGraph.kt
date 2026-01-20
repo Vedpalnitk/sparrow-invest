@@ -26,6 +26,7 @@ import com.sparrowinvest.app.ui.explore.ExploreScreen
 import com.sparrowinvest.app.ui.explore.FundDetailScreen
 import com.sparrowinvest.app.ui.goals.GoalDetailScreen
 import com.sparrowinvest.app.ui.goals.GoalsScreen
+import com.sparrowinvest.app.ui.settings.SettingsScreen
 import com.sparrowinvest.app.ui.home.HomeScreen
 import com.sparrowinvest.app.ui.insights.InsightsScreen
 import com.sparrowinvest.app.ui.investments.InvestmentsScreen
@@ -273,6 +274,15 @@ fun NavGraph(
                             navController.navigate(Screen.FundDetail.createRoute(schemeCode))
                         },
                         onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                // Settings
+                composable(Screen.Settings.route) {
+                    SettingsScreen(
+                        onNavigateBack = {
                             navController.popBackStack()
                         }
                     )
