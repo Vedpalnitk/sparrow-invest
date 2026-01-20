@@ -12,28 +12,31 @@ struct UpcomingActionsCard: View {
     var onComplete: ((UpcomingAction) -> Void)?
     var onDismiss: ((UpcomingAction) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isExpanded: Bool = true
 
     private var activeActions: [UpcomingAction] {
         actions.filter { !$0.isCompleted && !$0.isDismissed }.sortedByPriority
+    }
+
+    private var pendingCount: Int {
+        activeActions.count
+    }
+
+    private var highPriorityCount: Int {
+        activeActions.filter { $0.priority == .high }.count
+    }
+
+    private var overdueCount: Int {
+        activeActions.filter { $0.isOverdue }.count
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.medium) {
             // Header
             HStack {
-                HStack(spacing: 8) {
-                    Text("Upcoming Actions")
-                        .font(.system(size: 16, weight: .regular))
-                        .foregroundColor(.primary)
-
-                    if actions.highPriorityCount > 0 {
-                        Text("\(actions.highPriorityCount)")
-                            .font(.system(size: 11, weight: .regular))
-                            .foregroundColor(.white)
-                            .frame(width: 20, height: 20)
-                            .background(Circle().fill(Color.red))
-                    }
-                }
+                Text("Upcoming Actions")
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(.primary)
 
                 Spacer()
 
@@ -48,27 +51,105 @@ struct UpcomingActionsCard: View {
                 }
             }
 
-            // Actions List
-            if activeActions.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 28))
-                        .foregroundColor(.green)
-                    Text("All caught up!")
-                        .font(.system(size: 14, weight: .light))
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-            } else {
-                VStack(spacing: 10) {
-                    ForEach(Array(activeActions.prefix(4))) { action in
-                        ActionRow(
-                            action: action,
-                            onComplete: { onComplete?(action) },
-                            onDismiss: { onDismiss?(action) }
-                        )
+            // Stats Grid with expand/collapse
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    // Pending
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.blue)
+                            Text("Pending")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(pendingCount)")
+                            .font(.system(size: 22, weight: .light, design: .rounded))
+                            .foregroundColor(.primary)
                     }
+                    .frame(maxWidth: .infinity)
+
+                    Divider()
+                        .frame(height: 44)
+
+                    // High Priority
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.orange)
+                            Text("Urgent")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(highPriorityCount)")
+                            .font(.system(size: 22, weight: .light, design: .rounded))
+                            .foregroundColor(highPriorityCount > 0 ? .orange : .primary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Divider()
+                        .frame(height: 44)
+
+                    // Overdue
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.red)
+                            Text("Overdue")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(overdueCount)")
+                            .font(.system(size: 22, weight: .light, design: .rounded))
+                            .foregroundColor(overdueCount > 0 ? .red : .primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+
+                // Expand/Collapse toggle - minimal chevron
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        isExpanded.toggle()
+                    }
+                } label: {
+                    Image(systemName: "chevron.compact.down")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(Color(uiColor: .tertiaryLabel))
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 10)
+                        .contentShape(Rectangle())
+                }
+            }
+
+            // Actions List (collapsible)
+            if isExpanded {
+                if activeActions.isEmpty {
+                    VStack(spacing: 8) {
+                        Image(systemName: "checkmark.circle")
+                            .font(.system(size: 28))
+                            .foregroundColor(.green)
+                        Text("All caught up!")
+                            .font(.system(size: 14, weight: .light))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                } else {
+                    VStack(spacing: 10) {
+                        ForEach(Array(activeActions.prefix(4))) { action in
+                            ActionRow(
+                                action: action,
+                                onComplete: { onComplete?(action) },
+                                onDismiss: { onDismiss?(action) }
+                            )
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }

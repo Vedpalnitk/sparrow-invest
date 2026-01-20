@@ -11,9 +11,24 @@ struct GoalProgressTile: View {
     let goals: [Goal]
     var onTapGoal: ((Goal) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isExpanded: Bool = true
 
     private var displayGoals: [Goal] {
-        Array(goals.sorted { $0.progress > $1.progress }.prefix(3))
+        Array(goals.sorted { $0.progress > $1.progress }.prefix(2))
+    }
+
+    private var totalGoals: Int {
+        goals.count
+    }
+
+    private var averageProgress: Int {
+        guard !goals.isEmpty else { return 0 }
+        let totalProgress = goals.reduce(0.0) { $0 + $1.progress }
+        return Int((totalProgress / Double(goals.count)) * 100)
+    }
+
+    private var totalTargetAmount: Double {
+        goals.reduce(0.0) { $0 + $1.targetAmount }
     }
 
     var body: some View {
@@ -37,45 +52,125 @@ struct GoalProgressTile: View {
                 }
             }
 
-            // Goals List
-            if goals.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "target")
-                        .font(.system(size: 32))
-                        .foregroundColor(Color(uiColor: .tertiaryLabel))
-                    Text("No goals set yet")
-                        .font(.system(size: 14, weight: .light))
-                        .foregroundColor(.secondary)
+            // Stats Grid with expand/collapse
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    // Total Goals
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "target")
+                                .font(.system(size: 14))
+                                .foregroundColor(.blue)
+                            Text("Goals")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(totalGoals)")
+                            .font(.system(size: 22, weight: .light, design: .rounded))
+                            .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Divider()
+                        .frame(height: 44)
+
+                    // Average Progress
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chart.bar.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.green)
+                            Text("Progress")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(averageProgress)%")
+                            .font(.system(size: 22, weight: .light, design: .rounded))
+                            .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    Divider()
+                        .frame(height: 44)
+
+                    // Total Target
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "indianrupeesign.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.orange)
+                            Text("Target")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text(totalTargetAmount.compactCurrencyFormatted)
+                            .font(.system(size: 16, weight: .light, design: .rounded))
+                            .foregroundColor(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+
+                // Expand/Collapse toggle - minimal chevron
+                if !goals.isEmpty {
                     Button {
-                        // Create goal action
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            isExpanded.toggle()
+                        }
                     } label: {
-                        Text("Create Your First Goal")
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(
-                                Capsule()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [.blue, .cyan],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                            )
+                        Image(systemName: "chevron.compact.down")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(Color(uiColor: .tertiaryLabel))
+                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 10)
+                            .contentShape(Rectangle())
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-            } else {
-                VStack(spacing: AppTheme.Spacing.compact) {
-                    ForEach(displayGoals) { goal in
-                        GoalProgressRow(goal: goal)
-                            .onTapGesture {
-                                onTapGoal?(goal)
-                            }
+            }
+
+            // Goals List (collapsible)
+            if isExpanded {
+                if goals.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "target")
+                            .font(.system(size: 32))
+                            .foregroundColor(Color(uiColor: .tertiaryLabel))
+                        Text("No goals set yet")
+                            .font(.system(size: 14, weight: .light))
+                            .foregroundColor(.secondary)
+                        Button {
+                            // Create goal action
+                        } label: {
+                            Text("Create Your First Goal")
+                                .font(.system(size: 13, weight: .regular))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(
+                                    Capsule()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [.blue, .cyan],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
+                                )
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                } else {
+                    VStack(spacing: AppTheme.Spacing.compact) {
+                        ForEach(displayGoals) { goal in
+                            GoalProgressRow(goal: goal)
+                                .onTapGesture {
+                                    onTapGoal?(goal)
+                                }
+                        }
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }

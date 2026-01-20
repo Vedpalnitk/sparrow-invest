@@ -10,6 +10,7 @@ import SwiftUI
 struct SIPDashboardCard: View {
     let activeSIPs: [SIP]
     @Environment(\.colorScheme) private var colorScheme
+    @State private var isExpanded: Bool = true
 
     private var totalMonthlyAmount: Double {
         activeSIPs.filter { $0.isActive }.reduce(0) { $0 + $1.amount }
@@ -58,70 +59,93 @@ struct SIPDashboardCard: View {
                 }
             }
 
-            // Stats Grid
-            HStack(spacing: 0) {
-                // Active SIPs
-                VStack(spacing: 4) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "repeat.circle.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.blue)
-                        Text("Active")
-                            .font(.system(size: 12, weight: .light))
-                            .foregroundColor(.secondary)
+            // Stats Grid with expand/collapse
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    // Active SIPs
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "repeat.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.blue)
+                            Text("Active")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text("\(activeSIPs.filter { $0.isActive }.count)")
+                            .font(.system(size: 22, weight: .light, design: .rounded))
+                            .foregroundColor(.primary)
                     }
-                    Text("\(activeSIPs.filter { $0.isActive }.count)")
-                        .font(.system(size: 22, weight: .light, design: .rounded))
-                        .foregroundColor(.primary)
-                }
-                .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity)
 
-                Divider()
-                    .frame(height: 44)
+                    Divider()
+                        .frame(height: 44)
 
-                // Monthly Amount
-                VStack(spacing: 4) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "indianrupeesign.circle.fill")
-                            .font(.system(size: 14))
-                            .foregroundColor(.green)
-                        Text("Monthly")
-                            .font(.system(size: 12, weight: .light))
-                            .foregroundColor(.secondary)
+                    // Monthly Amount
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "indianrupeesign.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(.green)
+                            Text("Monthly")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text(totalMonthlyAmount.currencyFormatted)
+                            .font(.system(size: 16, weight: .light, design: .rounded))
+                            .foregroundColor(.primary)
                     }
-                    Text(totalMonthlyAmount.currencyFormatted)
-                        .font(.system(size: 16, weight: .light, design: .rounded))
-                        .foregroundColor(.primary)
-                }
-                .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity)
 
-                Divider()
-                    .frame(height: 44)
+                    Divider()
+                        .frame(height: 44)
 
-                // Next SIP
-                VStack(spacing: 4) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "calendar.badge.clock")
-                            .font(.system(size: 14))
-                            .foregroundColor(.orange)
-                        Text("Next")
-                            .font(.system(size: 12, weight: .light))
-                            .foregroundColor(.secondary)
+                    // Next SIP
+                    VStack(spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.system(size: 14))
+                                .foregroundColor(.orange)
+                            Text("Next")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundColor(.secondary)
+                        }
+                        Text(nextSIPFormatted)
+                            .font(.system(size: 16, weight: .light, design: .rounded))
+                            .foregroundColor(.primary)
                     }
-                    Text(nextSIPFormatted)
-                        .font(.system(size: 16, weight: .light, design: .rounded))
-                        .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
+
+                // Expand/Collapse toggle - minimal chevron
+                let upcomingSIPs = Array(getUpcomingSIPs().prefix(2))
+                if !upcomingSIPs.isEmpty {
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            isExpanded.toggle()
+                        }
+                    } label: {
+                        Image(systemName: "chevron.compact.down")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(Color(uiColor: .tertiaryLabel))
+                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 10)
+                            .contentShape(Rectangle())
+                    }
+                }
             }
 
-            // Upcoming SIPs List
-            let upcomingSIPs = Array(getUpcomingSIPs().prefix(2))
-            if !upcomingSIPs.isEmpty {
-                VStack(spacing: AppTheme.Spacing.small) {
-                    ForEach(upcomingSIPs) { sip in
-                        UpcomingSIPRow(sip: sip)
+            // Upcoming SIPs List (collapsible)
+            if isExpanded {
+                let upcomingSIPs = Array(getUpcomingSIPs().prefix(2))
+                if !upcomingSIPs.isEmpty {
+                    VStack(spacing: AppTheme.Spacing.small) {
+                        ForEach(upcomingSIPs) { sip in
+                            UpcomingSIPRow(sip: sip)
+                        }
                     }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }
