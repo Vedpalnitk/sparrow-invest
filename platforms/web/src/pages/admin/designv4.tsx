@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import PageHeader from '@/components/layout/PageHeader';
@@ -175,75 +174,16 @@ const FinancialGlassCard = ({ title, balance, trend, colors }: { title: string; 
   );
 };
 
-// Tab Navigation Component
-const DesignTabs = ({ active, colors }: { active: 'v1' | 'v2' | 'v3' | 'v4' | 'ios' | 'android'; colors: typeof V4_COLORS_LIGHT }) => {
-  const isDark = useDarkMode();
+// Design Version Badge Component
+const DesignVersionBadge = ({ colors }: { colors: typeof V4_COLORS_LIGHT }) => {
   return (
-    <div className="flex flex-wrap gap-2 mb-8">
-      <Link href="/admin/design">
-        <span className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all ${
-          active === 'v1'
-            ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-            : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`}>
-          v1 — Blue
-        </span>
-      </Link>
-      <Link href="/admin/designv2">
-        <span className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all ${
-          active === 'v2'
-            ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30'
-            : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`}>
-          v2 — Purple
-        </span>
-      </Link>
-      <Link href="/admin/designv3">
-        <span className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all ${
-          active === 'v3'
-            ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
-            : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`}>
-          v3 — Cyan
-        </span>
-      </Link>
-      <Link href="/admin/designv4">
-        <span className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all ${
-          active === 'v4'
-            ? 'text-white shadow-lg'
-            : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`} style={active === 'v4' ? {
-          background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
-          boxShadow: `0 4px 14px ${colors.glassShadow}`
-        } : {}}>
-          v4 — Refined Blue
-        </span>
-      </Link>
-      <div className="w-px h-8 bg-gray-300 dark:bg-slate-600 mx-1" />
-      <Link href="/admin/design-ios">
-        <span className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all ${
-          active === 'ios'
-            ? 'text-white shadow-lg'
-            : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`} style={active === 'ios' ? {
-          background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)',
-          boxShadow: '0 4px 14px rgba(0, 122, 255, 0.3)'
-        } : {}}>
-          iOS
-        </span>
-      </Link>
-      <Link href="/admin/design-android">
-        <span className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all ${
-          active === 'android'
-            ? 'text-white shadow-lg'
-            : isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-        }`} style={active === 'android' ? {
-          background: 'linear-gradient(135deg, #34A853 0%, #4285F4 100%)',
-          boxShadow: '0 4px 14px rgba(52, 168, 83, 0.3)'
-        } : {}}>
-          Android
-        </span>
-      </Link>
+    <div className="flex gap-2 mb-8">
+      <span className="px-4 py-2 rounded-full text-sm font-semibold text-white shadow-lg" style={{
+        background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
+        boxShadow: `0 4px 14px ${colors.glassShadow}`
+      }}>
+        v4 — Refined Blue
+      </span>
     </div>
   );
 };
@@ -280,7 +220,7 @@ const DesignPageV4 = () => {
           badge="v4.0"
         />
 
-        <DesignTabs active="v4" colors={colors} />
+        <DesignVersionBadge colors={colors} />
 
         {/* Typography Scale */}
         <section className="mb-12">

@@ -51,7 +51,7 @@ const useV4Colors = () => {
 };
 
 interface NavbarProps {
-  mode?: 'admin' | 'user';
+  mode?: 'admin' | 'user' | 'advisor';
 }
 
 const Navbar = ({ mode = 'user' }: NavbarProps) => {
@@ -62,7 +62,7 @@ const Navbar = ({ mode = 'user' }: NavbarProps) => {
 
   const scopedLinks = mode === 'admin'
     ? [
-        { label: 'Overview', href: '/dashboard?mode=admin' },
+        { label: 'Overview', href: '/admin/dashboard' },
         { label: 'Pipeline', href: '/admin/pipeline' },
         { label: 'Personas', href: '/admin/personas' },
         { label: 'Users', href: '/admin/users' },
@@ -72,6 +72,16 @@ const Navbar = ({ mode = 'user' }: NavbarProps) => {
         { label: 'ML Lab', href: '/admin/lab' },
         { label: 'Recommendations', href: '/admin/recommendations' },
         { label: 'Design', href: '/admin/designv4' },
+      ]
+    : mode === 'advisor'
+    ? [
+        { label: 'Dashboard', href: '/advisor/dashboard' },
+        { label: 'Clients', href: '/advisor/clients' },
+        { label: 'Prospects', href: '/advisor/prospects' },
+        { label: 'Transactions', href: '/advisor/transactions' },
+        { label: 'Analysis', href: '/advisor/analysis' },
+        { label: 'Reports', href: '/advisor/reports' },
+        { label: 'Funds', href: '/advisor/funds' },
       ]
     : navLinks;
 
@@ -112,7 +122,7 @@ const Navbar = ({ mode = 'user' }: NavbarProps) => {
               Sparrow Invest
             </p>
             <p className="text-xs" style={{ color: colors.textSecondary }}>
-              {mode === 'admin' ? 'Admin Studio' : 'Smart Portfolio Manager'}
+              {mode === 'admin' ? 'Admin Studio' : mode === 'advisor' ? 'Financial Advisor' : 'Smart Portfolio Manager'}
             </p>
           </div>
         </Link>
