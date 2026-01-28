@@ -24,6 +24,16 @@ from .recommendation import (
     AssetClassBreakdown,
 )
 from .risk import RiskRequest, RiskResponse, RiskFactor
+from .portfolio_analysis import (
+    PortfolioHoldingInput,
+    AllocationTarget as PortfolioAllocationTarget,
+    PortfolioAnalysisRequest,
+    PortfolioAnalysisResponse,
+    EnrichedHolding,
+    RebalancingAction,
+    CurrentMetrics,
+    AnalysisSummary,
+)
 
 __all__ = [
     "ProfileInput",
@@ -48,4 +58,13 @@ __all__ = [
     "RiskRequest",
     "RiskResponse",
     "RiskFactor",
+    # Portfolio Analysis
+    "PortfolioHoldingInput",
+    "PortfolioAllocationTarget",
+    "PortfolioAnalysisRequest",
+    "PortfolioAnalysisResponse",
+    "EnrichedHolding",
+    "RebalancingAction",
+    "CurrentMetrics",
+    "AnalysisSummary",
 ]

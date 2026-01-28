@@ -14,6 +14,8 @@ import {
   OptimizeResponseDto,
   RiskRequestDto,
   RiskResponseDto,
+  PortfolioAnalysisRequestDto,
+  PortfolioAnalysisResponseDto,
 } from './dto';
 
 interface MLServiceClient {
@@ -330,20 +332,22 @@ export class MlGatewayService implements OnModuleInit {
   }
 
   /**
-   * Get fund universe from ML service.
+   * Get fund universe from database (SchemePlan table).
+   * This is now served directly from the backend's database instead of ML service.
    */
   async getFunds(assetClass?: string, category?: string): Promise<any> {
     try {
+      // Call the backend's own ML funds endpoint
       const params = new URLSearchParams();
       if (assetClass) params.append('asset_class', assetClass);
       if (category) params.append('category', category);
 
       const queryString = params.toString();
-      const url = `${this.mlServiceHttpUrl}/api/v1/funds${queryString ? `?${queryString}` : ''}`;
+      const url = `http://localhost:3501/api/v1/funds/live/ml/funds${queryString ? `?${queryString}` : ''}`;
 
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`ML service returned ${response.status}`);
+        throw new Error(`Funds endpoint returned ${response.status}`);
       }
 
       return response.json();
@@ -354,15 +358,15 @@ export class MlGatewayService implements OnModuleInit {
   }
 
   /**
-   * Get fund universe statistics from ML service.
+   * Get fund universe statistics from database.
    */
   async getFundsStats(): Promise<any> {
     try {
-      const url = `${this.mlServiceHttpUrl}/api/v1/funds/stats`;
+      const url = `http://localhost:3501/api/v1/funds/live/ml/funds/stats`;
 
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`ML service returned ${response.status}`);
+        throw new Error(`Funds stats endpoint returned ${response.status}`);
       }
 
       return response.json();
@@ -370,6 +374,145 @@ export class MlGatewayService implements OnModuleInit {
       this.logger.error(`GetFundsStats failed: ${error.message}`);
       throw error;
     }
+  }
+
+  /**
+   * Analyze portfolio against target allocation and generate rebalancing roadmap.
+   * Uses HTTP to call the ML service endpoint.
+   */
+  async analyzePortfolio(
+    request: PortfolioAnalysisRequestDto,
+  ): Promise<PortfolioAnalysisResponseDto> {
+    try {
+      const httpRequest = {
+        request_id: request.request_id || '',
+        holdings: request.holdings.map((h) => ({
+          scheme_code: h.scheme_code,
+          scheme_name: h.scheme_name,
+          amount: h.amount,
+          units: h.units,
+          purchase_date: h.purchase_date,
+          purchase_price: h.purchase_price,
+          purchase_amount: h.purchase_amount,
+        })),
+        target_allocation: {
+          equity: request.target_allocation.equity || 0,
+          debt: request.target_allocation.debt || 0,
+          hybrid: request.target_allocation.hybrid || 0,
+          gold: request.target_allocation.gold || 0,
+          international: request.target_allocation.international || 0,
+          liquid: request.target_allocation.liquid || 0,
+        },
+        profile: request.profile,
+      };
+
+      const response = await fetch(
+        `${this.mlServiceHttpUrl}/api/v1/analyze/portfolio`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(httpRequest),
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response
+          .json()
+          .catch(() => ({ detail: 'Unknown error' }));
+        throw new Error(error.detail || `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      return this.fromHttpPortfolioAnalysisResponse(data);
+    } catch (error) {
+      this.logger.error(`AnalyzePortfolio failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  private fromHttpPortfolioAnalysisResponse(
+    response: any,
+  ): PortfolioAnalysisResponseDto {
+    return {
+      request_id: response.request_id,
+      current_allocation: {
+        equity: response.current_allocation?.equity || 0,
+        debt: response.current_allocation?.debt || 0,
+        hybrid: response.current_allocation?.hybrid || 0,
+        gold: response.current_allocation?.gold || 0,
+        international: response.current_allocation?.international || 0,
+        liquid: response.current_allocation?.liquid || 0,
+      },
+      target_allocation: {
+        equity: response.target_allocation?.equity || 0,
+        debt: response.target_allocation?.debt || 0,
+        hybrid: response.target_allocation?.hybrid || 0,
+        gold: response.target_allocation?.gold || 0,
+        international: response.target_allocation?.international || 0,
+        liquid: response.target_allocation?.liquid || 0,
+      },
+      allocation_gaps: response.allocation_gaps || {},
+      current_metrics: {
+        total_value: response.current_metrics?.total_value || 0,
+        total_holdings: response.current_metrics?.total_holdings || 0,
+        weighted_return_1y: response.current_metrics?.weighted_return_1y,
+        weighted_return_3y: response.current_metrics?.weighted_return_3y,
+        weighted_volatility: response.current_metrics?.weighted_volatility,
+        weighted_sharpe: response.current_metrics?.weighted_sharpe,
+        category_breakdown: response.current_metrics?.category_breakdown || {},
+      },
+      holdings: (response.holdings || []).map((h: any) => ({
+        scheme_code: h.scheme_code,
+        scheme_name: h.scheme_name,
+        category: h.category,
+        asset_class: h.asset_class,
+        current_value: h.current_value,
+        weight: h.weight,
+        units: h.units,
+        nav: h.nav,
+        return_1y: h.return_1y,
+        return_3y: h.return_3y,
+        volatility: h.volatility,
+        sharpe_ratio: h.sharpe_ratio,
+        holding_period_days: h.holding_period_days,
+        tax_status: h.tax_status,
+        purchase_amount: h.purchase_amount,
+        unrealized_gain: h.unrealized_gain,
+      })),
+      rebalancing_actions: (response.rebalancing_actions || []).map(
+        (a: any) => ({
+          action: a.action,
+          priority: a.priority,
+          scheme_code: a.scheme_code,
+          scheme_name: a.scheme_name,
+          category: a.category,
+          asset_class: a.asset_class,
+          current_value: a.current_value,
+          current_weight: a.current_weight,
+          current_units: a.current_units,
+          target_value: a.target_value,
+          target_weight: a.target_weight,
+          transaction_amount: a.transaction_amount,
+          transaction_units: a.transaction_units,
+          tax_status: a.tax_status,
+          holding_period_days: a.holding_period_days,
+          estimated_gain: a.estimated_gain,
+          tax_note: a.tax_note,
+          reason: a.reason,
+        }),
+      ),
+      summary: {
+        is_aligned: response.summary?.is_aligned || false,
+        alignment_score: response.summary?.alignment_score || 0,
+        primary_issues: response.summary?.primary_issues || [],
+        total_sell_amount: response.summary?.total_sell_amount || 0,
+        total_buy_amount: response.summary?.total_buy_amount || 0,
+        net_transaction: response.summary?.net_transaction || 0,
+        tax_impact_summary: response.summary?.tax_impact_summary || '',
+      },
+      model_version: response.model_version,
+      latency_ms: response.latency_ms,
+    };
   }
 
   // ============= Request/Response Transformers =============

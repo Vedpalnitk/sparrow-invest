@@ -14,6 +14,8 @@ import {
   OptimizeResponseDto,
   RiskRequestDto,
   RiskResponseDto,
+  PortfolioAnalysisRequestDto,
+  PortfolioAnalysisResponseDto,
 } from './dto';
 
 @ApiTags('ML Gateway')
@@ -82,6 +84,21 @@ export class MlGatewayController {
   @ApiOperation({ summary: 'Assess portfolio risk' })
   async assessRisk(@Body() request: RiskRequestDto): Promise<RiskResponseDto> {
     return this.mlGatewayService.assessRisk(request);
+  }
+
+  @Public()
+  @Post('analyze/portfolio')
+  @ApiOperation({
+    summary: 'Analyze portfolio against target allocation',
+    description:
+      'Accepts current portfolio holdings and target allocation from persona classification. ' +
+      'Returns gap analysis, rebalancing actions (SELL/BUY/HOLD/ADD_NEW), and tax implications (LTCG/STCG). ' +
+      'Holdings can be specified as amounts (INR) or units. Purchase dates enable tax status calculation.',
+  })
+  async analyzePortfolio(
+    @Body() request: PortfolioAnalysisRequestDto,
+  ): Promise<PortfolioAnalysisResponseDto> {
+    return this.mlGatewayService.analyzePortfolio(request);
   }
 
   @Public()

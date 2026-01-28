@@ -21,12 +21,15 @@ from app.schemas import (
     AllocationTarget,
     RiskRequest,
     RiskResponse,
+    PortfolioAnalysisRequest,
+    PortfolioAnalysisResponse,
 )
 from app.services import (
     PersonaService,
     PortfolioService,
     RecommendationService,
     RiskService,
+    portfolio_analysis_service,
 )
 
 router = APIRouter()
@@ -216,6 +219,56 @@ async def recommend_funds_blended(request: BlendedRecommendationRequest) -> Blen
             alignment_message=alignment_message,
             model_version=f"{recommendation_service.get_model_version()}-blended",
             latency_ms=latency_ms,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/analyze/portfolio", response_model=PortfolioAnalysisResponse, tags=["Portfolio Analysis"])
+async def analyze_portfolio(request: PortfolioAnalysisRequest) -> PortfolioAnalysisResponse:
+    """
+    Analyze current portfolio against target allocation.
+
+    This endpoint accepts:
+    - Current portfolio holdings (with amounts/units and optional purchase dates)
+    - Target allocation from persona classification
+
+    Returns:
+    - Current vs target allocation breakdown
+    - Gap analysis by asset class
+    - Rebalancing actions (SELL/BUY/HOLD/ADD_NEW)
+    - Tax implications (LTCG/STCG flags)
+    - Transaction amounts and priorities
+
+    Tax Awareness:
+    - Holdings >365 days are flagged as LTCG (10% tax above 1L)
+    - Holdings <=365 days are flagged as STCG (15% tax)
+    - Tax-loss harvesting opportunities are identified
+    - Recent STCG purchases may be flagged as HOLD
+
+    Rebalancing Priority:
+    - HIGH: >15% off target or single fund >40% of portfolio
+    - MEDIUM: 5-15% off target or category >35%
+    - LOW: <5% adjustments
+    """
+    try:
+        result = await portfolio_analysis_service.analyze(
+            holdings=request.holdings,
+            target_allocation=request.target_allocation,
+            profile=request.profile,
+        )
+
+        return PortfolioAnalysisResponse(
+            request_id=request.request_id,
+            current_allocation=result.current_allocation,
+            target_allocation=result.target_allocation,
+            allocation_gaps=result.allocation_gaps,
+            current_metrics=result.current_metrics,
+            holdings=result.holdings,
+            rebalancing_actions=result.rebalancing_actions,
+            summary=result.summary,
+            model_version=result.model_version,
+            latency_ms=result.latency_ms,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
