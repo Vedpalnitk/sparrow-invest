@@ -10,45 +10,67 @@ import SwiftUI
 
 // MARK: - API Response Models
 
+/// Advisor list response from /api/v1/advisors
+struct AdvisorsListResponse: Decodable {
+    let advisors: [AdvisorAPIResponse]
+    let total: Int
+    let page: Int
+    let totalPages: Int
+}
+
 /// Advisor response from /api/v1/advisors
 struct AdvisorAPIResponse: Decodable {
     let id: String
-    let name: String
-    let photo: String?
-    let region: String
-    let phone: String?
-    let email: String
+    let displayName: String
+    let bio: String?
+    let email: String?
     let specializations: [String]
     let experienceYears: Int
+    let sebiRegNo: String?
+    let arnNo: String?
     let rating: Double
-    let reviewCount: Int
+    let totalReviews: Int
+    let totalClients: Int?
+    let aumManaged: Double?
+    let isAcceptingNew: Bool
+    let minInvestment: Double?
+    let feeStructure: String?
+    let avatarUrl: String?
+    let city: String?
     let languages: [String]
-    let isAvailable: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case id, name, photo, region, phone, email, specializations
-        case experienceYears = "experience_years"
-        case rating
-        case reviewCount = "review_count"
-        case languages
-        case isAvailable = "is_available"
-    }
+    let isVerified: Bool
 
     func toAdvisor() -> Advisor {
-        let specs = specializations.compactMap { AdvisorSpecialization(rawValue: $0) }
+        // Map API specialization strings to enum values
+        let specMap: [String: AdvisorSpecialization] = [
+            "Retirement Planning": .retirement,
+            "Retirement": .retirement,
+            "Tax Planning": .taxPlanning,
+            "ELSS": .taxPlanning,
+            "Goal-based Investing": .goalBased,
+            "Goal Based": .goalBased,
+            "SIP Planning": .sipPlanning,
+            "Equity Investing": .sipPlanning,
+            "Portfolio Review": .portfolioReview,
+            "NRI Services": .nriServices,
+            "HNI Services": .hni,
+            "HNI": .hni
+        ]
+        let specs = specializations.compactMap { specMap[$0] }
+
         return Advisor(
             id: id,
-            name: name,
-            photo: photo,
-            region: region,
-            phone: phone ?? "",
-            email: email,
-            specializations: specs,
+            name: displayName,
+            photo: avatarUrl,
+            region: city ?? "India",
+            phone: "",
+            email: email ?? "",
+            specializations: specs.isEmpty ? [.portfolioReview] : specs,
             experienceYears: experienceYears,
             rating: rating,
-            reviewCount: reviewCount,
+            reviewCount: totalReviews,
             languages: languages,
-            isAvailable: isAvailable
+            isAvailable: isAcceptingNew
         )
     }
 }
@@ -219,8 +241,8 @@ class AdvisorStore: ObservableObject {
 
         do {
             // Fetch advisors from API
-            let response: [AdvisorAPIResponse] = try await apiService.get("/advisors")
-            self.advisors = response.map { $0.toAdvisor() }
+            let response: AdvisorsListResponse = try await apiService.get("/advisors")
+            self.advisors = response.advisors.map { $0.toAdvisor() }
 
             // Also fetch callback requests
             await fetchCallbackRequests()
@@ -240,8 +262,8 @@ class AdvisorStore: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let response: [AdvisorAPIResponse] = try await apiService.get("/advisors?region=\(region)")
-            self.advisors = response.map { $0.toAdvisor() }
+            let response: AdvisorsListResponse = try await apiService.get("/advisors?city=\(region)")
+            self.advisors = response.advisors.map { $0.toAdvisor() }
         } catch {
             self.error = error
         }

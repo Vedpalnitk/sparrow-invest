@@ -2,11 +2,227 @@
 //  DashboardStore.swift
 //  SparrowInvest
 //
-//  Central dashboard state management
+//  Central dashboard state management with API integration
 //
 
 import Foundation
 import SwiftUI
+
+// MARK: - API Response Models
+
+/// Market index response from /api/v1/market/indices
+struct MarketIndexResponse: Decodable {
+    let id: String
+    let symbol: String
+    let name: String
+    let currentValue: Double
+    let change: Double
+    let changePercent: Double
+    let previousClose: Double
+    let dayHigh: Double?
+    let dayLow: Double?
+    let lastUpdated: String
+
+    func toMarketIndex() -> MarketIndex {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let date = isoFormatter.date(from: lastUpdated) ?? Date()
+
+        return MarketIndex(
+            id: id,
+            name: name,
+            symbol: symbol,
+            value: currentValue,
+            previousClose: previousClose,
+            change: change,
+            changePercentage: changePercent,
+            lastUpdated: date
+        )
+    }
+}
+
+/// Market status response from /api/v1/market/status
+struct MarketStatusResponse: Decodable {
+    let isOpen: Bool
+    let status: String
+    let currentTime: String
+    let nextOpenTime: String?
+    let nextCloseTime: String?
+
+    func toMarketStatus() -> MarketStatus {
+        switch status.lowercased() {
+        case "open": return .open
+        case "pre_open", "preopen": return .preOpen
+        case "post_close", "postclose": return .postClose
+        default: return .closed
+        }
+    }
+}
+
+/// Portfolio history response from /api/v1/auth/me/portfolio/history
+struct PortfolioHistoryResponse: Decodable {
+    let period: Int
+    let data: [PortfolioHistoryDataPoint]
+}
+
+struct PortfolioHistoryDataPoint: Decodable {
+    let date: String
+    let totalValue: Double
+    let totalInvested: Double
+    let dayChange: Double?
+    let dayChangePct: Double?
+
+    func toHistoryPoint() -> PortfolioHistoryPoint {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let parsedDate = dateFormatter.date(from: date) ?? Date()
+
+        return PortfolioHistoryPoint(
+            date: parsedDate,
+            value: totalValue,
+            invested: totalInvested
+        )
+    }
+}
+
+/// Dividend response from /api/v1/auth/me/dividends
+struct DividendAPIResponse: Decodable {
+    let id: String
+    let fundName: String
+    let fundSchemeCode: String
+    let amount: Double
+    let dividendType: String
+    let recordDate: String
+    let paymentDate: String
+    let nav: Double?
+    let units: Double?
+
+    func toDividendRecord() -> DividendRecord {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+
+        return DividendRecord(
+            fundCode: fundSchemeCode,
+            fundName: fundName,
+            amount: amount,
+            unitsHeld: units ?? 0,
+            dividendPerUnit: units != nil && units! > 0 ? amount / units! : 0,
+            recordDate: dateFormatter.date(from: recordDate) ?? Date(),
+            paymentDate: dateFormatter.date(from: paymentDate) ?? Date(),
+            status: .paid
+        )
+    }
+}
+
+/// Tax summary response from /api/v1/me/taxes/summary
+struct TaxSummaryAPIResponse: Decodable {
+    let id: String
+    let financialYear: String
+    let ltcgRealized: Double
+    let stcgRealized: Double
+    let ltcgUnrealized: Double
+    let stcgUnrealized: Double
+    let elssInvested: Double
+    let dividendReceived: Double
+    let taxHarvestingDone: Double
+    let taxEstimate: TaxEstimateResponse
+    let capitalGains: [CapitalGainResponse]?
+
+    func toTaxSummary() -> TaxSummary {
+        return TaxSummary.calculate(
+            ltcg: ltcgRealized,
+            stcg: stcgRealized,
+            elss: elssInvested
+        )
+    }
+}
+
+struct TaxEstimateResponse: Decodable {
+    let ltcgTax: Double
+    let stcgTax: Double
+    let totalTax: Double
+    let ltcgExemption: Double
+    let remainingExemption: Double
+}
+
+struct CapitalGainResponse: Decodable {
+    let id: String
+    let fundName: String
+    let fundSchemeCode: String
+    let gainType: String
+    let purchaseDate: String
+    let saleDate: String
+    let purchaseValue: Double
+    let saleValue: Double
+    let gain: Double
+    let taxableGain: Double
+}
+
+/// Actions response from /api/v1/me/actions
+struct ActionsAPIResponse: Decodable {
+    let actions: [ActionAPIResponse]
+    let total: Int
+    let unreadCount: Int
+    let highPriorityCount: Int
+}
+
+struct ActionAPIResponse: Decodable {
+    let id: String
+    let type: String
+    let priority: String
+    let title: String
+    let description: String?
+    let actionUrl: String?
+    let referenceId: String?
+    let dueDate: String?
+    let isRead: Bool
+    let isDismissed: Bool
+    let isCompleted: Bool
+    let createdAt: String
+    let expiresAt: String?
+
+    func toUpcomingAction() -> UpcomingAction {
+        let actionType: ActionType = {
+            switch type.uppercased() {
+            case "SIP_DUE": return .sipDue
+            case "SIP_FAILED": return .sipDue
+            case "REBALANCE_RECOMMENDED": return .rebalance
+            case "GOAL_REVIEW": return .goalDeadline
+            case "TAX_HARVESTING": return .taxHarvest
+            case "KYC_EXPIRY": return .kycExpiry
+            case "DIVIDEND_RECEIVED": return .sipDue
+            default: return .sipDue
+            }
+        }()
+
+        let actionPriority: ActionPriority = {
+            switch priority.uppercased() {
+            case "URGENT", "HIGH": return .high
+            case "MEDIUM": return .medium
+            case "LOW": return .low
+            default: return .medium
+            }
+        }()
+
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let parsedDueDate = dueDate.flatMap { isoFormatter.date(from: $0) } ?? Date()
+
+        var action = UpcomingAction(
+            type: actionType,
+            title: title,
+            description: description ?? "",
+            dueDate: parsedDueDate,
+            priority: actionPriority,
+            amount: nil,
+            fundCode: nil,
+            goalId: referenceId
+        )
+        action.isCompleted = isCompleted
+        action.isDismissed = isDismissed
+        return action
+    }
+}
 
 // MARK: - Portfolio View Mode
 
@@ -27,6 +243,9 @@ class DashboardStore: ObservableObject {
     @Published var upcomingActions: [UpcomingAction] = []
     @Published var selectedHistoryPeriod: HistoryPeriod = .oneYear
     @Published var isLoading: Bool = false
+    @Published var error: Error?
+
+    private let apiService = APIService.shared
 
     init() {
         loadMockData()
@@ -35,24 +254,132 @@ class DashboardStore: ObservableObject {
     // MARK: - Data Loading
 
     func loadMockData() {
-        loadMarketData()
-        loadPortfolioHistory()
+        loadMarketDataMock()
+        loadPortfolioHistoryMock()
         loadTaxSummary()
-        loadDividendSummary()
+        loadDividendSummaryMock()
         loadUpcomingActions()
     }
 
     func refreshAllData() async {
         isLoading = true
-        // Simulate network delay
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
-        loadMockData()
-        isLoading = false
+        defer { isLoading = false }
+
+        // Fetch from API in parallel
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.fetchMarketIndices() }
+            group.addTask { await self.fetchPortfolioHistory() }
+            group.addTask { await self.fetchDividends() }
+            group.addTask { await self.fetchTaxSummary() }
+            group.addTask { await self.fetchActions() }
+        }
     }
 
-    // MARK: - Market Data
+    // MARK: - API Data Fetching
 
-    private func loadMarketData() {
+    func fetchMarketIndices() async {
+        do {
+            let indices: [MarketIndexResponse] = try await apiService.get("/market/indices", authenticated: false)
+            let marketIndices = indices.map { $0.toMarketIndex() }
+
+            // Try to get market status
+            var status: MarketStatus = .closed
+            do {
+                let statusResponse: MarketStatusResponse = try await apiService.get("/market/status", authenticated: false)
+                status = statusResponse.toMarketStatus()
+            } catch {
+                // Calculate status locally based on time
+                status = calculateMarketStatus()
+            }
+
+            marketOverview = MarketOverview(
+                indices: marketIndices,
+                status: status,
+                lastUpdated: Date()
+            )
+            self.error = nil
+        } catch {
+            print("Failed to fetch market indices: \(error). Using mock data.")
+            loadMarketDataMock()
+        }
+    }
+
+    func fetchPortfolioHistory() async {
+        do {
+            let response: PortfolioHistoryResponse = try await apiService.get("/auth/me/portfolio/history?days=\(selectedHistoryPeriod.days)")
+            let dataPoints = response.data.map { $0.toHistoryPoint() }
+            portfolioHistory = PortfolioHistory(dataPoints: dataPoints, period: selectedHistoryPeriod)
+            self.error = nil
+        } catch {
+            print("Failed to fetch portfolio history: \(error). Using mock data.")
+            loadPortfolioHistoryMock()
+        }
+    }
+
+    func fetchDividends() async {
+        do {
+            let response: [DividendAPIResponse] = try await apiService.get("/auth/me/dividends")
+            let records = response.map { $0.toDividendRecord() }
+            let totalReceived = records.reduce(0) { $0 + $1.amount }
+
+            dividendSummary = DividendSummary(
+                financialYear: "FY 2025-26",
+                totalReceived: totalReceived,
+                projectedAnnual: totalReceived * 1.5,
+                dividendYield: 1.8,
+                records: records,
+                nextExpectedDate: records.first?.paymentDate
+            )
+            self.error = nil
+        } catch {
+            print("Failed to fetch dividends: \(error). Using mock data.")
+            loadDividendSummaryMock()
+        }
+    }
+
+    func fetchTaxSummary() async {
+        do {
+            let response: TaxSummaryAPIResponse = try await apiService.get("/me/taxes/summary")
+            taxSummary = response.toTaxSummary()
+            self.error = nil
+        } catch {
+            print("Failed to fetch tax summary: \(error). Using mock data.")
+            loadTaxSummary()
+        }
+    }
+
+    func fetchActions() async {
+        do {
+            let response: ActionsAPIResponse = try await apiService.get("/me/actions")
+            upcomingActions = response.actions.map { $0.toUpcomingAction() }
+            self.error = nil
+        } catch {
+            print("Failed to fetch actions: \(error). Using mock data.")
+            loadUpcomingActions()
+        }
+    }
+
+    private func calculateMarketStatus() -> MarketStatus {
+        let calendar = Calendar.current
+        let hour = calendar.component(.hour, from: Date())
+        let minute = calendar.component(.minute, from: Date())
+        let weekday = calendar.component(.weekday, from: Date())
+
+        if weekday >= 2 && weekday <= 6 { // Monday to Friday
+            if hour == 9 && minute < 15 {
+                return .preOpen
+            } else if (hour == 9 && minute >= 15) || (hour > 9 && hour < 15) || (hour == 15 && minute <= 30) {
+                return .open
+            } else if hour == 15 && minute > 30 && minute <= 45 {
+                return .postClose
+            }
+        }
+        return .closed
+    }
+
+    // MARK: - Market Data (Mock)
+
+    private func loadMarketDataMock() {
         let indices = [
             MarketIndex(
                 id: "nifty50",
@@ -96,26 +423,9 @@ class DashboardStore: ObservableObject {
             )
         ]
 
-        // Determine market status based on current time
-        let calendar = Calendar.current
-        let hour = calendar.component(.hour, from: Date())
-        let minute = calendar.component(.minute, from: Date())
-        let weekday = calendar.component(.weekday, from: Date())
-
-        var status: MarketStatus = .closed
-        if weekday >= 2 && weekday <= 6 { // Monday to Friday
-            if hour == 9 && minute < 15 {
-                status = .preOpen
-            } else if (hour == 9 && minute >= 15) || (hour > 9 && hour < 15) || (hour == 15 && minute <= 30) {
-                status = .open
-            } else if hour == 15 && minute > 30 && minute <= 45 {
-                status = .postClose
-            }
-        }
-
         marketOverview = MarketOverview(
             indices: indices,
-            status: status,
+            status: calculateMarketStatus(),
             lastUpdated: Date()
         )
     }
@@ -128,6 +438,17 @@ class DashboardStore: ObservableObject {
 
     func loadPortfolioHistory(for period: HistoryPeriod) {
         selectedHistoryPeriod = period
+        // Try to fetch from API
+        Task {
+            await fetchPortfolioHistory()
+        }
+    }
+
+    private func loadPortfolioHistoryMock() {
+        loadPortfolioHistoryMock(for: selectedHistoryPeriod)
+    }
+
+    private func loadPortfolioHistoryMock(for period: HistoryPeriod) {
         var dataPoints: [PortfolioHistoryPoint] = []
 
         let calendar = Calendar.current
@@ -173,9 +494,9 @@ class DashboardStore: ObservableObject {
         )
     }
 
-    // MARK: - Dividend Summary
+    // MARK: - Dividend Summary (Mock)
 
-    private func loadDividendSummary() {
+    private func loadDividendSummaryMock() {
         let records = [
             DividendRecord(
                 fundCode: "HDFC_EQUITY",
