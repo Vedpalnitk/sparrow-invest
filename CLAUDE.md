@@ -52,7 +52,7 @@ mutual-fundsv1/
 - **Install & Run**: `xcrun simctl install "iPhone 17 Pro" <path-to-app> && xcrun simctl launch "iPhone 17 Pro" com.sparrowinvest.app`
 
 ### Backend
-- **Dev server**: `cd backend && npm run dev`
+- **Dev server**: `cd backend && npm run start:dev`
 
 ### ML Service
 - **Start**: `cd ml-service && python -m app.main`
@@ -134,6 +134,14 @@ All demo users use the format `firstname.lastname@demo.com` with password `Demo@
 | `priya.patel@demo.com` | `Demo@123` | Priya Patel | **Managed** | Patel Family head, has FA advisor |
 | `rajesh.sharma@demo.com` | `Demo@123` | Rajesh Sharma | **Managed** | Sharma Family head, has FA advisor |
 
+### FA (Advisor) Demo Users
+
+| Email | Password | Name |
+|-------|----------|------|
+| `priya.sharma@sparrowinvest.com` | `Advisor@123` | Priya Sharma |
+| `arun.mehta@sparrowinvest.com` | `Advisor@123` | Arun Mehta |
+| `kavitha.nair@sparrowinvest.com` | `Advisor@123` | Kavitha Nair |
+
 ### User Types
 
 1. **Self-service Users** (`clientType: "self"`)
@@ -160,6 +168,23 @@ All demo users use the format `firstname.lastname@demo.com` with password `Demo@
 - SPOUSE: Sunita Sharma
 - CHILD: Arjun Sharma
 - PARENT: Kamla Devi Sharma
+
+### FA Portal API Patterns
+
+| Endpoint Pattern | Description |
+|------------------|-------------|
+| `GET /api/v1/goals` | All goals for logged-in advisor |
+| `GET /api/v1/clients/:clientId/goals` | Goals for specific client |
+| `GET /api/v1/funds/live/search?q=HDFC` | Fund search (append "Direct Growth" for direct plans) |
+| `POST /api/v1/sips/:id/pause` | Pause a SIP |
+| `POST /api/v1/sips/:id/resume` | Resume a paused SIP |
+| `POST /api/v1/sips/:id/cancel` | Cancel a SIP |
+
+### FA Portal Components
+
+- **FANotificationProvider**: Must wrap app in `_app.tsx` for toast notifications. Already configured.
+- **TransactionFormModal**: Reusable modal for Buy/SIP/Redeem/Switch transactions
+- **FACard, FATintedCard, FAInfoTile**: Themed card components for FA Portal
 
 ---
 
@@ -207,6 +232,19 @@ All demo users use the format `firstname.lastname@demo.com` with password `Demo@
 | `/api/v1/transactions/trade-request` | POST | Submit trade request to FA |
 | `/api/v1/transactions/my-requests` | GET | Get user's trade request history |
 | `/api/v1/auth/me/portfolio` | GET | Returns `clientType`, `advisor`, `family` data |
+
+## Available Skills
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| **Frontend Design** | `/frontend-design` | Create distinctive, production-grade frontend interfaces with high design quality. Use for building web components, pages, or redesigning existing UI. |
+| **Feature Development** | `/feature-dev` | Guided feature development with codebase understanding and architecture focus. |
+| **Code Review** | `/code-review` | Review pull requests for bugs, security, and code quality. |
+| **CLAUDE.md Revision** | `/revise-claude-md` | Update CLAUDE.md with learnings from the current session. |
+| **CLAUDE.md Improver** | `/claude-md-improver` | Audit and improve CLAUDE.md files in the repository. |
+
+### Usage
+Invoke skills by typing the command (e.g., `/frontend-design`) followed by your request.
 
 ## Additional Context
 @docs/design/design-guidelines.md

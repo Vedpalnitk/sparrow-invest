@@ -1,61 +1,7 @@
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-// V4 Color Palette
-const V4_COLORS_LIGHT = {
-  primary: '#2563EB',
-  primaryDark: '#1D4ED8',
-  secondary: '#7C3AED',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  background: '#F8FAFC',
-  cardBackground: 'rgba(255, 255, 255, 0.8)',
-  cardBorder: 'rgba(37, 99, 235, 0.1)',
-  chipBg: 'rgba(37, 99, 235, 0.08)',
-  chipBorder: 'rgba(37, 99, 235, 0.15)',
-  textPrimary: '#1E293B',
-  textSecondary: '#64748B',
-  textTertiary: '#94A3B8',
-  progressBg: 'rgba(37, 99, 235, 0.1)',
-  glassShadow: 'rgba(37, 99, 235, 0.08)',
-};
-
-const V4_COLORS_DARK = {
-  primary: '#60A5FA',
-  primaryDark: '#3B82F6',
-  secondary: '#A78BFA',
-  success: '#34D399',
-  warning: '#FBBF24',
-  error: '#F87171',
-  background: '#0F172A',
-  cardBackground: 'rgba(30, 41, 59, 0.8)',
-  cardBorder: 'rgba(96, 165, 250, 0.15)',
-  chipBg: 'rgba(96, 165, 250, 0.12)',
-  chipBorder: 'rgba(96, 165, 250, 0.2)',
-  textPrimary: '#F1F5F9',
-  textSecondary: '#94A3B8',
-  textTertiary: '#64748B',
-  progressBg: 'rgba(96, 165, 250, 0.15)',
-  glassShadow: 'rgba(0, 0, 0, 0.3)',
-};
-
-const useDarkMode = () => {
-  const [isDark, setIsDark] = useState(false);
-  useEffect(() => {
-    const checkDark = () => setIsDark(document.documentElement.classList.contains('dark'));
-    checkDark();
-    const observer = new MutationObserver(checkDark);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-  return isDark;
-};
-
-const useV4Colors = () => {
-  const isDark = useDarkMode();
-  return isDark ? V4_COLORS_DARK : V4_COLORS_LIGHT;
-};
+import AdvisorLayout from '@/components/layout/AdvisorLayout';
+import { useFATheme, formatCurrency, getRiskColor, getStageColor } from '@/utils/fa';
+import { FACard, FATintedCard, FAChip, FAIconContainer } from '@/components/advisor/shared';
 
 // Mock data for advisor dashboard
 const mockClients = [
@@ -79,13 +25,8 @@ const mockPendingActions = [
   { id: '4', type: 'KYC', client: 'Sneha Gupta', action: 'KYC renewal pending', amount: null, urgent: false },
 ];
 
-const formatCurrency = (amount: number) => {
-  if (amount >= 10000000) return `₹${(amount / 10000000).toFixed(2)} Cr`;
-  if (amount >= 100000) return `₹${(amount / 100000).toFixed(2)} L`;
-  return `₹${amount.toLocaleString()}`;
-};
 
-// Navigation items for FA portal
+// Navigation items for FA portal with gradient styling
 const advisorNavItems = [
   { label: 'Clients', href: '/advisor/clients', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', description: 'Manage client portfolios' },
   { label: 'Prospects', href: '/advisor/prospects', icon: 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z', description: 'Lead pipeline' },
@@ -96,86 +37,14 @@ const advisorNavItems = [
 ];
 
 const AdvisorDashboard = () => {
-  const colors = useV4Colors();
-  const isDark = useDarkMode();
+  const { isDark, colors } = useFATheme();
 
   const totalAum = mockClients.reduce((sum, c) => sum + c.aum, 0);
   const avgReturns = mockClients.reduce((sum, c) => sum + c.returns, 0) / mockClients.length;
 
-  const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'Conservative': return colors.success;
-      case 'Moderate': return colors.primary;
-      case 'Aggressive': return colors.secondary;
-      default: return colors.textSecondary;
-    }
-  };
-
-  const getStageColor = (stage: string) => {
-    switch (stage) {
-      case 'Discovery': return colors.warning;
-      case 'Analysis': return colors.primary;
-      case 'Negotiation': return colors.success;
-      default: return colors.textSecondary;
-    }
-  };
-
   return (
-    <div className="min-h-screen" style={{ background: colors.background }}>
-      {/* Header */}
-      <header
-        className="sticky top-0 z-50"
-        style={{
-          background: isDark ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.8)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: `1px solid ${colors.cardBorder}`
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
-                style={{ background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` }}
-              >
-                <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M17 5H9a4 4 0 000 8h6a4 4 0 010 8H7"/>
-                </svg>
-              </div>
-              <div>
-                <span className="text-lg font-semibold" style={{ color: colors.success }}>Sparrow Invest</span>
-                <p className="text-xs" style={{ color: colors.textTertiary }}>Financial Advisor Portal</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <span
-                className="text-xs px-3 py-1.5 rounded-full font-medium hidden md:inline-flex items-center gap-2"
-                style={{ background: `${colors.success}15`, color: colors.success, border: `1px solid ${colors.success}30` }}
-              >
-                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: colors.success }} />
-                Advisor Active
-              </span>
-              <Link href="/">
-                <span
-                  className="flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-all hover:shadow-lg"
-                  style={{
-                    background: colors.chipBg,
-                    border: `1px solid ${colors.chipBorder}`,
-                    color: colors.primary
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  Home
-                </span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8">
+    <AdvisorLayout title="Dashboard">
+      <div style={{ background: colors.background, minHeight: '100%', margin: '-2rem', padding: '2rem' }}>
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
@@ -186,64 +55,93 @@ const AdvisorDashboard = () => {
           </p>
         </div>
 
-        {/* Quick Navigation */}
+        {/* Quick Navigation - Gradient Border Cards */}
         <div className="mb-8">
           <h2 className="text-sm font-semibold uppercase tracking-wide mb-4" style={{ color: colors.textSecondary }}>
             Quick Access
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {advisorNavItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="p-4 rounded-xl transition-all duration-200 hover:-translate-y-1"
-                style={{
-                  background: colors.cardBackground,
-                  border: `1px solid ${colors.cardBorder}`,
-                  boxShadow: `0 4px 24px ${colors.glassShadow}`
-                }}
-              >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                  style={{ background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` }}
+            {advisorNavItems.map((item, index) => {
+              // Cycle through accent colors for variety
+              const accentColors = [colors.primary, colors.secondary, colors.success, colors.warning, colors.error, colors.accent];
+              const accentColor = accentColors[index % accentColors.length];
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="group"
                 >
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
-                  </svg>
-                </div>
-                <p className="text-sm font-semibold" style={{ color: colors.textPrimary }}>{item.label}</p>
-                <p className="text-xs mt-1" style={{ color: colors.textSecondary }}>{item.description}</p>
-              </Link>
-            ))}
+                  <div
+                    className="p-4 rounded-2xl h-full transition-all duration-300 group-hover:-translate-y-1"
+                    style={{
+                      background: `linear-gradient(145deg, ${colors.cardBackground} 0%, ${isDark ? colors.backgroundTertiary : colors.backgroundSecondary} 100%)`,
+                      border: `1px solid ${colors.cardBorder}`,
+                      borderLeft: `4px solid ${accentColor}`,
+                      boxShadow: `0 4px 20px ${colors.glassShadow}`
+                    }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                      style={{ background: `${accentColor}15` }}
+                    >
+                      <svg className="w-5 h-5" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
+                      </svg>
+                    </div>
+                    <p className="text-base font-semibold" style={{ color: colors.textPrimary }}>{item.label}</p>
+                    <p className="text-xs mt-0.5" style={{ color: colors.textTertiary }}>{item.description}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* KPI Cards - Duo-Tone Gradient Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'TOTAL AUM', value: formatCurrency(totalAum), change: '+12.4%', color: colors.success },
-            { label: 'TOTAL CLIENTS', value: mockClients.length.toString(), change: '+2', color: colors.primary },
-            { label: 'AVG. RETURNS', value: `${avgReturns.toFixed(1)}%`, change: '+3.2%', color: colors.success },
-            { label: 'PROSPECTS', value: mockProspects.length.toString(), change: '3 active', color: colors.warning },
-          ].map((kpi) => (
-            <div
-              key={kpi.label}
-              className="p-4 rounded-2xl"
-              style={{
-                background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)`,
-                boxShadow: `0 8px 32px ${isDark ? 'rgba(52, 211, 153, 0.3)' : 'rgba(16, 185, 129, 0.25)'}`
-              }}
-            >
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/70">{kpi.label}</p>
-              <p className="text-xl font-bold mt-2 text-white">{kpi.value}</p>
-              <span
-                className="text-xs font-medium px-2 py-0.5 rounded-full mt-2 inline-block"
-                style={{ background: 'rgba(255, 255, 255, 0.2)', color: '#FFFFFF' }}
+            { label: 'TOTAL AUM', value: formatCurrency(totalAum), change: '+12.4%', variant: 'primary' },
+            { label: 'TOTAL CLIENTS', value: mockClients.length.toString(), change: '+2', variant: 'secondary' },
+            { label: 'AVG. RETURNS', value: `${avgReturns.toFixed(1)}%`, change: '+3.2%', variant: 'success' },
+            { label: 'PROSPECTS', value: mockProspects.length.toString(), change: '3 active', variant: 'accent' },
+          ].map((kpi) => {
+            const getGradient = () => {
+              switch (kpi.variant) {
+                case 'secondary': return `linear-gradient(135deg, ${colors.secondary} 0%, ${colors.primary} 100%)`;
+                case 'success': return `linear-gradient(135deg, ${colors.success} 0%, ${isDark ? '#059669' : '#047857'} 100%)`;
+                case 'accent': return `linear-gradient(135deg, ${colors.primaryDark} 0%, ${colors.secondary} 100%)`;
+                default: return `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`;
+              }
+            };
+            return (
+              <div
+                key={kpi.label}
+                className="p-4 rounded-2xl relative overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  background: getGradient(),
+                  boxShadow: `0 8px 32px ${isDark ? 'rgba(168, 85, 247, 0.25)' : `${colors.primary}25`}`
+                }}
               >
-                {kpi.change}
-              </span>
-            </div>
-          ))}
+                {/* Decorative circles */}
+                <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full" style={{ background: 'rgba(255,255,255,0.1)' }} />
+                <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
+                <div className="relative z-10">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/70">{kpi.label}</p>
+                  <p className="text-xl font-bold mt-2 text-white">{kpi.value}</p>
+                  <span
+                    className="text-xs font-medium px-2 py-0.5 rounded-full mt-2 inline-block"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      color: '#FFFFFF'
+                    }}
+                  >
+                    {kpi.change}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -284,9 +182,10 @@ const AdvisorDashboard = () => {
                     className="flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 hover:-translate-y-0.5"
                     style={{
                       background: isDark
-                        ? 'linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(147, 197, 253, 0.04) 100%)'
-                        : 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%)',
+                        ? 'linear-gradient(135deg, rgba(216, 180, 254, 0.06) 0%, rgba(249, 168, 212, 0.03) 100%)'
+                        : 'linear-gradient(135deg, rgba(168, 85, 247, 0.03) 0%, rgba(244, 114, 182, 0.01) 100%)',
                       border: `1px solid ${action.urgent ? colors.error + '30' : colors.cardBorder}`,
+                      boxShadow: `0 4px 20px ${colors.glassShadow}`
                     }}
                   >
                     <div
@@ -342,7 +241,7 @@ const AdvisorDashboard = () => {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center"
-                    style={{ background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)` }}
+                    style={{ background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)` }}
                   >
                     <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -361,9 +260,10 @@ const AdvisorDashboard = () => {
                     className="flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 hover:-translate-y-0.5 cursor-pointer"
                     style={{
                       background: isDark
-                        ? 'linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(147, 197, 253, 0.04) 100%)'
-                        : 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%)',
+                        ? 'linear-gradient(135deg, rgba(216, 180, 254, 0.06) 0%, rgba(249, 168, 212, 0.03) 100%)'
+                        : 'linear-gradient(135deg, rgba(168, 85, 247, 0.03) 0%, rgba(244, 114, 182, 0.01) 100%)',
                       border: `1px solid ${colors.cardBorder}`,
+                      boxShadow: `0 4px 20px ${colors.glassShadow}`
                     }}
                   >
                     <div
@@ -379,7 +279,7 @@ const AdvisorDashboard = () => {
                         <span className="text-xs" style={{ color: colors.textTertiary }}>•</span>
                         <span
                           className="text-xs px-1.5 py-0.5 rounded"
-                          style={{ background: `${getRiskColor(client.riskProfile)}15`, color: getRiskColor(client.riskProfile) }}
+                          style={{ background: `${getRiskColor(client.riskProfile, colors)}15`, color: getRiskColor(client.riskProfile, colors) }}
                         >
                           {client.riskProfile}
                         </span>
@@ -427,16 +327,17 @@ const AdvisorDashboard = () => {
                     className="p-3 rounded-2xl transition-all duration-200 hover:-translate-y-0.5"
                     style={{
                       background: isDark
-                        ? 'linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(147, 197, 253, 0.04) 100%)'
-                        : 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%)',
+                        ? 'linear-gradient(135deg, rgba(216, 180, 254, 0.06) 0%, rgba(249, 168, 212, 0.03) 100%)'
+                        : 'linear-gradient(135deg, rgba(168, 85, 247, 0.03) 0%, rgba(244, 114, 182, 0.01) 100%)',
                       border: `1px solid ${colors.cardBorder}`,
+                      boxShadow: `0 4px 20px ${colors.glassShadow}`
                     }}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>{prospect.name}</p>
                       <span
                         className="text-xs px-2 py-0.5 rounded"
-                        style={{ background: `${getStageColor(prospect.stage)}15`, color: getStageColor(prospect.stage) }}
+                        style={{ background: `${getStageColor(prospect.stage, colors)}15`, color: getStageColor(prospect.stage, colors) }}
                       >
                         {prospect.stage}
                       </span>
@@ -484,21 +385,33 @@ const AdvisorDashboard = () => {
                   { title: 'Rebalance Alert', detail: '3 portfolios need attention', type: 'warning' },
                   { title: 'Tax Harvesting', detail: 'Opportunity in 2 portfolios', type: 'success' },
                   { title: 'Goal Review', detail: '5 clients approaching milestones', type: 'info' },
-                ].map((insight, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-2xl"
-                    style={{
-                      background: isDark
-                        ? 'linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(147, 197, 253, 0.04) 100%)'
-                        : 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%)',
-                      border: `1px solid ${colors.cardBorder}`,
-                    }}
-                  >
-                    <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>{insight.title}</p>
-                    <p className="text-xs mt-1" style={{ color: colors.textSecondary }}>{insight.detail}</p>
-                  </div>
-                ))}
+                ].map((insight, idx) => {
+                  const getAccentColor = () => {
+                    switch (insight.type) {
+                      case 'warning': return colors.warning;
+                      case 'success': return colors.success;
+                      default: return colors.primary;
+                    }
+                  };
+                  const accentColor = getAccentColor();
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-2xl transition-all duration-200 hover:-translate-y-0.5"
+                      style={{
+                        background: isDark
+                          ? 'linear-gradient(135deg, rgba(216, 180, 254, 0.06) 0%, rgba(249, 168, 212, 0.03) 100%)'
+                          : 'linear-gradient(135deg, rgba(168, 85, 247, 0.03) 0%, rgba(244, 114, 182, 0.01) 100%)',
+                        border: `1px solid ${isDark ? `${accentColor}20` : `${accentColor}15`}`,
+                        borderLeft: `4px solid ${accentColor}`,
+                        boxShadow: `0 4px 20px ${colors.glassShadow}`
+                      }}
+                    >
+                      <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>{insight.title}</p>
+                      <p className="text-xs mt-1" style={{ color: colors.textSecondary }}>{insight.detail}</p>
+                    </div>
+                  );
+                })}
               </div>
               <Link href="/advisor/analysis">
                 <span
@@ -511,15 +424,8 @@ const AdvisorDashboard = () => {
             </div>
           </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="max-w-6xl mx-auto px-6 py-8 text-center">
-        <p className="text-xs" style={{ color: colors.textTertiary }}>
-          2024 Sparrow Invest. Financial Advisor Portal.
-        </p>
-      </footer>
-    </div>
+      </div>
+    </AdvisorLayout>
   );
 };
 

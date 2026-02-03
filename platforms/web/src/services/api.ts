@@ -4,21 +4,85 @@
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3501';
 
+// Token storage key for FA Portal authentication
+const FA_TOKEN_KEY = 'fa_auth_token';
+
+// Get auth token from localStorage (client-side only)
+export function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(FA_TOKEN_KEY);
+}
+
+// Set auth token in localStorage
+export function setAuthToken(token: string): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(FA_TOKEN_KEY, token);
+  }
+}
+
+// Clear auth token from localStorage
+export function clearAuthToken(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(FA_TOKEN_KEY);
+  }
+}
+
+// ============= Auth API =============
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  user: AuthUser;
+}
+
+export const authApi = {
+  login: (email: string, password: string) =>
+    request<AuthResponse>('/api/v1/auth/login', {
+      method: 'POST',
+      body: { email, password },
+      skipAuth: true,
+    }),
+  register: (email: string, password: string, name: string) =>
+    request<AuthResponse>('/api/v1/auth/register', {
+      method: 'POST',
+      body: { email, password, name },
+      skipAuth: true,
+    }),
+};
+
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: any;
   headers?: Record<string, string>;
+  skipAuth?: boolean; // Skip adding auth header (for public endpoints)
 }
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, headers = {} } = options;
+  const { method = 'GET', body, headers = {}, skipAuth = false } = options;
+
+  // Build headers with optional auth token
+  const requestHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...headers,
+  };
+
+  // Add auth token if available and not skipped
+  if (!skipAuth) {
+    const token = getAuthToken();
+    console.log('[API] Token present:', !!token, token ? `(${token.substring(0, 20)}...)` : '');
+    if (token) {
+      requestHeaders['Authorization'] = `Bearer ${token}`;
+    }
+  }
 
   const config: RequestInit = {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
+    headers: requestHeaders,
   };
 
   if (body) {
@@ -34,6 +98,74 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   return response.json();
 }
+
+// ============= Users Management API =============
+
+export interface UserProfile {
+  name: string;
+}
+
+export interface SystemUser {
+  id: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  isActive: boolean;
+  isVerified: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+  profile: UserProfile | null;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  name: string;
+  role: string;
+  phone?: string;
+}
+
+export interface UpdateUserRequest {
+  email?: string;
+  name?: string;
+  role?: string;
+  phone?: string;
+  isActive?: boolean;
+}
+
+export const usersApi = {
+  getAll: () => request<SystemUser[]>('/api/v1/users'),
+
+  getOne: (id: string) => request<SystemUser>(`/api/v1/users/${id}`),
+
+  create: (data: CreateUserRequest) =>
+    request<SystemUser>('/api/v1/users', {
+      method: 'POST',
+      body: data,
+    }),
+
+  update: (id: string, data: UpdateUserRequest) =>
+    request<SystemUser>(`/api/v1/users/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+
+  delete: (id: string) =>
+    request<void>(`/api/v1/users/${id}`, {
+      method: 'DELETE',
+    }),
+
+  resetPassword: (id: string, newPassword: string) =>
+    request<{ message: string }>(`/api/v1/users/${id}/reset-password`, {
+      method: 'POST',
+      body: { newPassword },
+    }),
+
+  toggleActive: (id: string) =>
+    request<SystemUser>(`/api/v1/users/${id}/toggle-active`, {
+      method: 'POST',
+    }),
+};
 
 // ============= Personas API =============
 
@@ -473,6 +605,167 @@ export interface RiskResponse {
   latency_ms: number;
 }
 
+// ============= Portfolio Analysis Types =============
+
+export interface PortfolioHolding {
+  scheme_code: number;
+  scheme_name?: string;
+  amount?: number;
+  units?: number;
+  purchase_date?: string;
+  purchase_price?: number;
+  purchase_amount?: number;
+}
+
+export interface PortfolioAllocationTarget {
+  equity: number;
+  debt: number;
+  hybrid: number;
+  gold: number;
+  international: number;
+  liquid: number;
+}
+
+export interface PortfolioAnalysisRequest {
+  request_id?: string;
+  holdings: PortfolioHolding[];
+  target_allocation: PortfolioAllocationTarget;
+  profile: Record<string, any>;
+}
+
+export interface EnrichedHolding {
+  scheme_code: number;
+  scheme_name: string;
+  category: string;
+  asset_class: string;
+  current_value: number;
+  weight: number;
+  units?: number;
+  nav?: number;
+  return_1y?: number;
+  return_3y?: number;
+  volatility?: number;
+  sharpe_ratio?: number;
+  holding_period_days?: number;
+  tax_status?: 'LTCG' | 'STCG';
+  purchase_amount?: number;
+  unrealized_gain?: number;
+}
+
+export interface RebalancingAction {
+  action: 'SELL' | 'BUY' | 'HOLD' | 'ADD_NEW';
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  scheme_code: number;
+  scheme_name: string;
+  category: string;
+  asset_class: string;
+  current_value?: number;
+  current_weight?: number;
+  current_units?: number;
+  target_value: number;
+  target_weight: number;
+  transaction_amount: number;
+  transaction_units?: number;
+  tax_status?: 'LTCG' | 'STCG';
+  holding_period_days?: number;
+  estimated_gain?: number;
+  tax_note?: string;
+  reason: string;
+}
+
+export interface CurrentMetrics {
+  total_value: number;
+  total_holdings: number;
+  weighted_return_1y?: number;
+  weighted_return_3y?: number;
+  weighted_volatility?: number;
+  weighted_sharpe?: number;
+  category_breakdown: Record<string, { allocation: number; count: number; value: number }>;
+}
+
+export interface AnalysisSummary {
+  is_aligned: boolean;
+  alignment_score: number;
+  primary_issues: string[];
+  total_sell_amount: number;
+  total_buy_amount: number;
+  net_transaction: number;
+  tax_impact_summary: string;
+}
+
+export interface PortfolioAnalysisResponse {
+  request_id?: string;
+  current_allocation: PortfolioAllocationTarget;
+  target_allocation: PortfolioAllocationTarget;
+  allocation_gaps: Record<string, number>;
+  current_metrics: CurrentMetrics;
+  holdings: EnrichedHolding[];
+  rebalancing_actions: RebalancingAction[];
+  summary: AnalysisSummary;
+  model_version: string;
+  latency_ms: number;
+}
+
+// ============= Portfolio Optimization Types =============
+
+export interface OptimizeFundInput {
+  scheme_code: number;
+  scheme_name: string;
+  category: string;
+  asset_class: string;
+  return_1y: number;
+  return_3y?: number;
+  return_5y?: number;
+  volatility: number;
+  sharpe_ratio?: number;
+  expense_ratio?: number;
+  aum?: number;
+}
+
+export interface OptimizationConstraints {
+  min_funds?: number;
+  max_funds?: number;
+  min_weight_per_fund?: number;
+  max_weight_per_fund?: number;
+  min_equity?: number;
+  max_equity?: number;
+  min_debt?: number;
+  max_debt?: number;
+  max_volatility?: number;
+}
+
+export interface OptimizePortfolioRequest {
+  request_id?: string;
+  persona_id: string;
+  profile: Record<string, string>;
+  available_funds: OptimizeFundInput[];
+  constraints?: OptimizationConstraints;
+}
+
+export interface OptimizedAllocation {
+  scheme_code: number;
+  scheme_name: string;
+  category: string;
+  weight: number;
+  monthly_sip?: number;
+}
+
+export interface OptimizedPortfolioMetrics {
+  expected_return: number;
+  expected_volatility: number;
+  sharpe_ratio: number;
+  max_drawdown?: number;
+  projected_value?: number;
+}
+
+export interface OptimizePortfolioResponse {
+  request_id?: string;
+  allocations: OptimizedAllocation[];
+  expected_metrics: OptimizedPortfolioMetrics;
+  model_version: string;
+  latency_ms: number;
+}
+
 export const mlApi = {
   health: () => request<{ status: string; services: any[] }>('/api/v1/ml/health'),
   classify: (data: ClassifyRequest) => request<ClassifyResponse>('/api/v1/classify', { method: 'POST', body: data }),
@@ -480,6 +773,8 @@ export const mlApi = {
   recommend: (data: RecommendRequest) => request<RecommendResponse>('/api/v1/recommendations', { method: 'POST', body: data }),
   recommendBlended: (data: BlendedRecommendRequest) => request<BlendedRecommendResponse>('/api/v1/recommendations/blended', { method: 'POST', body: data }),
   assessRisk: (data: any) => request<RiskResponse>('/api/v1/risk', { method: 'POST', body: data }),
+  analyzePortfolio: (data: PortfolioAnalysisRequest) => request<PortfolioAnalysisResponse>('/api/v1/analyze/portfolio', { method: 'POST', body: data }),
+  optimizePortfolio: (data: OptimizePortfolioRequest) => request<OptimizePortfolioResponse>('/api/v1/recommendations/portfolio', { method: 'POST', body: data }),
 };
 
 // ============= Funds Universe API =============
@@ -550,6 +845,16 @@ export interface LiveFundWithMetrics {
   return3Y?: number;
   return5Y?: number;
   assetClass: string;
+  // Risk data from Kuvera
+  isin?: string;
+  riskRating?: number;      // 1-5 scale
+  crisilRating?: string;    // Original CRISIL text
+  volatility?: number;      // Percentage
+  // Additional Kuvera data
+  fundRating?: number;      // Star rating 1-5
+  expenseRatio?: number;    // TER percentage
+  aum?: number;             // Assets Under Management in Crores
+  fundManager?: string;     // Fund manager name
 }
 
 export const liveFundsApi = {
@@ -560,10 +865,508 @@ export const liveFundsApi = {
     return request<LiveFundScheme[]>(`/api/v1/funds/live/search?${params.toString()}`);
   },
   getPopular: () => request<LiveFundWithMetrics[]>('/api/v1/funds/live/popular'),
-  getByCategory: (category: string, limit = 10) =>
-    request<LiveFundScheme[]>(`/api/v1/funds/live/category/${encodeURIComponent(category)}?limit=${limit}`),
+  // Get funds by category with full metrics (large_cap, mid_cap, small_cap, flexi_cap, elss, hybrid, debt, liquid, index, sectoral, international, gold)
+  getByCategory: (category: string, limit = 20) =>
+    request<LiveFundWithMetrics[]>(`/api/v1/funds/live/category/${encodeURIComponent(category)}?limit=${limit}`),
+  // Search by category name (returns basic scheme info)
+  searchByCategory: (category: string, limit = 10) =>
+    request<LiveFundScheme[]>(`/api/v1/funds/live/search-category/${encodeURIComponent(category)}?limit=${limit}`),
   getDetails: (schemeCode: number) =>
     request<LiveFundWithMetrics>(`/api/v1/funds/live/${schemeCode}`),
   getBatchDetails: (schemeCodes: number[]) =>
     request<LiveFundWithMetrics[]>(`/api/v1/funds/live/batch/details?codes=${schemeCodes.join(',')}`),
+};
+
+// ============= Direct MFAPI.in API (for NAV history) =============
+
+export interface NavDataPoint {
+  date: string;  // DD-MM-YYYY format from MFAPI.in
+  nav: string;   // NAV as string from API
+}
+
+export interface FundNavHistory {
+  meta: {
+    fund_house: string;
+    scheme_type: string;
+    scheme_category: string;
+    scheme_code: number;
+    scheme_name: string;
+  };
+  data: NavDataPoint[];
+  status: string;
+}
+
+export const mfApi = {
+  getNavHistory: async (schemeCode: number): Promise<FundNavHistory> => {
+    const res = await fetch(`https://api.mfapi.in/mf/${schemeCode}`);
+    if (!res.ok) throw new Error('Failed to fetch NAV history');
+    return res.json();
+  }
+};
+
+// ============= Database-Backed Funds API (New Single Source of Truth) =============
+
+// Raw API response format (snake_case from backend)
+interface RawDatabaseFund {
+  scheme_code: number;
+  scheme_name: string;
+  fund_house: string;
+  category: string;
+  sub_category?: string;
+  asset_class: string;
+  nav?: number;
+  nav_date?: string;
+  day_change?: number;
+  day_change_percent?: number;
+  return_1m?: number;
+  return_3m?: number;
+  return_6m?: number;
+  return_1y?: number;
+  return_3y?: number;
+  return_5y?: number;
+  risk_rating?: number;
+  fund_rating?: number;
+  expense_ratio?: number;
+  aum?: number;
+  fund_manager?: string;
+  benchmark?: string;
+  min_investment?: number;
+  min_sip_amount?: number;
+  exit_load?: string;
+  launch_date?: string;
+  volatility?: number;
+  sharpe_ratio?: number;
+  beta?: number;
+  alpha?: number;
+  sortino?: number;
+  max_drawdown?: number;
+  top_holdings?: { name: string; percentage: number }[];
+}
+
+// Normalized format for frontend use (camelCase)
+export interface DatabaseFund {
+  schemeCode: number;
+  schemeName: string;
+  fundHouse: string;
+  category: string;
+  subCategory?: string;
+  assetClass: string;
+  currentNav: number;
+  navDate?: string;
+  dayChange: number;
+  dayChangePercent: number;
+  return1M?: number;
+  return3M?: number;
+  return6M?: number;
+  return1Y?: number;
+  return3Y?: number;
+  return5Y?: number;
+  riskRating?: number;
+  fundRating?: number;
+  expenseRatio?: number;
+  aum?: number;
+  fundManager?: string;
+  benchmark?: string;
+  minInvestment?: number;
+  minSipAmount?: number;
+  exitLoad?: string;
+  launchDate?: string;
+  volatility?: number;
+  sharpeRatio?: number;
+  beta?: number;
+  alpha?: number;
+  sortino?: number;
+  maxDrawdown?: number;
+  topHoldings?: { name: string; percentage: number }[];
+}
+
+// Transform snake_case to camelCase
+function transformFund(raw: RawDatabaseFund): DatabaseFund {
+  return {
+    schemeCode: raw.scheme_code,
+    schemeName: raw.scheme_name,
+    fundHouse: raw.fund_house,
+    category: raw.category,
+    subCategory: raw.sub_category,
+    assetClass: raw.asset_class,
+    currentNav: raw.nav || 0,
+    navDate: raw.nav_date,
+    dayChange: raw.day_change || 0,
+    dayChangePercent: raw.day_change_percent || 0,
+    return1M: raw.return_1m,
+    return3M: raw.return_3m,
+    return6M: raw.return_6m,
+    return1Y: raw.return_1y,
+    return3Y: raw.return_3y,
+    return5Y: raw.return_5y,
+    riskRating: raw.risk_rating,
+    fundRating: raw.fund_rating,
+    expenseRatio: raw.expense_ratio,
+    aum: raw.aum,
+    fundManager: raw.fund_manager,
+    benchmark: raw.benchmark,
+    minInvestment: raw.min_investment,
+    minSipAmount: raw.min_sip_amount,
+    exitLoad: raw.exit_load,
+    launchDate: raw.launch_date,
+    volatility: raw.volatility,
+    sharpeRatio: raw.sharpe_ratio,
+    beta: raw.beta,
+    alpha: raw.alpha,
+    sortino: raw.sortino,
+    maxDrawdown: raw.max_drawdown,
+    topHoldings: raw.top_holdings,
+  };
+}
+
+export interface FundsStatsResponse {
+  total: number;
+  byAssetClass: Record<string, number>;
+  byCategory: Record<string, number>;
+}
+
+export const dbFundsApi = {
+  // Get all funds from database (single source of truth)
+  getAllFunds: async (): Promise<DatabaseFund[]> => {
+    const response = await request<{ funds: RawDatabaseFund[] }>('/api/v1/funds/live/ml/funds');
+    return response.funds.map(transformFund);
+  },
+
+  // Get fund statistics
+  getStats: () =>
+    request<FundsStatsResponse>('/api/v1/funds/live/ml/funds/stats'),
+
+  // Get single fund by scheme code
+  getFund: async (schemeCode: number): Promise<DatabaseFund | null> => {
+    try {
+      const response = await request<{ fund: RawDatabaseFund }>(`/api/v1/funds/live/ml/funds/${schemeCode}`);
+      return response.fund ? transformFund(response.fund) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  // Get multiple funds by scheme codes
+  getBatchFunds: async (schemeCodes: number[]): Promise<DatabaseFund[]> => {
+    const response = await request<{ funds: RawDatabaseFund[] }>(`/api/v1/funds/live/ml/funds/batch?codes=${schemeCodes.join(',')}`);
+    return response.funds.map(transformFund);
+  },
+
+  // Search funds by name/AMC
+  searchFunds: async (query: string): Promise<DatabaseFund[]> => {
+    // Append "Direct Growth" to search for direct plans by default
+    const searchQuery = query.toLowerCase().includes('direct') ? query : `${query} Direct Growth`;
+    const response = await request<Array<{ schemeCode: number; schemeName: string }>>(`/api/v1/funds/live/search?q=${encodeURIComponent(searchQuery)}`);
+    // Transform MFAPI response to DatabaseFund format
+    return response.map(fund => ({
+      schemeCode: fund.schemeCode,
+      schemeName: fund.schemeName,
+      category: '',
+      subCategory: '',
+      amc: fund.schemeName.split(' ')[0] || '',
+      riskLevel: 'Moderate' as const,
+      nav: 0,
+      expenseRatio: 0,
+      aum: 0,
+      returns1y: 0,
+      returns3y: 0,
+      returns5y: 0,
+    }));
+  },
+};
+
+// ============= FA Portal APIs =============
+// Types for Client, Holding, Transaction, SIP are defined in @/utils/faTypes
+// Import types from there when consuming these APIs
+
+// Generic paginated response type for FA APIs
+export interface FAPaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ============= Clients API =============
+
+export interface ClientFilterParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  riskProfile?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export const clientsApi = {
+  list: <T = unknown>(params?: ClientFilterParams) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.status) query.append('status', params.status);
+    if (params?.riskProfile) query.append('riskProfile', params.riskProfile);
+    if (params?.search) query.append('search', params.search);
+    if (params?.sortBy) query.append('sortBy', params.sortBy);
+    if (params?.sortOrder) query.append('sortOrder', params.sortOrder);
+    const queryString = query.toString();
+    return request<FAPaginatedResponse<T>>(`/api/v1/clients${queryString ? `?${queryString}` : ''}`);
+  },
+
+  getById: <T = unknown>(id: string) =>
+    request<T>(`/api/v1/clients/${id}`),
+
+  create: <T = unknown>(data: Record<string, unknown>) =>
+    request<T>('/api/v1/clients', { method: 'POST', body: data }),
+
+  update: <T = unknown>(id: string, data: Record<string, unknown>) =>
+    request<T>(`/api/v1/clients/${id}`, { method: 'PUT', body: data }),
+
+  deactivate: (id: string) =>
+    request<void>(`/api/v1/clients/${id}`, { method: 'DELETE' }),
+};
+
+// ============= Portfolio API =============
+
+export interface CreateHoldingDto {
+  fundName: string;
+  fundSchemeCode: string;
+  fundCategory: string;
+  assetClass: string;
+  folioNumber?: string;
+  units: number;
+  avgNav: number;
+}
+
+export const portfolioApi = {
+  getClientHoldings: <T = unknown>(clientId: string) =>
+    request<T[]>(`/api/v1/portfolio/clients/${clientId}/holdings`),
+
+  getPortfolioSummary: <T = unknown>(clientId: string) =>
+    request<T>(`/api/v1/portfolio/clients/${clientId}/summary`),
+
+  addHolding: <T = unknown>(clientId: string, data: CreateHoldingDto) =>
+    request<T>(`/api/v1/portfolio/clients/${clientId}/holdings`, { method: 'POST', body: data }),
+
+  updateHolding: <T = unknown>(id: string, data: Partial<CreateHoldingDto>) =>
+    request<T>(`/api/v1/portfolio/holdings/${id}`, { method: 'PUT', body: data }),
+
+  deleteHolding: (id: string) =>
+    request<void>(`/api/v1/portfolio/holdings/${id}`, { method: 'DELETE' }),
+
+  syncNavs: () =>
+    request<{ synced: number }>('/api/v1/portfolio/holdings/sync-nav', { method: 'POST' }),
+};
+
+// ============= Transactions API =============
+
+export interface TransactionFilterParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  type?: string;
+  clientId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
+}
+
+export const transactionsApi = {
+  list: <T = unknown>(params?: TransactionFilterParams) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.status) query.append('status', params.status);
+    if (params?.type) query.append('type', params.type);
+    if (params?.clientId) query.append('clientId', params.clientId);
+    if (params?.dateFrom) query.append('dateFrom', params.dateFrom);
+    if (params?.dateTo) query.append('dateTo', params.dateTo);
+    if (params?.search) query.append('search', params.search);
+    const queryString = query.toString();
+    return request<FAPaginatedResponse<T>>(`/api/v1/transactions${queryString ? `?${queryString}` : ''}`);
+  },
+
+  getByClient: <T = unknown>(clientId: string) =>
+    request<T[]>(`/api/v1/transactions/clients/${clientId}`),
+
+  getById: <T = unknown>(id: string) =>
+    request<T>(`/api/v1/transactions/${id}`),
+
+  createLumpsum: <T = unknown>(data: Record<string, unknown>) =>
+    request<T>('/api/v1/transactions/lumpsum', { method: 'POST', body: data }),
+
+  createRedemption: <T = unknown>(data: Record<string, unknown>) =>
+    request<T>('/api/v1/transactions/redemption', { method: 'POST', body: data }),
+
+  updateStatus: <T = unknown>(id: string, status: string) =>
+    request<T>(`/api/v1/transactions/${id}/status`, { method: 'PUT', body: { status } }),
+
+  cancel: (id: string) =>
+    request<void>(`/api/v1/transactions/${id}/cancel`, { method: 'POST' }),
+};
+
+// ============= SIPs API =============
+
+export interface SipFilterParams {
+  page?: number;
+  limit?: number;
+  status?: string;
+  clientId?: string;
+  search?: string;
+}
+
+export interface CreateSIPDto {
+  clientId: string;
+  fundName: string;
+  fundSchemeCode: string;
+  folioNumber?: string;
+  amount: number;
+  frequency: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY';
+  sipDate: number;
+  startDate: string;
+  endDate?: string;
+  isPerpetual?: boolean;
+  stepUpPercent?: number;
+  stepUpFrequency?: 'YEARLY' | 'HALF_YEARLY';
+}
+
+export interface UpdateSIPDto {
+  amount?: number;
+  sipDate?: number;
+  endDate?: string;
+  stepUpPercent?: number;
+  stepUpFrequency?: 'YEARLY' | 'HALF_YEARLY';
+}
+
+export const sipsApi = {
+  list: <T = unknown>(params?: SipFilterParams) => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.status) query.append('status', params.status);
+    if (params?.clientId) query.append('clientId', params.clientId);
+    if (params?.search) query.append('search', params.search);
+    const queryString = query.toString();
+    return request<FAPaginatedResponse<T>>(`/api/v1/sips${queryString ? `?${queryString}` : ''}`);
+  },
+
+  getByClient: <T = unknown>(clientId: string) =>
+    request<T[]>(`/api/v1/sips/clients/${clientId}`),
+
+  getById: <T = unknown>(id: string) =>
+    request<T>(`/api/v1/sips/${id}`),
+
+  create: <T = unknown>(data: CreateSIPDto) =>
+    request<T>('/api/v1/sips', { method: 'POST', body: data }),
+
+  update: <T = unknown>(id: string, data: UpdateSIPDto) =>
+    request<T>(`/api/v1/sips/${id}`, { method: 'PUT', body: data }),
+
+  pause: <T = unknown>(id: string) =>
+    request<T>(`/api/v1/sips/${id}/pause`, { method: 'POST' }),
+
+  resume: <T = unknown>(id: string) =>
+    request<T>(`/api/v1/sips/${id}/resume`, { method: 'POST' }),
+
+  cancel: (id: string) =>
+    request<{ success: boolean }>(`/api/v1/sips/${id}/cancel`, { method: 'POST' }),
+};
+
+// ============= Goals API =============
+
+export interface GoalFilterParams {
+  clientId?: string;
+}
+
+export interface CreateGoalDto {
+  name: string;
+  category: string;
+  icon?: string;
+  targetAmount: number;
+  currentAmount?: number;
+  targetDate: string;
+  monthlySip?: number;
+  priority?: number;
+  linkedFundCodes?: string[];
+  notes?: string;
+}
+
+export interface UpdateGoalDto {
+  name?: string;
+  category?: string;
+  icon?: string;
+  targetAmount?: number;
+  currentAmount?: number;
+  targetDate?: string;
+  monthlySip?: number;
+  status?: string;
+  priority?: number;
+  linkedFundCodes?: string[];
+  notes?: string;
+}
+
+export interface AddContributionDto {
+  amount: number;
+  type: string;
+  date: string;
+  description?: string;
+}
+
+export interface GoalResponse {
+  id: string;
+  name: string;
+  category: string;
+  icon: string | null;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: string;
+  monthlySip: number | null;
+  status: string;
+  priority: number;
+  linkedFundCodes: string[];
+  notes: string | null;
+  progress: number;
+  daysRemaining: number;
+  createdAt: string;
+  updatedAt: string;
+  clientId?: string;
+  clientName?: string;
+}
+
+export interface ContributionResponse {
+  id: string;
+  amount: number;
+  type: string;
+  date: string;
+  description: string | null;
+  createdAt: string;
+}
+
+export const goalsApi = {
+  // Advisor-wide goals (for dashboard)
+  list: () =>
+    request<GoalResponse[]>('/api/v1/goals'),
+
+  // Client-specific goals
+  getByClient: (clientId: string) =>
+    request<GoalResponse[]>(`/api/v1/clients/${clientId}/goals`),
+
+  getById: (clientId: string, goalId: string) =>
+    request<GoalResponse>(`/api/v1/clients/${clientId}/goals/${goalId}`),
+
+  create: (clientId: string, data: CreateGoalDto) =>
+    request<GoalResponse>(`/api/v1/clients/${clientId}/goals`, { method: 'POST', body: data }),
+
+  update: (clientId: string, goalId: string, data: UpdateGoalDto) =>
+    request<GoalResponse>(`/api/v1/clients/${clientId}/goals/${goalId}`, { method: 'PUT', body: data }),
+
+  delete: (clientId: string, goalId: string) =>
+    request<{ message: string }>(`/api/v1/clients/${clientId}/goals/${goalId}`, { method: 'DELETE' }),
+
+  addContribution: (clientId: string, goalId: string, data: AddContributionDto) =>
+    request<GoalResponse>(`/api/v1/clients/${clientId}/goals/${goalId}/contributions`, { method: 'POST', body: data }),
+
+  getContributions: (clientId: string, goalId: string) =>
+    request<ContributionResponse[]>(`/api/v1/clients/${clientId}/goals/${goalId}/contributions`),
 };
