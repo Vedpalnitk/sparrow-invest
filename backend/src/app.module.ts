@@ -9,6 +9,20 @@ import { AllocationsModule } from './allocations/allocations.module';
 import { MlModelsModule } from './ml-models/ml-models.module';
 import { MlGatewayModule } from './ml-gateway/ml-gateway.module';
 import { FundsModule } from './funds/funds.module';
+import { ClientsModule } from './clients/clients.module';
+import { PortfolioModule } from './portfolio/portfolio.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { SipsModule } from './sips/sips.module';
+import { UsersModule } from './users/users.module';
+import { GoalsModule } from './goals/goals.module';
+import { MarketModule } from './market/market.module';
+import { PointsModule } from './points/points.module';
+import { TaxesModule } from './taxes/taxes.module';
+import { ActionsModule } from './actions/actions.module';
+import { AdvisorsModule } from './advisors/advisors.module';
+import { ChatModule } from './chat/chat.module';
+import { PortfolioAnalysisModule } from './portfolio-analysis/portfolio-analysis.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -24,6 +38,26 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     MlModelsModule,
     MlGatewayModule,
     FundsModule,
+    // FA Portal Modules
+    ClientsModule,
+    PortfolioModule,
+    TransactionsModule,
+    SipsModule,
+    // Admin Modules
+    UsersModule,
+    // User Features
+    GoalsModule,
+    MarketModule,
+    PointsModule,
+    TaxesModule,
+    ActionsModule,
+    AdvisorsModule,
+    // AI Chat
+    ChatModule,
+    // Portfolio Analysis (calls Python service)
+    PortfolioAnalysisModule,
+    // Notifications (Email, WhatsApp, Push)
+    NotificationsModule,
   ],
   controllers: [],
   providers: [

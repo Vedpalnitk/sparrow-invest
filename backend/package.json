@@ -22,6 +22,9 @@
     "db:migrate": "npx prisma migrate dev",
     "db:push": "npx prisma db push",
     "db:seed": "ts-node prisma/seed.ts",
+    "db:seed:families": "ts-node prisma/seed-families.ts",
+    "db:seed:advisors": "ts-node prisma/seed-advisors-and-self-clients.ts",
+    "db:seed:self-portfolio": "ts-node prisma/seed-self-assisted-portfolio.ts",
     "db:studio": "npx prisma studio"
   },
   "prisma": {
@@ -33,6 +36,7 @@
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/event-emitter": "^3.0.1",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/microservices": "^11.1.11",
     "@nestjs/passport": "^11.0.5",
@@ -42,12 +46,14 @@
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
+    "nodemailer": "^8.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "prisma": "^6.19.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "twilio": "^5.12.1",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
@@ -60,6 +66,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
+    "@types/nodemailer": "^7.0.9",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "@types/supertest": "^6.0.2",

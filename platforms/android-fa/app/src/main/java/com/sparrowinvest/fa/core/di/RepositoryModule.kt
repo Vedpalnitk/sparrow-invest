@@ -8,6 +8,7 @@ import com.sparrowinvest.fa.data.repository.ChatRepository
 import com.sparrowinvest.fa.data.repository.ClientRepository
 import com.sparrowinvest.fa.data.repository.FundsRepository
 import com.sparrowinvest.fa.data.repository.InsightsRepository
+import com.sparrowinvest.fa.data.repository.NotificationRepository
 import com.sparrowinvest.fa.data.repository.SipRepository
 import com.sparrowinvest.fa.data.repository.TransactionRepository
 import dagger.Module
@@ -76,5 +77,13 @@ object RepositoryModule {
         apiService: ApiService
     ): InsightsRepository {
         return InsightsRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationRepository(
+        apiService: ApiService
+    ): NotificationRepository {
+        return NotificationRepository(apiService)
     }
 }

@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateTransactionDto, UpdateTransactionStatusDto, CreateTradeRequestDto } from './dto/create-transaction.dto';
 import { TransactionFilterDto } from './dto/transaction-filter.dto';
+import { NOTIFICATION_EVENTS } from '../notifications/events/notification.events';
 
 // Type mapping for display
 const TYPE_MAP: Record<string, string> = {
@@ -24,7 +26,10 @@ const STATUS_MAP: Record<string, string> = {
 
 @Injectable()
 export class TransactionsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async findAll(advisorId: string, filters: TransactionFilterDto) {
     const {
@@ -162,6 +167,14 @@ export class TransactionsService {
           select: { id: true, name: true },
         },
       },
+    });
+
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.TRADE_CREATED, {
+      userId: advisorId,
+      category: 'TRADE_ALERTS',
+      title: 'Trade Created',
+      body: `${dto.type} order for ${dto.fundName} — ₹${dto.amount.toLocaleString('en-IN')}`,
+      metadata: { transactionId: transaction.id, clientId: dto.clientId },
     });
 
     return this.transformTransaction(transaction);
@@ -327,6 +340,14 @@ export class TransactionsService {
           select: { id: true, name: true },
         },
       },
+    });
+
+    this.eventEmitter.emit(NOTIFICATION_EVENTS.CLIENT_TRADE_REQUEST, {
+      userId: client.advisorId,
+      category: 'CLIENT_REQUESTS',
+      title: 'New Trade Request',
+      body: `${client.name} requested a ${dto.type} for ${dto.fundName} — ₹${dto.amount.toLocaleString('en-IN')}`,
+      metadata: { transactionId: transaction.id, clientId: client.id },
     });
 
     return {

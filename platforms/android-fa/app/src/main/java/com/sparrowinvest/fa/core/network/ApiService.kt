@@ -75,10 +75,6 @@ interface ApiService {
     @GET("funds/live/category/{category}")
     suspend fun getFundsByCategory(@Path("category") category: String): Response<List<Fund>>
 
-    // Market endpoints
-    @GET("market/indices")
-    suspend fun getMarketIndices(): Response<List<MarketIndex>>
-
     // Dashboard/KPI endpoints
     @GET("advisor/dashboard")
     suspend fun getDashboard(): Response<FADashboard>
@@ -105,4 +101,17 @@ interface ApiService {
 
     @GET("chat/messages/{messageId}/status")
     suspend fun getChatMessageStatus(@Path("messageId") messageId: String): Response<ChatMessageStatus>
+
+    // Notification endpoints
+    @GET("notifications/preferences")
+    suspend fun getNotificationPreferences(): Response<NotificationPreferences>
+
+    @PUT("notifications/preferences")
+    suspend fun updateNotificationPreferences(@Body request: UpdatePreferencesRequest): Response<NotificationPreferences>
+
+    @GET("notifications/logs")
+    suspend fun getNotificationLogs(
+        @Query("limit") limit: Int = 50,
+        @Query("offset") offset: Int = 0
+    ): Response<NotificationLogsResponse>
 }
