@@ -616,7 +616,7 @@ model FAClient {
 
 ## Notes
 
-- All mock data files are in `/platforms/ios/SparrowInvest/Services/`
+- All mock data files are in `/platforms/ios-consumer/SparrowInvest/Services/`
 - Most stores already have API fallback pattern - just need endpoints
 - ProfileView has hardcoded values that need to be connected to stores
 - Market data uses seeded mock values (would need NSE/BSE API for live data)

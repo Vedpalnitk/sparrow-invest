@@ -3,7 +3,9 @@
 ## Project Overview
 AI-powered mutual fund portfolio management platform with goal-aligned recommendations. The project consists of multiple platforms and services:
 - **Next.js Web App** - Admin dashboard and user portal (port 3500)
-- **iOS App** - Native SwiftUI mobile application (SparrowInvest)
+- **iOS Consumer App** - Native SwiftUI mobile app for consumers (ios-consumer)
+- **iOS FA App** - Native SwiftUI mobile app for Financial Advisors (ios-fa)
+- **Android Consumer App** - Native Kotlin/Jetpack Compose app for consumers (android-consumer)
 - **Android FA App** - Native Kotlin/Jetpack Compose app for Financial Advisors (android-fa)
 - **Backend** - NestJS API service (port 3501)
 - **ML Service** - Machine learning recommendation engine
@@ -21,7 +23,7 @@ mutual-fundsv1/
 │   │   │   ├── styles/     # Global CSS and Tailwind
 │   │   │   └── utils/      # Utility functions and constants
 │   │   └── package.json
-│   ├── ios/                # Native iOS app (SwiftUI)
+│   ├── ios-consumer/        # iOS consumer app (SwiftUI)
 │   │   └── SparrowInvest/
 │   │       ├── App/        # App entry point
 │   │       ├── Models/     # Data models
@@ -29,6 +31,16 @@ mutual-fundsv1/
 │   │       ├── Components/ # Reusable components
 │   │       ├── Services/   # API and state services
 │   │       └── Utilities/  # Helpers and theme
+│   ├── ios-fa/              # iOS FA app (SwiftUI)
+│   │   └── SparrowInvestFA/
+│   │       ├── App/        # App entry point
+│   │       ├── Models/     # Data models
+│   │       ├── Views/      # SwiftUI views
+│   │       ├── Components/ # Reusable components
+│   │       ├── Services/   # API and state services
+│   │       └── Utilities/  # Helpers and theme
+│   ├── android-consumer/    # Android consumer app (Kotlin/Compose)
+│   │   └── app/src/main/java/com/sparrowinvest/consumer/
 │   └── android-fa/         # Android FA app (Kotlin/Compose)
 │       └── app/src/main/java/com/sparrowinvest/fa/
 │           ├── ui/         # Compose UI (screens, components, navigation)
@@ -52,11 +64,16 @@ mutual-fundsv1/
 - **Build**: `cd platforms/web && npm run build`
 - **Lint**: `cd platforms/web && npm run lint`
 
-### iOS App (SwiftUI)
-- **Open in Xcode**: `open platforms/ios/SparrowInvest.xcodeproj` (or use XcodeGen with project.yml)
-- **Generate project**: `cd platforms/ios && xcodegen generate`
-- **Build**: `xcodebuild -project platforms/ios/SparrowInvest.xcodeproj -scheme SparrowInvest -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2' build`
+### iOS Consumer App (SwiftUI)
+- **Open in Xcode**: `open platforms/ios-consumer/SparrowInvest.xcodeproj` (or use XcodeGen with project.yml)
+- **Generate project**: `cd platforms/ios-consumer && xcodegen generate`
+- **Build**: `xcodebuild -project platforms/ios-consumer/SparrowInvest.xcodeproj -scheme SparrowInvest -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2' build`
 - **Install & Run**: `xcrun simctl install "iPhone 17 Pro" <path-to-app> && xcrun simctl launch "iPhone 17 Pro" com.sparrowinvest.app`
+
+### iOS FA App (SwiftUI)
+- **Open in Xcode**: `open platforms/ios-fa/SparrowInvestFA.xcodeproj` (or use XcodeGen with project.yml)
+- **Generate project**: `cd platforms/ios-fa && xcodegen generate`
+- **Build**: `xcodebuild -project platforms/ios-fa/SparrowInvestFA.xcodeproj -scheme SparrowInvestFA -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2' build`
 
 ### Android FA App (Kotlin/Compose)
 - **Build**: `cd platforms/android-fa && ./gradlew assembleDebug`
@@ -95,7 +112,7 @@ mutual-fundsv1/
 - `@/styles/*` → `src/styles/*`
 
 ### iOS App
-Uses SwiftUI with standard Swift package structure in `platforms/ios/SparrowInvest/`
+Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/SparrowInvest/`
 
 ## Important Patterns
 
@@ -107,7 +124,7 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios/SparrowInve
 ### API Integration
 - MFAPI.in for Indian mutual fund NAV data
 - Web API services in `platforms/web/src/services/`
-- iOS API services in `platforms/ios/SparrowInvest/Services/`
+- iOS API services in `platforms/ios-consumer/SparrowInvest/Services/`
 
 ### State Management
 - Web: React Context API (no Redux), localStorage for persistence
@@ -120,18 +137,22 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios/SparrowInve
 - `platforms/web/src/context/ThemeContext.tsx` - Web theme management
 - `platforms/web/src/utils/v4-colors.ts` - V4 design system colors
 
-### iOS App
-- `platforms/ios/SparrowInvest/App/SparrowInvestApp.swift` - App entry point
-- `platforms/ios/SparrowInvest/App/ContentView.swift` - Main content view
-- `platforms/ios/SparrowInvest/Services/APIService.swift` - API integration
-- `platforms/ios/SparrowInvest/Services/AuthManager.swift` - Authentication
-- `platforms/ios/SparrowInvest/Services/FamilyStore.swift` - Family portfolio & client type
-- `platforms/ios/SparrowInvest/Services/AdvisorStore.swift` - Advisor assignment management
-- `platforms/ios/SparrowInvest/Views/Common/MainTabView.swift` - Main tab container, data loading
-- `platforms/ios/SparrowInvest/Views/Home/HomeView.swift` - Dashboard with quick actions
-- `platforms/ios/SparrowInvest/Views/Invest/ManagedInvestmentView.swift` - FA trade request form
-- `platforms/ios/SparrowInvest/Models/TradeRequest.swift` - Trade request models
-- `platforms/ios/SparrowInvest/Utilities/AppTheme.swift` - Theme management
+### iOS Consumer App
+- `platforms/ios-consumer/SparrowInvest/App/SparrowInvestApp.swift` - App entry point
+- `platforms/ios-consumer/SparrowInvest/App/ContentView.swift` - Main content view
+- `platforms/ios-consumer/SparrowInvest/Services/APIService.swift` - API integration
+- `platforms/ios-consumer/SparrowInvest/Services/AuthManager.swift` - Authentication
+- `platforms/ios-consumer/SparrowInvest/Services/FamilyStore.swift` - Family portfolio & client type
+- `platforms/ios-consumer/SparrowInvest/Services/AdvisorStore.swift` - Advisor assignment management
+- `platforms/ios-consumer/SparrowInvest/Views/Common/MainTabView.swift` - Main tab container, data loading
+- `platforms/ios-consumer/SparrowInvest/Views/Home/HomeView.swift` - Dashboard with quick actions
+- `platforms/ios-consumer/SparrowInvest/Views/Invest/ManagedInvestmentView.swift` - FA trade request form
+- `platforms/ios-consumer/SparrowInvest/Models/TradeRequest.swift` - Trade request models
+- `platforms/ios-consumer/SparrowInvest/Utilities/AppTheme.swift` - Theme management
+
+### iOS FA App
+- `platforms/ios-fa/SparrowInvestFA/App/SparrowInvestFAApp.swift` - App entry point
+- `platforms/ios-fa/SparrowInvestFA/App/ContentView.swift` - Main content view
 
 ### Android FA App
 - `platforms/android-fa/app/src/main/java/com/sparrowinvest/fa/MainActivity.kt` - App entry point

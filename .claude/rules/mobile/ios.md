@@ -3,7 +3,7 @@
 ## Project Structure
 
 ```
-platforms/ios/SparrowInvest/
+platforms/ios-consumer/SparrowInvest/
 ├── App/                    # App entry point
 ├── Models/                 # Data models (Codable structs)
 ├── Views/                  # SwiftUI views organized by feature

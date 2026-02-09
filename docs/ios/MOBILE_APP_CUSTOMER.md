@@ -855,7 +855,7 @@ The app has been migrated to a native SwiftUI implementation for better performa
 ### Build Commands
 ```bash
 # Generate Xcode project
-cd platforms/ios && xcodegen generate
+cd platforms/ios-consumer && xcodegen generate
 
 # Build for simulator
 xcodebuild -project SparrowInvest.xcodeproj -scheme SparrowInvest -destination 'platform=iOS Simulator,name=iPhone 17 Pro,OS=26.2' build
@@ -867,7 +867,7 @@ xcrun simctl launch "iPhone 17 Pro" com.sparrowinvest.app
 
 ### Project Structure
 ```
-platforms/ios/SparrowInvest/
+platforms/ios-consumer/SparrowInvest/
 ├── App/                    # App entry point
 ├── Models/                 # Data models (Points, Advisor, etc.)
 ├── Views/                  # SwiftUI views by feature
