@@ -49,6 +49,12 @@ interface ApiService {
     @POST("transactions/redemption")
     suspend fun executeSell(@Body request: ExecuteTradeRequest): Response<FATransaction>
 
+    @POST("transactions/lumpsum")
+    suspend fun createTransaction(@Body request: CreateTransactionRequest): Response<FATransaction>
+
+    @POST("transactions/redemption")
+    suspend fun createRedemption(@Body request: CreateTransactionRequest): Response<FATransaction>
+
     @PUT("transactions/{id}/status")
     suspend fun updateTransactionStatus(
         @Path("id") id: String,

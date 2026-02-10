@@ -21,6 +21,12 @@ sealed class Screen(val route: String) {
     }
 
     // Transaction screens
+    data object NewTransactionWizard : Screen("transaction/new?clientId={clientId}") {
+        fun createRoute(clientId: String? = null): String {
+            return if (clientId != null) "transaction/new?clientId=$clientId"
+            else "transaction/new"
+        }
+    }
     data object ExecuteTrade : Screen("trade/execute/{clientId}") {
         fun createRoute(clientId: String) = "trade/execute/$clientId"
     }

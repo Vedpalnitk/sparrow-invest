@@ -3,6 +3,7 @@ package com.sparrowinvest.fa.data.repository
 import com.sparrowinvest.fa.core.network.ApiResult
 import com.sparrowinvest.fa.core.network.ApiService
 import com.sparrowinvest.fa.data.model.ApiResponse
+import com.sparrowinvest.fa.data.model.CreateTransactionRequest
 import com.sparrowinvest.fa.data.model.ExecuteTradeRequest
 import com.sparrowinvest.fa.data.model.FATransaction
 import com.sparrowinvest.fa.data.model.UpdateStatusRequest
@@ -109,5 +110,29 @@ class TransactionRepository @Inject constructor(
 
     suspend fun executeTransaction(id: String, notes: String? = null): ApiResult<FATransaction> {
         return updateTransactionStatus(id, "EXECUTED", notes)
+    }
+
+    suspend fun createTransaction(request: CreateTransactionRequest): ApiResult<FATransaction> = withContext(Dispatchers.IO) {
+        try {
+            val isSell = request.type.equals("Sell", ignoreCase = true) ||
+                    request.type.equals("SWP", ignoreCase = true)
+            val response = if (isSell) {
+                apiService.createRedemption(request)
+            } else {
+                apiService.createTransaction(request)
+            }
+            if (response.isSuccessful) {
+                response.body()?.let { transaction ->
+                    ApiResult.success(transaction)
+                } ?: ApiResult.error("Empty response")
+            } else {
+                ApiResult.error(
+                    response.errorBody()?.string() ?: "Failed to create transaction",
+                    response.code()
+                )
+            }
+        } catch (e: Exception) {
+            ApiResult.error(e.message ?: "Network error", exception = e)
+        }
     }
 }

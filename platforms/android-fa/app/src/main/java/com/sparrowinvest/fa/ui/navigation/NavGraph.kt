@@ -38,6 +38,7 @@ import com.sparrowinvest.fa.ui.clients.ClientsScreen
 import com.sparrowinvest.fa.ui.dashboard.DashboardScreen
 import com.sparrowinvest.fa.ui.insights.InsightsScreen
 import com.sparrowinvest.fa.ui.sips.SipListScreen
+import com.sparrowinvest.fa.ui.transactions.NewTransactionWizardScreen
 import com.sparrowinvest.fa.ui.transactions.TransactionsScreen
 import com.sparrowinvest.fa.ui.transactions.PlatformWebViewScreen
 import com.sparrowinvest.fa.ui.transactions.TransactionPlatform
@@ -104,7 +105,7 @@ fun NavGraph(
             val showFab = showBottomNav && currentRoute != Screen.Insights.route
             if (showFab) {
                 FloatingActionButton(
-                    onClick = { navController.navigate(Screen.AvyaChat.route) },
+                    onClick = { navController.navigate(Screen.AvyaChat.createRoute()) },
                     modifier = Modifier.size(56.dp),
                     shape = CircleShape,
                     containerColor = Color.Transparent,
@@ -196,7 +197,7 @@ fun NavGraph(
                             }
                         },
                         onNavigateToAvyaChat = {
-                            navController.navigate(Screen.AvyaChat.route)
+                            navController.navigate(Screen.AvyaChat.createRoute())
                         }
                     )
                 }
@@ -235,6 +236,9 @@ fun NavGraph(
                         },
                         onNavigateToTransaction = { transactionId ->
                             navController.navigate(Screen.TransactionDetail.createRoute(transactionId))
+                        },
+                        onNavigateToNewTransaction = {
+                            navController.navigate(Screen.NewTransactionWizard.createRoute())
                         }
                     )
                 }
@@ -289,6 +293,8 @@ fun NavGraph(
                 ) { backStackEntry ->
                     val encodedQuery = backStackEntry.arguments?.getString(NavArguments.QUERY)
                     val initialQuery = encodedQuery?.let {
+                        // Filter out the route template placeholder
+                        if (it == "{${NavArguments.QUERY}}" || it == "{query}") return@let null
                         try {
                             java.net.URLDecoder.decode(it, "UTF-8")
                         } catch (e: Exception) {
@@ -320,6 +326,25 @@ fun NavGraph(
                     )
                 }
 
+                // New Transaction Wizard
+                composable(
+                    route = Screen.NewTransactionWizard.route,
+                    arguments = listOf(
+                        navArgument(NavArguments.CLIENT_ID) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
+                    )
+                ) {
+                    NewTransactionWizardScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onNavigateToPlatform = { platformId ->
+                            navController.navigate(Screen.PlatformWebView.createRoute(platformId))
+                        }
+                    )
+                }
+
                 // Detail screens
                 composable(
                     route = Screen.ClientDetail.route,
@@ -335,7 +360,7 @@ fun NavGraph(
                             navController.navigate(Screen.FundDetail.createRoute(schemeCode))
                         },
                         onNavigateToExecuteTrade = {
-                            navController.navigate(Screen.ExecuteTrade.createRoute(clientId))
+                            navController.navigate(Screen.NewTransactionWizard.createRoute(clientId))
                         },
                         onNavigateToCreateSip = {
                             navController.navigate(Screen.CreateSip.createRoute(clientId))
