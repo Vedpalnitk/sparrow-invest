@@ -3,8 +3,10 @@ package com.sparrowinvest.app.core.di
 import com.sparrowinvest.app.core.network.ApiService
 import com.sparrowinvest.app.core.storage.PreferencesManager
 import com.sparrowinvest.app.core.storage.TokenManager
+import com.sparrowinvest.app.data.repository.AdvisorRepository
 import com.sparrowinvest.app.data.repository.AuthRepository
 import com.sparrowinvest.app.data.repository.FundsRepository
+import com.sparrowinvest.app.data.repository.ChatRepository
 import com.sparrowinvest.app.data.repository.GoalsRepository
 import com.sparrowinvest.app.data.repository.PortfolioRepository
 import dagger.Module
@@ -49,5 +51,19 @@ object RepositoryModule {
         apiService: ApiService
     ): GoalsRepository {
         return GoalsRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatRepository(
+        apiService: ApiService
+    ): ChatRepository {
+        return ChatRepository(apiService)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAdvisorRepository(): AdvisorRepository {
+        return AdvisorRepository()
     }
 }

@@ -19,19 +19,27 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.sparrowinvest.app.ui.auth.AuthViewModel
+import com.sparrowinvest.app.ui.auth.ForgotPasswordScreen
 import com.sparrowinvest.app.ui.auth.LoginScreen
+import com.sparrowinvest.app.ui.auth.OtpVerificationScreen
 import com.sparrowinvest.app.ui.auth.SignupScreen
 import com.sparrowinvest.app.ui.auth.WelcomeScreen
 import com.sparrowinvest.app.ui.avya.AvyaChatScreen
 import com.sparrowinvest.app.ui.components.AvyaFab
+import com.sparrowinvest.app.ui.explore.AdvisorDetailScreen
+import com.sparrowinvest.app.ui.explore.AdvisorDirectoryScreen
 import com.sparrowinvest.app.ui.explore.ExploreScreen
 import com.sparrowinvest.app.ui.explore.FundDetailScreen
+import com.sparrowinvest.app.ui.explore.MyAdvisorScreen
 import com.sparrowinvest.app.ui.goals.GoalDetailScreen
 import com.sparrowinvest.app.ui.goals.GoalsScreen
 import com.sparrowinvest.app.ui.settings.SettingsScreen
 import com.sparrowinvest.app.ui.home.HomeScreen
 import com.sparrowinvest.app.ui.insights.InsightsScreen
 import com.sparrowinvest.app.ui.investments.InvestmentsScreen
+import com.sparrowinvest.app.ui.onboarding.RiskAssessmentScreen
+import com.sparrowinvest.app.ui.onboarding.RiskResultScreen
+import com.sparrowinvest.app.ui.points.PointsScreen
 import com.sparrowinvest.app.ui.profile.ProfileScreen
 
 @Composable
@@ -146,8 +154,14 @@ fun NavGraph(
                     LoginScreen(
                         viewModel = authViewModel,
                         onLoginSuccess = {
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            if (!authViewModel.hasCompletedOnboarding.value) {
+                                navController.navigate(Screen.RiskAssessment.route) {
+                                    popUpTo(Screen.Welcome.route) { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Welcome.route) { inclusive = true }
+                                }
                             }
                         },
                         onSignupClick = {
@@ -161,6 +175,9 @@ fun NavGraph(
                         },
                         onBackClick = {
                             navController.popBackStack()
+                        },
+                        onForgotPasswordClick = {
+                            navController.navigate(Screen.ForgotPassword.route)
                         }
                     )
                 }
@@ -169,8 +186,14 @@ fun NavGraph(
                     SignupScreen(
                         viewModel = authViewModel,
                         onSignupComplete = {
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            if (!authViewModel.hasCompletedOnboarding.value) {
+                                navController.navigate(Screen.RiskAssessment.route) {
+                                    popUpTo(Screen.Welcome.route) { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Welcome.route) { inclusive = true }
+                                }
                             }
                         },
                         onLoginClick = {
@@ -180,6 +203,78 @@ fun NavGraph(
                         },
                         onBackClick = {
                             navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.OtpVerification.route,
+                    arguments = listOf(
+                        navArgument(NavArguments.EMAIL) { type = NavType.StringType },
+                        navArgument(NavArguments.VERIFICATION_TYPE) { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val email = backStackEntry.arguments?.getString(NavArguments.EMAIL) ?: ""
+                    val verificationType = backStackEntry.arguments?.getString(NavArguments.VERIFICATION_TYPE) ?: "login"
+
+                    OtpVerificationScreen(
+                        email = email,
+                        verificationType = verificationType,
+                        viewModel = authViewModel,
+                        onVerificationSuccess = {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Welcome.route) { inclusive = true }
+                            }
+                        },
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(Screen.ForgotPassword.route) {
+                    ForgotPasswordScreen(
+                        viewModel = authViewModel,
+                        onBackToLogin = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                // Onboarding Flow
+                composable(Screen.RiskAssessment.route) {
+                    RiskAssessmentScreen(
+                        onComplete = { category, score ->
+                            navController.navigate(
+                                Screen.RiskResult.createRoute(category, score)
+                            ) {
+                                popUpTo(Screen.RiskAssessment.route) { inclusive = true }
+                            }
+                        },
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.RiskResult.route,
+                    arguments = listOf(
+                        navArgument(NavArguments.RISK_CATEGORY) { type = NavType.StringType },
+                        navArgument(NavArguments.RISK_SCORE) { type = NavType.IntType }
+                    )
+                ) { backStackEntry ->
+                    val category = backStackEntry.arguments?.getString(NavArguments.RISK_CATEGORY) ?: "Moderate"
+                    val score = backStackEntry.arguments?.getInt(NavArguments.RISK_SCORE) ?: 10
+
+                    RiskResultScreen(
+                        category = category,
+                        score = score,
+                        onContinue = {
+                            authViewModel.setOnboardingCompleted()
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.RiskResult.route) { inclusive = true }
+                            }
                         }
                     )
                 }
@@ -300,6 +395,51 @@ fun NavGraph(
                 composable(Screen.Settings.route) {
                     SettingsScreen(
                         onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                // Advisor screens
+                composable(Screen.AdvisorDirectory.route) {
+                    AdvisorDirectoryScreen(
+                        onNavigateToAdvisor = { advisorId ->
+                            navController.navigate(Screen.AdvisorDetail.createRoute(advisorId))
+                        },
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(
+                    route = Screen.AdvisorDetail.route,
+                    arguments = listOf(
+                        navArgument(NavArguments.ADVISOR_ID) { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val advisorId = backStackEntry.arguments?.getString(NavArguments.ADVISOR_ID) ?: ""
+
+                    AdvisorDetailScreen(
+                        advisorId = advisorId,
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                composable(Screen.MyAdvisor.route) {
+                    MyAdvisorScreen(
+                        onBackClick = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+
+                // Points/Rewards
+                composable(Screen.Points.route) {
+                    PointsScreen(
+                        onBackClick = {
                             navController.popBackStack()
                         }
                     )

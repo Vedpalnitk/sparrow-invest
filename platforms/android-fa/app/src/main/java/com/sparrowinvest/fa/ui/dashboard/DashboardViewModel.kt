@@ -8,7 +8,6 @@ import com.sparrowinvest.fa.data.model.Client
 import com.sparrowinvest.fa.data.model.FADashboard
 import com.sparrowinvest.fa.data.model.FASip
 import com.sparrowinvest.fa.data.model.FATransaction
-import com.sparrowinvest.fa.data.model.MarketIndex
 import com.sparrowinvest.fa.data.repository.ClientRepository
 import com.sparrowinvest.fa.data.repository.SipRepository
 import com.sparrowinvest.fa.data.repository.TransactionRepository
@@ -112,18 +111,6 @@ class DashboardViewModel @Inject constructor(
                 .sortedByDescending { it.returns }
                 .take(5)
 
-            // Load market indices from backend
-            val marketIndices = try {
-                val response = apiService.getMarketIndices()
-                if (response.isSuccessful) {
-                    response.body() ?: emptyList()
-                } else {
-                    emptyList()
-                }
-            } catch (e: Exception) {
-                emptyList<MarketIndex>()
-            }
-
             val dashboard = FADashboard(
                 totalAum = totalAum,
                 totalClients = clients.size,
@@ -135,8 +122,7 @@ class DashboardViewModel @Inject constructor(
                 pendingTransactions = _pendingTransactions.value.take(5),
                 upcomingSips = upcomingSips,
                 failedSips = failedSips,
-                topPerformers = topPerformers,
-                marketIndices = marketIndices
+                topPerformers = topPerformers
             )
 
             // Compute breakdown data for KPI detail sheet

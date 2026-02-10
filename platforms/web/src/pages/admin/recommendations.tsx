@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
-import Navbar from '@/components/layout/Navbar'
-import Footer from '@/components/layout/Footer'
+import AdminLayout from '@/components/layout/AdminLayout'
 import {
   personasApi,
   mlApi,
@@ -9,99 +8,10 @@ import {
   AllocationBreakdown,
   Persona,
 } from '@/services/api'
+import { useAdminColors, useDarkMode } from '@/utils/useAdminColors'
 
-// V4 Color Palette - Refined Blue Theme (Light Mode)
-const V4_COLORS_LIGHT = {
-  primary: '#2563EB',
-  primaryDark: '#1D4ED8',
-  primaryDeep: '#1E40AF',
-  accent: '#3B82F6',
-  secondary: '#0EA5E9',
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  background: '#FFFFFF',
-  backgroundSecondary: '#F8FAFC',
-  backgroundTertiary: '#F1F5F9',
-  glassBackground: 'rgba(255, 255, 255, 0.82)',
-  glassBorder: 'rgba(37, 99, 235, 0.12)',
-  glassShadow: 'rgba(37, 99, 235, 0.08)',
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',
-  textTertiary: '#94A3B8',
-  inputBg: 'rgba(37, 99, 235, 0.02)',
-  inputBorder: 'rgba(37, 99, 235, 0.12)',
-  cardBg: 'linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(59, 130, 246, 0.02) 100%)',
-  cardBorder: 'rgba(37, 99, 235, 0.1)',
-  chipBg: 'rgba(37, 99, 235, 0.06)',
-  chipBorder: 'rgba(37, 99, 235, 0.12)',
-  progressBg: 'rgba(37, 99, 235, 0.1)',
-  cardBackground: '#FFFFFF',
-}
-
-// V4 Color Palette - Refined Blue Theme (Dark Mode)
-const V4_COLORS_DARK = {
-  primary: '#60A5FA',
-  primaryDark: '#3B82F6',
-  primaryDeep: '#2563EB',
-  accent: '#93C5FD',
-  secondary: '#38BDF8',
-  success: '#34D399',
-  warning: '#FBBF24',
-  error: '#F87171',
-  background: '#0B1120',
-  backgroundSecondary: '#111827',
-  backgroundTertiary: '#1E293B',
-  glassBackground: 'rgba(17, 24, 39, 0.88)',
-  glassBorder: 'rgba(96, 165, 250, 0.12)',
-  glassShadow: 'rgba(0, 0, 0, 0.35)',
-  textPrimary: '#F8FAFC',
-  textSecondary: '#CBD5E1',
-  textTertiary: '#64748B',
-  inputBg: 'rgba(96, 165, 250, 0.06)',
-  inputBorder: 'rgba(96, 165, 250, 0.15)',
-  cardBg: 'linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(147, 197, 253, 0.04) 100%)',
-  cardBorder: 'rgba(96, 165, 250, 0.15)',
-  chipBg: 'rgba(96, 165, 250, 0.08)',
-  chipBorder: 'rgba(96, 165, 250, 0.15)',
-  progressBg: 'rgba(96, 165, 250, 0.15)',
-  cardBackground: '#111827',
-}
-
-// Hook to detect dark mode
-const useDarkMode = () => {
-  const [isDark, setIsDark] = useState(false)
-
-  useEffect(() => {
-    const checkDarkMode = () => {
-      const isDarkClass = document.documentElement.classList.contains('dark')
-      const isDarkMedia = window.matchMedia('(prefers-color-scheme: dark)').matches
-      const isLightClass = document.documentElement.classList.contains('light')
-      setIsDark(isDarkClass || (isDarkMedia && !isLightClass))
-    }
-
-    checkDarkMode()
-
-    const observer = new MutationObserver(checkDarkMode)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    mediaQuery.addEventListener('change', checkDarkMode)
-
-    return () => {
-      observer.disconnect()
-      mediaQuery.removeEventListener('change', checkDarkMode)
-    }
-  }, [])
-
-  return isDark
-}
-
-// Get colors based on dark mode
-const useV4Colors = () => {
-  const isDark = useDarkMode()
-  return isDark ? V4_COLORS_DARK : V4_COLORS_LIGHT
-}
+// Use shared admin color hook
+const useV4Colors = useAdminColors
 
 interface ProfileRecommendation {
   profile: ClassificationLog
@@ -642,18 +552,11 @@ const RecommendationsPage = () => {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: colors.background }}>
-      <Navbar mode="admin" />
-      <main className="max-w-6xl mx-auto px-6 py-8">
+    <AdminLayout title="Recommendations Review">
+      <div style={{ background: colors.background, minHeight: '100%', margin: '-2rem', padding: '2rem' }}>
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-medium px-2 py-0.5 rounded" style={{ background: colors.chipBg, color: colors.primary }}>Admin</span>
-            </div>
-            <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>Recommendations Review</h1>
-            <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>Review fund recommendations for classified user profiles.</p>
-          </div>
+          <p className="text-sm" style={{ color: colors.textSecondary }}>Review fund recommendations for classified user profiles.</p>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               <label className="text-xs font-semibold" style={{ color: colors.textSecondary }}>Investment:</label>
@@ -746,14 +649,6 @@ const RecommendationsPage = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-4">
-                        {/* Avatar */}
-                        <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-                          style={{ background: `linear-gradient(135deg, ${getPersonaColor(item.profile.prediction.personaSlug)} 0%, ${colors.primaryDark} 100%)` }}
-                        >
-                          {item.profile.user?.profile?.name?.charAt(0) || 'U'}
-                        </div>
-
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-base font-semibold" style={{ color: colors.textPrimary }}>
@@ -1196,9 +1091,8 @@ const RecommendationsPage = () => {
             })}
           </div>
         )}
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </AdminLayout>
   )
 }
 

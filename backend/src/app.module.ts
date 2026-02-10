@@ -23,6 +23,7 @@ import { AdvisorsModule } from './advisors/advisors.module';
 import { ChatModule } from './chat/chat.module';
 import { PortfolioAnalysisModule } from './portfolio-analysis/portfolio-analysis.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AdvisorDashboardModule } from './advisor-dashboard/advisor-dashboard.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -58,6 +59,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     PortfolioAnalysisModule,
     // Notifications (Email, WhatsApp, Push)
     NotificationsModule,
+    // Advisor Dashboard (aggregated KPIs, insights)
+    AdvisorDashboardModule,
   ],
   controllers: [],
   providers: [

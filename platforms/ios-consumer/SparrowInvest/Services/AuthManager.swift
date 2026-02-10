@@ -331,6 +331,31 @@ class AuthManager: ObservableObject {
         saveAuth()
     }
 
+    /// Restore session after successful biometric authentication.
+    /// Restores the authenticated state from stored tokens and cached user data
+    /// without making an API call - the session will be verified asynchronously.
+    func loginWithBiometric() {
+        // Restore cached user data
+        if let userData = userDefaults.data(forKey: userKey) {
+            user = try? JSONDecoder().decode(User.self, from: userData)
+        }
+
+        // Restore token to API service
+        if let token = userDefaults.string(forKey: tokenKey), !token.isEmpty {
+            apiService.setAuthToken(token)
+        }
+
+        // Restore auth state
+        isAuthenticated = true
+        hasCompletedOnboarding = userDefaults.bool(forKey: onboardingKey)
+        isGuestUser = false
+
+        // Verify session validity in background
+        Task {
+            await checkSession()
+        }
+    }
+
     func completeOnboarding() {
         hasCompletedOnboarding = true
         userDefaults.set(true, forKey: onboardingKey)

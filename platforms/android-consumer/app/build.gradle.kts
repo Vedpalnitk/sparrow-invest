@@ -101,6 +101,9 @@ dependencies {
     // Security
     implementation(libs.androidx.security.crypto)
 
+    // Biometric
+    implementation(libs.androidx.biometric)
+
     // Charts
     implementation(libs.vico.compose.m3)
 

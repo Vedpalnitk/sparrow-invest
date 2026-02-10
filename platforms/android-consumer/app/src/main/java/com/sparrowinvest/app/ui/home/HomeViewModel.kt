@@ -7,8 +7,13 @@ import com.sparrowinvest.app.data.model.AdvisorInfo
 import com.sparrowinvest.app.data.model.AssetAllocation
 import com.sparrowinvest.app.data.model.ClientType
 import com.sparrowinvest.app.data.model.Goal
+import com.sparrowinvest.app.data.model.HistoryPeriod
 import com.sparrowinvest.app.data.model.Holding
+import com.sparrowinvest.app.data.model.MarketIndex
+import com.sparrowinvest.app.data.model.MarketOverview
 import com.sparrowinvest.app.data.model.Portfolio
+import com.sparrowinvest.app.data.model.PortfolioHistory
+import com.sparrowinvest.app.data.model.PortfolioHistoryPoint
 import com.sparrowinvest.app.data.model.Sip
 import com.sparrowinvest.app.data.model.SipFrequency
 import com.sparrowinvest.app.data.model.SipStatus
@@ -16,6 +21,9 @@ import com.sparrowinvest.app.data.model.Transaction
 import com.sparrowinvest.app.data.model.TransactionType
 import com.sparrowinvest.app.data.model.TransactionStatus
 import com.sparrowinvest.app.data.model.User
+import com.sparrowinvest.app.data.model.TaxSummary
+import com.sparrowinvest.app.data.model.DividendSummary
+import com.sparrowinvest.app.data.model.DividendRecord
 import com.sparrowinvest.app.data.repository.AuthRepository
 import com.sparrowinvest.app.data.repository.GoalsRepository
 import com.sparrowinvest.app.data.repository.PortfolioRepository
@@ -27,6 +35,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Locale
 import javax.inject.Inject
 
 enum class PortfolioViewMode {
@@ -78,12 +87,45 @@ class HomeViewModel @Inject constructor(
     private val _profileCompletion = MutableStateFlow(65)
     val profileCompletion: StateFlow<Int> = _profileCompletion.asStateFlow()
 
+    private val _portfolioHistory = MutableStateFlow(PortfolioHistory.empty)
+    val portfolioHistory: StateFlow<PortfolioHistory> = _portfolioHistory.asStateFlow()
+
+    private val _selectedHistoryPeriod = MutableStateFlow(HistoryPeriod.ONE_YEAR)
+    val selectedHistoryPeriod: StateFlow<HistoryPeriod> = _selectedHistoryPeriod.asStateFlow()
+
+    private val _taxSummary = MutableStateFlow(TaxSummary.empty)
+    val taxSummary: StateFlow<TaxSummary> = _taxSummary.asStateFlow()
+
+    private val _dividendSummary = MutableStateFlow(DividendSummary.empty)
+    val dividendSummary: StateFlow<DividendSummary> = _dividendSummary.asStateFlow()
+
+    private val _marketOverview = MutableStateFlow(MarketOverview.empty)
+    val marketOverview: StateFlow<MarketOverview> = _marketOverview.asStateFlow()
+
+    // Top movers derived from portfolio holdings
+    val topGainers: List<Holding>
+        get() = _portfolio.value?.holdings
+            ?.filter { it.dayChange > 0 }
+            ?.sortedByDescending { it.dayChangePercentage }
+            ?.take(3) ?: emptyList()
+
+    val topLosers: List<Holding>
+        get() = _portfolio.value?.holdings
+            ?.filter { it.dayChange < 0 }
+            ?.sortedBy { it.dayChangePercentage }
+            ?.take(3) ?: emptyList()
+
     init {
         loadData()
     }
 
     fun setPortfolioViewMode(mode: PortfolioViewMode) {
         _portfolioViewMode.value = mode
+    }
+
+    fun setHistoryPeriod(period: HistoryPeriod) {
+        _selectedHistoryPeriod.value = period
+        _portfolioHistory.value = createMockPortfolioHistory(period)
     }
 
     fun loadData() {
@@ -154,6 +196,32 @@ class HomeViewModel @Inject constructor(
 
             // Load upcoming actions (mock for now)
             _upcomingActions.value = createMockUpcomingActions()
+
+            // Load portfolio history (mock for now)
+            _portfolioHistory.value = createMockPortfolioHistory(_selectedHistoryPeriod.value)
+
+            // Load tax summary (mock for now)
+            _taxSummary.value = TaxSummary.calculate(
+                ltcg = 85000.0,
+                stcg = 12000.0,
+                elss = 95000.0
+            )
+
+            // Load dividend summary (mock for now)
+            _dividendSummary.value = createMockDividendSummary()
+
+            // Load market overview (mock for now)
+            _marketOverview.value = MarketOverview(
+                indices = listOf(
+                    MarketIndex("1", "Nifty 50", "NSEI", 22456.80, 22380.50, 76.30, 0.34),
+                    MarketIndex("2", "Sensex", "BSESN", 73890.45, 73650.20, 240.25, 0.33),
+                    MarketIndex("3", "Bank Nifty", "NSEBANK", 48230.15, 48100.00, 130.15, 0.27),
+                    MarketIndex("4", "Nifty IT", "NSEIT", 38450.60, 38520.30, -69.70, -0.18),
+                    MarketIndex("5", "Nifty Midcap", "NSEMID", 42180.90, 42050.10, 130.80, 0.31)
+                ),
+                status = "Closed",
+                lastUpdated = "Jan 10, 2026 3:30 PM"
+            )
 
             _uiState.value = HomeUiState.Success
         }
@@ -341,6 +409,100 @@ class HomeViewModel @Inject constructor(
                 type = ActionType.REBALANCE,
                 dueDate = "Review"
             )
+        )
+    }
+
+    private fun createMockPortfolioHistory(period: HistoryPeriod): PortfolioHistory {
+        val days = period.days.coerceAtMost(365 * 5)
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.DAY_OF_YEAR, -days)
+
+        val baseValue = 180000.0
+        val baseInvested = 175000.0
+        val pointCount = when (period) {
+            HistoryPeriod.ONE_MONTH -> 30
+            HistoryPeriod.THREE_MONTHS -> 45
+            HistoryPeriod.SIX_MONTHS -> 60
+            HistoryPeriod.ONE_YEAR -> 52
+            HistoryPeriod.THREE_YEARS -> 72
+            HistoryPeriod.FIVE_YEARS -> 60
+            HistoryPeriod.ALL -> 80
+        }
+        val stepDays = days / pointCount
+
+        val points = mutableListOf<PortfolioHistoryPoint>()
+        var currentValue = baseValue
+        var currentInvested = baseInvested
+
+        for (i in 0..pointCount) {
+            val dateStr = String.format(
+                Locale.US, "%04d-%02d-%02d",
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH) + 1,
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
+
+            points.add(
+                PortfolioHistoryPoint(
+                    id = i.toString(),
+                    date = dateStr,
+                    value = currentValue,
+                    invested = currentInvested
+                )
+            )
+
+            // Simulate growth with some volatility
+            val growthRate = 0.0008 + (Math.random() * 0.003 - 0.001)
+            currentValue *= (1 + growthRate)
+            currentInvested += (500 + Math.random() * 200) * stepDays / 30
+            calendar.add(Calendar.DAY_OF_YEAR, stepDays)
+        }
+
+        return PortfolioHistory(dataPoints = points, period = period)
+    }
+
+    private fun createMockDividendSummary(): DividendSummary {
+        return DividendSummary(
+            financialYear = "FY 2025-26",
+            totalReceived = 8450.0,
+            projectedAnnual = 14200.0,
+            dividendYield = 2.8,
+            records = listOf(
+                DividendRecord(
+                    id = "d1",
+                    fundCode = "119598",
+                    fundName = "Axis Bluechip Fund",
+                    amount = 3200.0,
+                    unitsHeld = 234.56,
+                    dividendPerUnit = 13.64,
+                    recordDate = "Dec 15, 2025",
+                    paymentDate = "Dec 20, 2025",
+                    status = "Paid"
+                ),
+                DividendRecord(
+                    id = "d2",
+                    fundCode = "145552",
+                    fundName = "Mirae Asset Large Cap Fund",
+                    amount = 2750.0,
+                    unitsHeld = 189.32,
+                    dividendPerUnit = 14.53,
+                    recordDate = "Nov 28, 2025",
+                    paymentDate = "Dec 5, 2025",
+                    status = "Paid"
+                ),
+                DividendRecord(
+                    id = "d3",
+                    fundCode = "120594",
+                    fundName = "HDFC Corporate Bond Fund",
+                    amount = 2500.0,
+                    unitsHeld = 500.0,
+                    dividendPerUnit = 5.0,
+                    recordDate = "Jan 15, 2026",
+                    paymentDate = "Jan 22, 2026",
+                    status = "Announced"
+                )
+            ),
+            nextExpectedDate = "Feb 15, 2026"
         )
     }
 

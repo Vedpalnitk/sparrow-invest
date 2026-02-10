@@ -63,15 +63,11 @@ const Navbar = ({ mode = 'user' }: NavbarProps) => {
   const scopedLinks = mode === 'admin'
     ? [
         { label: 'Overview', href: '/admin/dashboard' },
-        { label: 'Pipeline', href: '/admin/pipeline' },
-        { label: 'Personas', href: '/admin/personas' },
-        { label: 'Users', href: '/admin/users' },
-        { label: 'Allocations', href: '/admin/allocations' },
         { label: 'Funds', href: '/admin/funds' },
-        { label: 'Models', href: '/admin/models' },
-        { label: 'ML Lab', href: '/admin/lab' },
+        { label: 'Users', href: '/admin/users' },
+        { label: 'ML Studio', href: '/admin/ml' },
+        { label: 'ML Config', href: '/admin/ml-config' },
         { label: 'Recommendations', href: '/admin/recommendations' },
-        { label: 'Design', href: '/admin/designv4' },
       ]
     : mode === 'advisor'
     ? [

@@ -15,6 +15,7 @@ class PreferencesManager @Inject constructor(
         private const val KEY_HAS_COMPLETED_ONBOARDING = "has_completed_onboarding"
         private const val KEY_CURRENT_USER = "current_user"
         private const val KEY_THEME_MODE = "theme_mode"
+        private const val KEY_BIOMETRIC_ENABLED = "biometric_enabled"
     }
 
     private val json = Json {

@@ -124,20 +124,52 @@ export default function FundNavChart({ schemeCode, isDark = false }: FundNavChar
     const dates = filteredData.map(d => formatDate(d.date));
     const navs = filteredData.map(d => parseFloat(d.nav));
 
+    // Dark mode specific colors
+    const bgColor = isDark ? 'transparent' : '#FFFFFF';
+    const tooltipBg = isDark ? '#1E293B' : '#FFFFFF';
+    const tooltipBorder = isDark ? 'rgba(147, 197, 253, 0.2)' : 'rgba(59, 130, 246, 0.15)';
+    const tooltipTextColor = isDark ? '#F8FAFC' : '#1E293B';
+    const tooltipSecondaryColor = isDark ? '#94A3B8' : '#64748B';
+    const axisLineColor = isDark ? 'rgba(147, 197, 253, 0.15)' : 'rgba(59, 130, 246, 0.08)';
+    const axisLabelColor = isDark ? '#94A3B8' : '#64748B';
+    const splitLineColor = isDark ? 'rgba(147, 197, 253, 0.1)' : 'rgba(59, 130, 246, 0.06)';
+    const lineColors = isDark
+      ? [
+          { offset: 0, color: '#93C5FD' },
+          { offset: 0.5, color: '#60A5FA' },
+          { offset: 1, color: '#7DD3FC' },
+        ]
+      : [
+          { offset: 0, color: '#3B82F6' },
+          { offset: 0.5, color: '#2563EB' },
+          { offset: 1, color: '#38BDF8' },
+        ];
+    const areaColors = isDark
+      ? [
+          { offset: 0, color: 'rgba(147, 197, 253, 0.15)' },
+          { offset: 0.5, color: 'rgba(147, 197, 253, 0.05)' },
+          { offset: 1, color: 'rgba(147, 197, 253, 0)' },
+        ]
+      : [
+          { offset: 0, color: 'rgba(59, 130, 246, 0.12)' },
+          { offset: 0.5, color: 'rgba(59, 130, 246, 0.04)' },
+          { offset: 1, color: 'rgba(59, 130, 246, 0)' },
+        ];
+
     return {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: bgColor,
       tooltip: {
         trigger: 'axis',
-        backgroundColor: '#FFFFFF',
-        borderColor: 'rgba(59, 130, 246, 0.15)',
+        backgroundColor: tooltipBg,
+        borderColor: tooltipBorder,
         borderWidth: 1,
         padding: [12, 16],
-        textStyle: { color: '#1E293B', fontSize: 13 },
+        textStyle: { color: tooltipTextColor, fontSize: 13 },
         formatter: (params: any) => {
           const data = params[0];
           return `
-            <div style="font-weight: 600; margin-bottom: 4px; color: #1E293B;">${data.name}</div>
-            <div style="color: #64748B">NAV: <span style="color: #3B82F6; font-weight: 600;">${parseFloat(data.value).toFixed(4)}</span></div>
+            <div style="font-weight: 600; margin-bottom: 4px; color: ${tooltipTextColor};">${data.name}</div>
+            <div style="color: ${tooltipSecondaryColor}">NAV: <span style="color: ${colors.primary}; font-weight: 600;">${parseFloat(data.value).toFixed(4)}</span></div>
           `;
         },
       },
@@ -151,10 +183,10 @@ export default function FundNavChart({ schemeCode, isDark = false }: FundNavChar
         type: 'category',
         data: dates,
         boundaryGap: false,
-        axisLine: { lineStyle: { color: 'rgba(59, 130, 246, 0.08)' } },
+        axisLine: { lineStyle: { color: axisLineColor } },
         axisTick: { show: false },
         axisLabel: {
-          color: '#64748B',
+          color: axisLabelColor,
           fontSize: 11,
           interval: Math.floor(dates.length / 6),
         },
@@ -168,12 +200,12 @@ export default function FundNavChart({ schemeCode, isDark = false }: FundNavChar
         axisTick: { show: false },
         splitLine: {
           lineStyle: {
-            color: 'rgba(59, 130, 246, 0.06)',
+            color: splitLineColor,
             type: 'dashed',
           },
         },
         axisLabel: {
-          color: '#64748B',
+          color: axisLabelColor,
           fontSize: 11,
           formatter: (value: number) => value.toFixed(0),
         },
@@ -194,20 +226,16 @@ export default function FundNavChart({ schemeCode, isDark = false }: FundNavChar
               y: 0,
               x2: 1,
               y2: 0,
-              colorStops: [
-                { offset: 0, color: '#3B82F6' },
-                { offset: 0.5, color: '#2563EB' },
-                { offset: 1, color: '#38BDF8' },
-              ],
+              colorStops: lineColors,
             },
-            shadowColor: 'rgba(59, 130, 246, 0.25)',
+            shadowColor: isDark ? 'rgba(147, 197, 253, 0.3)' : 'rgba(59, 130, 246, 0.25)',
             shadowBlur: 10,
             shadowOffsetY: 5,
           },
           itemStyle: {
-            color: '#3B82F6',
+            color: colors.primary,
             borderWidth: 2,
-            borderColor: '#FFFFFF',
+            borderColor: isDark ? '#1E293B' : '#FFFFFF',
           },
           areaStyle: {
             color: {
@@ -216,18 +244,14 @@ export default function FundNavChart({ schemeCode, isDark = false }: FundNavChar
               y: 0,
               x2: 0,
               y2: 1,
-              colorStops: [
-                { offset: 0, color: 'rgba(59, 130, 246, 0.12)' },
-                { offset: 0.5, color: 'rgba(59, 130, 246, 0.04)' },
-                { offset: 1, color: 'rgba(59, 130, 246, 0)' },
-              ],
+              colorStops: areaColors,
             },
           },
           emphasis: {
             focus: 'series',
             itemStyle: {
               shadowBlur: 15,
-              shadowColor: 'rgba(59, 130, 246, 0.4)',
+              shadowColor: isDark ? 'rgba(147, 197, 253, 0.5)' : 'rgba(59, 130, 246, 0.4)',
             },
           },
         },

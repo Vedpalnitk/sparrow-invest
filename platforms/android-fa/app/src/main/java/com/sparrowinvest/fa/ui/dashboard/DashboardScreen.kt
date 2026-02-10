@@ -61,7 +61,6 @@ import com.sparrowinvest.fa.data.model.FADashboard
 import com.sparrowinvest.fa.data.model.FASip
 import com.sparrowinvest.fa.data.model.FATransaction
 import com.sparrowinvest.fa.data.model.KpiGrowth
-import com.sparrowinvest.fa.data.model.MarketIndex
 import com.sparrowinvest.fa.ui.components.ErrorState
 import com.sparrowinvest.fa.ui.components.GlassCard
 import com.sparrowinvest.fa.ui.components.IconContainer
@@ -456,21 +455,6 @@ private fun DashboardContent(
             }
         }
 
-        // Market Indices Section
-        if (dashboard.marketIndices.isNotEmpty()) {
-            item {
-                SectionHeader(
-                    title = "Market Indices",
-                    actionText = null,
-                    onActionClick = {}
-                )
-            }
-
-            item {
-                MarketIndicesRow(indices = dashboard.marketIndices)
-            }
-        }
-
         item {
             Spacer(modifier = Modifier.height(Spacing.large))
         }
@@ -773,61 +757,6 @@ private fun ClientCard(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        }
-    }
-}
-
-@Composable
-private fun MarketIndicesRow(indices: List<MarketIndex>) {
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(Spacing.compact)
-    ) {
-        items(indices) { index ->
-            MarketIndexCard(index = index)
-        }
-    }
-}
-
-@Composable
-private fun MarketIndexCard(index: MarketIndex) {
-    val changeColor = if (index.isPositive) Success else com.sparrowinvest.fa.ui.theme.Error
-
-    GlassCard(
-        modifier = Modifier.width(140.dp),
-        cornerRadius = CornerRadius.large,
-        contentPadding = Spacing.compact
-    ) {
-        Column {
-            Text(
-                text = index.name,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(Spacing.small))
-            Text(
-                text = index.formattedValue,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Icon(
-                    imageVector = if (index.isPositive)
-                        Icons.AutoMirrored.Filled.TrendingUp
-                    else
-                        Icons.AutoMirrored.Filled.TrendingDown,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = changeColor
-                )
-                Text(
-                    text = index.formattedChangePercent,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = changeColor
-                )
-            }
         }
     }
 }

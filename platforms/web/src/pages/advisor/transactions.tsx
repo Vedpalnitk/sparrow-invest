@@ -2,126 +2,173 @@
  * Transactions Page
  *
  * Execute and track client mutual fund transactions.
- * Supports: Buy, Sell, SIP, SWP, Switch, STP
+ * Server-side pagination, filtering, and search for handling large datasets.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import AdvisorLayout from '@/components/layout/AdvisorLayout'
 import { useFATheme, formatCurrency, getTransactionTypeColor, getStatusColor } from '@/utils/fa'
-import { Transaction, TransactionType, TransactionStatus, TransactionFormData } from '@/utils/faTypes'
+import { Transaction, TransactionType, TransactionFormData } from '@/utils/faTypes'
 import {
   FACard,
-  FAStatCard,
   FAChip,
-  FASearchInput,
-  FASelect,
+  FAStatCard,
   FAButton,
   FAEmptyState,
-  FALoadingState,
-  FAInput,
   useNotification,
 } from '@/components/advisor/shared'
 import TransactionFormModal from '@/components/advisor/TransactionFormModal'
-import { transactionsApi, sipsApi } from '@/services/api'
+import { transactionsApi, sipsApi, FAPaginatedResponse } from '@/services/api'
 
-// Mock transactions data (fallback when API is not available)
-const mockTransactions: Transaction[] = [
-  { id: '1', clientId: 'c1', clientName: 'Rajesh Sharma', fundName: 'HDFC Mid-Cap Opportunities Fund', fundSchemeCode: '112090', fundCategory: 'Equity', type: 'Buy', amount: 50000, units: 125.45, nav: 398.56, status: 'Completed', date: '2024-01-20', folioNumber: 'HDFC-123456' },
-  { id: '2', clientId: 'c2', clientName: 'Priya Patel', fundName: 'ICICI Prudential Bluechip Fund', fundSchemeCode: '120594', fundCategory: 'Equity', type: 'SIP', amount: 25000, units: 52.18, nav: 479.12, status: 'Completed', date: '2024-01-20', folioNumber: 'ICICI-789012' },
-  { id: '3', clientId: 'c3', clientName: 'Amit Kumar', fundName: 'Axis Short Term Fund', fundSchemeCode: '118989', fundCategory: 'Debt', type: 'Buy', amount: 100000, units: 3892.15, nav: 25.69, status: 'Processing', date: '2024-01-19', folioNumber: 'AXIS-345678' },
-  { id: '4', clientId: 'c4', clientName: 'Sneha Gupta', fundName: 'SBI Equity Hybrid Fund', fundSchemeCode: '119598', fundCategory: 'Hybrid', type: 'Sell', amount: 75000, units: 312.50, nav: 240.00, status: 'Pending', date: '2024-01-19', folioNumber: 'SBI-901234' },
-  { id: '5', clientId: 'c5', clientName: 'Vikram Singh', fundName: 'Mirae Asset Large Cap Fund', fundSchemeCode: '122639', fundCategory: 'Equity', type: 'Switch', amount: 200000, units: 1875.00, nav: 106.67, status: 'Completed', date: '2024-01-18', folioNumber: 'MIRAE-567890' },
-  { id: '6', clientId: 'c6', clientName: 'Meera Krishnan', fundName: 'Kotak Corporate Bond Fund', fundSchemeCode: '135781', fundCategory: 'Debt', type: 'SIP', amount: 15000, units: 4687.50, nav: 32.00, status: 'Completed', date: '2024-01-18', folioNumber: 'KOTAK-123789' },
-  { id: '7', clientId: 'c7', clientName: 'Arjun Mehta', fundName: 'Nippon India Small Cap Fund', fundSchemeCode: '112323', fundCategory: 'Equity', type: 'Buy', amount: 30000, units: 234.38, nav: 128.00, status: 'Failed', date: '2024-01-17', folioNumber: 'NIP-456012' },
-  { id: '8', clientId: 'c8', clientName: 'Kavita Rao', fundName: 'UTI Nifty 50 Index Fund', fundSchemeCode: '120503', fundCategory: 'Index', type: 'SWP', amount: 20000, units: 125.00, nav: 160.00, status: 'Completed', date: '2024-01-17', folioNumber: 'UTI-789345' },
-  { id: '9', clientId: 'c1', clientName: 'Rajesh Sharma', fundName: 'Parag Parikh Flexi Cap Fund', fundSchemeCode: '135781', fundCategory: 'Equity', type: 'SIP', amount: 10000, units: 156.25, nav: 64.00, status: 'Completed', date: '2024-01-15', folioNumber: 'PPFAS-012678' },
-  { id: '10', clientId: 'c2', clientName: 'Priya Patel', fundName: 'DSP Tax Saver Fund', fundSchemeCode: '119034', fundCategory: 'ELSS', type: 'Buy', amount: 150000, units: 1562.50, nav: 96.00, status: 'Completed', date: '2024-01-15', folioNumber: 'DSP-345901' },
-]
+const PAGE_SIZE = 25
+
+const TYPE_OPTIONS = ['All', 'Buy', 'Sell', 'SIP', 'SWP', 'Switch', 'STP'] as const
+const STATUS_OPTIONS = ['All', 'Completed', 'Pending', 'Processing', 'Failed', 'Cancelled'] as const
 
 const TransactionsPage = () => {
   const router = useRouter()
   const { colors, isDark } = useFATheme()
   const notification = useNotification()
+
+  // Data
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+
+  // Filters
+  const [page, setPage] = useState(1)
   const [searchTerm, setSearchTerm] = useState('')
-  const [filterType, setFilterType] = useState<string>('all')
-  const [filterStatus, setFilterStatus] = useState<string>('all')
-  const [dateFrom, setDateFrom] = useState<string>('')
-  const [dateTo, setDateTo] = useState<string>('')
+  const [filterType, setFilterType] = useState('All')
+  const [filterStatus, setFilterStatus] = useState('All')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+
+  // Transaction modal
   const [showNewTransaction, setShowNewTransaction] = useState(false)
   const [selectedTransactionType, setSelectedTransactionType] = useState<TransactionType>('Buy')
   const [submitting, setSubmitting] = useState(false)
+  const [showTypeMenu, setShowTypeMenu] = useState(false)
 
-  // Fetch transactions from API
+  // Sort
+  const [sortColumn, setSortColumn] = useState('')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+
+  const handleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(column)
+      setSortDir('asc')
+    }
+  }
+
+  const sortIcon = (column: string) => {
+    if (sortColumn === column) {
+      return (
+        <svg className="w-3 h-3 ml-0.5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d={sortDir === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+        </svg>
+      )
+    }
+    return (
+      <svg className="w-3 h-3 ml-0.5 inline-block opacity-0 group-hover/th:opacity-30 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+      </svg>
+    )
+  }
+
+  // Search debounce
+  const searchTimeout = useRef<NodeJS.Timeout>()
+  const [searchInput, setSearchInput] = useState('')
+
+  const handleSearchChange = (value: string) => {
+    setSearchInput(value)
+    if (searchTimeout.current) clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => {
+      setSearchTerm(value)
+      setPage(1)
+    }, 300)
+  }
+
+  // Fetch transactions
   const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true)
-      setError(null)
       const response = await transactionsApi.list<Transaction>({
+        page,
+        limit: PAGE_SIZE,
         search: searchTerm || undefined,
-        type: filterType !== 'all' ? filterType : undefined,
-        status: filterStatus !== 'all' ? filterStatus : undefined,
+        type: filterType !== 'All' ? filterType : undefined,
+        status: filterStatus !== 'All' ? filterStatus : undefined,
         dateFrom: dateFrom || undefined,
         dateTo: dateTo || undefined,
       })
       setTransactions(response.data)
+      setTotal(response.total)
+      setTotalPages(response.totalPages)
     } catch {
-      setError('Using demo data - API not available')
-      setTransactions(mockTransactions)
+      setTransactions([])
+      setTotal(0)
+      setTotalPages(0)
     } finally {
       setLoading(false)
     }
-  }, [searchTerm, filterType, filterStatus, dateFrom, dateTo])
+  }, [page, searchTerm, filterType, filterStatus, dateFrom, dateTo])
 
   useEffect(() => {
     fetchTransactions()
   }, [fetchTransactions])
 
-  // Client-side filtering for mock data
-  const filteredTransactions = error
-    ? transactions.filter(txn => {
-        const matchesSearch = txn.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             txn.fundName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             txn.folioNumber.toLowerCase().includes(searchTerm.toLowerCase())
-        const matchesType = filterType === 'all' || txn.type === filterType
-        const matchesStatus = filterStatus === 'all' || txn.status === filterStatus
-        return matchesSearch && matchesType && matchesStatus
-      })
-    : transactions
-
+  // Stats
   const totalVolume = transactions.reduce((sum, t) => sum + t.amount, 0)
-  const completedTxns = transactions.filter(t => t.status === 'Completed').length
-  const pendingTxns = transactions.filter(t => t.status === 'Pending' || t.status === 'Processing').length
+  const completedCount = transactions.filter(t => t.status === 'Completed').length
+  const pendingCount = transactions.filter(t => t.status === 'Pending' || t.status === 'Processing').length
+  const failedCount = transactions.filter(t => t.status === 'Failed').length
+
+  const sortedTransactions = useMemo(() => {
+    if (!sortColumn) return transactions
+    const getters: Record<string, (t: Transaction) => string | number> = {
+      date: t => new Date(t.date).getTime(),
+      client: t => t.clientName,
+      fund: t => t.fundName,
+      type: t => t.type,
+      amount: t => t.amount,
+      nav: t => t.nav || 0,
+      status: t => t.status,
+    }
+    const getter = getters[sortColumn]
+    if (!getter) return transactions
+    return [...transactions].sort((a, b) => {
+      const aVal = getter(a)
+      const bVal = getter(b)
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortDir === 'asc' ? aVal - bVal : bVal - aVal
+      }
+      const aStr = String(aVal).toLowerCase()
+      const bStr = String(bVal).toLowerCase()
+      return sortDir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr)
+    })
+  }, [transactions, sortColumn, sortDir])
 
   const handleQuickAction = (type: TransactionType) => {
     setSelectedTransactionType(type)
     setShowNewTransaction(true)
+    setShowTypeMenu(false)
   }
 
   const handleNewTransaction = async (data: TransactionFormData) => {
     setSubmitting(true)
     try {
-      if (data.type === 'Buy') {
-        await transactionsApi.createLumpsum({
-          clientId: data.clientId,
-          fundSchemeCode: data.fundSchemeCode,
-          amount: data.amount,
-          folioNumber: data.folioNumber || undefined,
-          paymentMode: data.paymentMode,
-        })
-        notification.success('Order Placed', 'Lumpsum purchase order has been submitted successfully.')
-      } else if (data.type === 'Sell') {
-        await transactionsApi.createRedemption({
-          clientId: data.clientId,
-          fundSchemeCode: data.fundSchemeCode,
-          amount: data.amount,
-          folioNumber: data.folioNumber || undefined,
-        })
-        notification.success('Redemption Submitted', 'Redemption request has been submitted successfully.')
-      } else if (data.type === 'SIP') {
+      // Map frontend type to backend UPPERCASE enum
+      const typeMap: Record<string, string> = {
+        Buy: 'BUY', Sell: 'SELL', SIP: 'SIP',
+        SWP: 'SWP', Switch: 'SWITCH', STP: 'STP',
+      }
+
+      if (data.type === 'SIP') {
+        // SIP uses separate endpoint
         await sipsApi.create({
           clientId: data.clientId,
           fundName: data.fundName || '',
@@ -134,14 +181,43 @@ const TransactionsPage = () => {
           endDate: data.sipEndDate || undefined,
           isPerpetual: data.isPerpetual ?? true,
         })
-        notification.success('SIP Registered', 'New SIP has been registered successfully.')
+        notification.success('SIP Recorded', 'SIP registration recorded successfully.')
       } else {
-        notification.info('Coming Soon', `${data.type} transactions will be available soon.`)
+        // All other types use the transaction endpoints
+        const payload = {
+          clientId: data.clientId,
+          fundName: data.fundName || '',
+          fundSchemeCode: data.fundSchemeCode,
+          fundCategory: data.fundCategory || 'Equity',
+          type: typeMap[data.type] || data.type,
+          amount: data.amount,
+          nav: data.nav || 0,
+          folioNumber: data.folioNumber || 'NEW',
+          date: new Date().toISOString().split('T')[0],
+          paymentMode: data.paymentMode,
+          remarks: data.remarks,
+        }
+
+        if (data.type === 'Sell' || data.type === 'SWP') {
+          await transactionsApi.createRedemption(payload)
+        } else {
+          // Buy, Switch, STP
+          await transactionsApi.createLumpsum(payload)
+        }
+
+        const labels: Record<string, string> = {
+          Buy: 'Purchase', Sell: 'Redemption', Switch: 'Switch', SWP: 'SWP', STP: 'STP',
+        }
+        notification.success(
+          `${labels[data.type]} Recorded`,
+          `${labels[data.type]} transaction recorded successfully.`
+        )
       }
+
       fetchTransactions()
       setShowNewTransaction(false)
     } catch (err) {
-      notification.error('Transaction Failed', err instanceof Error ? err.message : 'Failed to process transaction')
+      notification.error('Transaction Failed', err instanceof Error ? err.message : 'Failed to record transaction')
     } finally {
       setSubmitting(false)
     }
@@ -151,249 +227,410 @@ const TransactionsPage = () => {
     router.push(`/advisor/transactions/${txn.id}`)
   }
 
-  const quickActions = [
-    { type: 'Buy' as TransactionType, label: 'Buy', icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6', pastel: 'pastelMint' },
-    { type: 'Sell' as TransactionType, label: 'Sell', icon: 'M20 12H4', pastel: 'pastelRose' },
-    { type: 'SIP' as TransactionType, label: 'SIP', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15', pastel: 'pastelIndigo' },
-    { type: 'SWP' as TransactionType, label: 'SWP', icon: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1', pastel: 'pastelPeach' },
-    { type: 'Switch' as TransactionType, label: 'Switch', icon: 'M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4', pastel: 'pastelPurple' },
-  ]
+  const clearFilters = () => {
+    setSearchInput('')
+    setSearchTerm('')
+    setFilterType('All')
+    setFilterStatus('All')
+    setDateFrom('')
+    setDateTo('')
+    setPage(1)
+  }
+
+  const hasActiveFilters = searchTerm || filterType !== 'All' || filterStatus !== 'All' || dateFrom || dateTo
+
+  const startItem = (page - 1) * PAGE_SIZE + 1
+  const endItem = Math.min(page * PAGE_SIZE, total)
 
   return (
     <AdvisorLayout title="Transactions">
       <div style={{ background: colors.background, minHeight: '100%', margin: '-2rem', padding: '2rem' }}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-sm" style={{ color: colors.textSecondary }}>Execute and track client transactions</p>
+            <p className="text-sm" style={{ color: colors.textSecondary }}>
+              {total > 0 ? `${total.toLocaleString('en-IN')} transactions` : 'Execute and track client transactions'}
+            </p>
           </div>
-          <FAButton
-            onClick={() => setShowNewTransaction(true)}
-            className="flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            New Transaction
-          </FAButton>
+          <div className="relative">
+            <FAButton
+              onClick={() => setShowTypeMenu(!showTypeMenu)}
+              className="flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Record Transaction
+              <svg className="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </FAButton>
+            {showTypeMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowTypeMenu(false)} />
+                <div
+                  className="absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden z-50 shadow-xl"
+                  style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}` }}
+                >
+                  {(['Buy', 'Sell', 'SIP', 'SWP', 'Switch', 'STP'] as TransactionType[]).map(type => {
+                    const typeColor = getTransactionTypeColor(type, colors)
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => handleQuickAction(type)}
+                        className="w-full px-4 py-2.5 text-left text-sm font-medium flex items-center gap-3 transition-colors"
+                        style={{ color: colors.textPrimary }}
+                        onMouseEnter={e => e.currentTarget.style.background = colors.chipBg}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ background: typeColor }}
+                        />
+                        {type}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        {/* Stat Tiles */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <FAStatCard
             label="Total Volume"
             value={formatCurrency(totalVolume)}
-            change="This month"
+            change="This page"
             accentColor={colors.primary}
           />
           <FAStatCard
             label="Transactions"
-            value={transactions.length.toString()}
-            change="This month"
+            value={total.toLocaleString('en-IN')}
+            change="All time"
             accentColor={colors.secondary}
           />
           <FAStatCard
             label="Completed"
-            value={completedTxns.toString()}
-            change={`${((completedTxns / transactions.length) * 100).toFixed(0)}% success rate`}
+            value={completedCount.toString()}
+            change={total > 0 ? `${((completedCount / transactions.length) * 100).toFixed(0)}% on this page` : ''}
             accentColor={colors.success}
           />
           <FAStatCard
             label="Pending"
-            value={pendingTxns.toString()}
-            change="Awaiting processing"
+            value={pendingCount.toString()}
+            change={failedCount > 0 ? `${failedCount} failed` : 'Awaiting processing'}
             accentColor={colors.warning}
           />
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-5 gap-3 mb-8">
-          {quickActions.map((action) => {
-            const actionColor = getTransactionTypeColor(action.type, colors)
-            return (
-              <button
-                key={action.type}
-                onClick={() => handleQuickAction(action.type)}
-                className="p-4 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg flex flex-col items-center gap-2"
-                style={{
-                  background: `${actionColor}${isDark ? '15' : '10'}`,
-                  border: `1px solid ${actionColor}30`,
-                }}
+        {/* Filters Bar */}
+        <FACard className="mb-4">
+          <div className="flex items-center gap-3">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                style={{ color: colors.textTertiary }}
+                fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
               >
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: `${actionColor}20` }}
-                >
-                  <svg className="w-5 h-5" style={{ color: actionColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={action.icon} />
-                  </svg>
-                </div>
-                <span className="text-sm font-semibold" style={{ color: actionColor }}>{action.label}</span>
-              </button>
-            )
-          })}
-        </div>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search client, fund, or folio..."
+                value={searchInput}
+                onChange={e => handleSearchChange(e.target.value)}
+                className="w-full h-9 pl-9 pr-3 rounded-lg text-sm focus:outline-none"
+                style={{
+                  background: colors.inputBg,
+                  border: `1px solid ${colors.inputBorder}`,
+                  color: colors.textPrimary,
+                }}
+              />
+            </div>
 
-        {/* Filters */}
-        <FACard className="mb-6">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px]">
-              <FASearchInput
-                placeholder="Search by client, fund, or folio..."
-                value={searchTerm}
-                onChange={setSearchTerm}
-              />
-            </div>
-            <FASelect
-              options={[
-                { value: 'all', label: 'All Types' },
-                { value: 'Buy', label: 'Buy' },
-                { value: 'Sell', label: 'Sell' },
-                { value: 'SIP', label: 'SIP' },
-                { value: 'SWP', label: 'SWP' },
-                { value: 'Switch', label: 'Switch' },
-              ]}
+            {/* Divider */}
+            <div className="w-px h-6" style={{ background: colors.cardBorder }} />
+
+            {/* Type filter */}
+            <select
               value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              containerClassName="w-36"
-            />
-            <FASelect
-              options={[
-                { value: 'all', label: 'All Status' },
-                { value: 'Completed', label: 'Completed' },
-                { value: 'Pending', label: 'Pending' },
-                { value: 'Processing', label: 'Processing' },
-                { value: 'Failed', label: 'Failed' },
-              ]}
+              onChange={e => { setFilterType(e.target.value); setPage(1) }}
+              className="h-9 px-3 rounded-lg text-sm focus:outline-none cursor-pointer"
+              style={{
+                background: colors.inputBg,
+                border: `1px solid ${filterType !== 'All' ? colors.primary : colors.inputBorder}`,
+                color: filterType !== 'All' ? colors.primary : colors.textSecondary,
+              }}
+            >
+              {TYPE_OPTIONS.map(t => <option key={t} value={t}>{t === 'All' ? 'All Types' : t}</option>)}
+            </select>
+
+            {/* Status filter */}
+            <select
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              containerClassName="w-36"
+              onChange={e => { setFilterStatus(e.target.value); setPage(1) }}
+              className="h-9 px-3 rounded-lg text-sm focus:outline-none cursor-pointer"
+              style={{
+                background: colors.inputBg,
+                border: `1px solid ${filterStatus !== 'All' ? colors.primary : colors.inputBorder}`,
+                color: filterStatus !== 'All' ? colors.primary : colors.textSecondary,
+              }}
+            >
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s === 'All' ? 'All Status' : s}</option>)}
+            </select>
+
+            {/* Divider */}
+            <div className="w-px h-6" style={{ background: colors.cardBorder }} />
+
+            {/* Date range */}
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={e => { setDateFrom(e.target.value); setPage(1) }}
+              className="h-9 px-2 rounded-lg text-sm focus:outline-none"
+              style={{
+                background: colors.inputBg,
+                border: `1px solid ${dateFrom ? colors.primary : colors.inputBorder}`,
+                color: dateFrom ? colors.textPrimary : colors.textTertiary,
+              }}
             />
-            <div className="flex items-center gap-2">
-              <FAInput
-                type="date"
-                placeholder="From"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                containerClassName="w-36"
-              />
-              <span className="text-sm" style={{ color: colors.textTertiary }}>to</span>
-              <FAInput
-                type="date"
-                placeholder="To"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                containerClassName="w-36"
-              />
-            </div>
-            {(dateFrom || dateTo) && (
+            <span className="text-xs" style={{ color: colors.textTertiary }}>-</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={e => { setDateTo(e.target.value); setPage(1) }}
+              className="h-9 px-2 rounded-lg text-sm focus:outline-none"
+              style={{
+                background: colors.inputBg,
+                border: `1px solid ${dateTo ? colors.primary : colors.inputBorder}`,
+                color: dateTo ? colors.textPrimary : colors.textTertiary,
+              }}
+            />
+
+            {/* Clear */}
+            {hasActiveFilters && (
               <button
-                onClick={() => { setDateFrom(''); setDateTo(''); }}
-                className="text-xs px-2 py-1 rounded"
+                onClick={clearFilters}
+                className="h-9 px-3 rounded-lg text-xs font-medium flex items-center gap-1 transition-all"
                 style={{ color: colors.primary, background: colors.chipBg }}
               >
-                Clear dates
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Clear
               </button>
             )}
           </div>
         </FACard>
 
-        {/* Transactions Table */}
-        {loading ? (
-          <FALoadingState message="Loading transactions..." />
-        ) : (
-        <FACard className="overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: colors.chipBg }}>
-                <th className="text-left p-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Client / Fund</th>
-                <th className="text-left p-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Type</th>
-                <th className="text-right p-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Amount</th>
-                <th className="text-right p-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Units</th>
-                <th className="text-right p-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>NAV</th>
-                <th className="text-center p-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Status</th>
-                <th className="text-right p-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Date</th>
-                <th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTransactions.map((txn, i) => {
-                const typeColor = getTransactionTypeColor(txn.type, colors)
-                const statusColor = getStatusColor(txn.status, colors)
-                return (
+        {/* Table */}
+        <FACard padding="none" className="overflow-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: `${colors.primary} transparent ${colors.primary} ${colors.primary}` }}
+                />
+                <span className="text-sm" style={{ color: colors.textSecondary }}>Loading transactions...</span>
+              </div>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="py-8">
+              <FAEmptyState
+                icon={
+                  <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                }
+                title={hasActiveFilters ? 'No matching transactions' : 'No transactions yet'}
+                description={hasActiveFilters ? 'Try adjusting your filters' : 'Create your first transaction to get started'}
+              />
+            </div>
+          ) : (
+            <>
+              <table className="w-full">
+                <thead>
                   <tr
-                    key={txn.id}
-                    onClick={() => handleRowClick(txn)}
-                    className="transition-colors cursor-pointer"
                     style={{
-                      borderTop: i > 0 ? `1px solid ${colors.cardBorder}` : undefined
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = isDark
-                        ? 'rgba(147, 197, 253, 0.05)'
-                        : 'rgba(59, 130, 246, 0.03)'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent'
+                      background: isDark
+                        ? `linear-gradient(135deg, rgba(147,197,253,0.06) 0%, rgba(125,211,252,0.03) 100%)`
+                        : `linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(56,189,248,0.02) 100%)`,
+                      borderBottom: `1px solid ${colors.cardBorder}`,
                     }}
                   >
-                    <td className="p-4">
-                      <p className="text-base font-semibold" style={{ color: colors.textPrimary }}>{txn.clientName}</p>
-                      <p className="text-sm" style={{ color: colors.textSecondary }}>{txn.fundName}</p>
-                      <p className="text-xs" style={{ color: colors.textTertiary }}>{txn.folioNumber}</p>
-                    </td>
-                    <td className="p-4">
-                      <FAChip color={typeColor}>{txn.type}</FAChip>
-                    </td>
-                    <td className="p-4 text-right font-bold" style={{ color: colors.textPrimary }}>
-                      {formatCurrency(txn.amount)}
-                    </td>
-                    <td className="p-4 text-right" style={{ color: colors.textSecondary }}>
-                      {txn.units.toFixed(2)}
-                    </td>
-                    <td className="p-4 text-right" style={{ color: colors.textSecondary }}>
-                      {formatCurrency(txn.nav)}
-                    </td>
-                    <td className="p-4 text-center">
-                      <FAChip color={statusColor}>{txn.status}</FAChip>
-                    </td>
-                    <td className="p-4 text-right text-sm" style={{ color: colors.textSecondary }}>
-                      {new Date(txn.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                    </td>
-                    <td className="p-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRowClick(txn)
-                        }}
-                        className="p-2 rounded-lg transition-all hover:scale-105"
-                        style={{ background: colors.chipBg, color: colors.primary }}
-                        title="View details"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </td>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('date')}>
+                      Date{sortIcon('date')}
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('client')}>
+                      Client{sortIcon('client')}
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('fund')}>
+                      Fund{sortIcon('fund')}
+                    </th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('type')}>
+                      Type{sortIcon('type')}
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('amount')}>
+                      Amount{sortIcon('amount')}
+                    </th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('nav')}>
+                      Units @ NAV{sortIcon('nav')}
+                    </th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('status')}>
+                      Status{sortIcon('status')}
+                    </th>
+                    <th className="w-8 px-2"></th>
                   </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {sortedTransactions.map((txn) => {
+                    const typeColor = getTransactionTypeColor(txn.type, colors)
+                    const statusColor = getStatusColor(txn.status, colors)
+                    return (
+                      <tr
+                        key={txn.id}
+                        onClick={() => handleRowClick(txn)}
+                        className="transition-colors cursor-pointer"
+                        style={{ borderBottom: `1px solid ${colors.cardBorder}` }}
+                        onMouseEnter={e => e.currentTarget.style.background = isDark ? 'rgba(147,197,253,0.04)' : 'rgba(59,130,246,0.02)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <td className="px-4 py-3 text-sm whitespace-nowrap" style={{ color: colors.textSecondary }}>
+                          {new Date(txn.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium truncate max-w-[160px]" style={{ color: colors.textPrimary }}>{txn.clientName}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="text-sm truncate max-w-[220px]" style={{ color: colors.textPrimary }}>{txn.fundName}</p>
+                          <p className="text-xs" style={{ color: colors.textTertiary }}>{txn.folioNumber}</p>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className="text-xs font-semibold px-2 py-0.5 rounded"
+                            style={{ background: `${typeColor}15`, color: typeColor }}
+                          >
+                            {txn.type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold whitespace-nowrap" style={{ color: colors.textPrimary }}>
+                          {formatCurrency(txn.amount)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-sm whitespace-nowrap" style={{ color: colors.textSecondary }}>
+                          {txn.units?.toFixed(2)} @ {formatCurrency(txn.nav)}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span
+                            className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded"
+                            style={{ background: `${statusColor}15`, color: statusColor }}
+                          >
+                            <span
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ background: statusColor }}
+                            />
+                            {txn.status}
+                          </span>
+                        </td>
+                        <td className="px-2 py-3">
+                          <svg className="w-4 h-4" style={{ color: colors.textTertiary }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                          </svg>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
 
-          {filteredTransactions.length === 0 && (
-            <FAEmptyState
-              icon={
-                <svg className="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
-              title="No transactions found"
-              description="Try adjusting your search or filters"
-            />
+              {/* Pagination Footer */}
+              <div
+                className="flex items-center justify-between px-4 py-3"
+                style={{ borderTop: `1px solid ${colors.cardBorder}` }}
+              >
+                <p className="text-sm" style={{ color: colors.textTertiary }}>
+                  {startItem}-{endItem} of {total.toLocaleString('en-IN')}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage(1)}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-lg transition-all disabled:opacity-30"
+                    style={{ color: colors.textSecondary }}
+                    title="First page"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="p-1.5 rounded-lg transition-all disabled:opacity-30"
+                    style={{ color: colors.textSecondary }}
+                    title="Previous page"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                    .reduce<(number | '...')[]>((acc, p, i, arr) => {
+                      if (i > 0 && p - (arr[i - 1] as number) > 1) acc.push('...')
+                      acc.push(p)
+                      return acc
+                    }, [])
+                    .map((p, i) =>
+                      p === '...' ? (
+                        <span key={`ellipsis-${i}`} className="px-1 text-sm" style={{ color: colors.textTertiary }}>...</span>
+                      ) : (
+                        <button
+                          key={p}
+                          onClick={() => setPage(p as number)}
+                          className="w-8 h-8 rounded-lg text-sm font-medium transition-all"
+                          style={{
+                            background: page === p ? colors.primary : 'transparent',
+                            color: page === p ? 'white' : colors.textSecondary,
+                          }}
+                        >
+                          {p}
+                        </button>
+                      )
+                  )}
+
+                  <button
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="p-1.5 rounded-lg transition-all disabled:opacity-30"
+                    style={{ color: colors.textSecondary }}
+                    title="Next page"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setPage(totalPages)}
+                    disabled={page === totalPages}
+                    className="p-1.5 rounded-lg transition-all disabled:opacity-30"
+                    style={{ color: colors.textSecondary }}
+                    title="Last page"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </>
           )}
         </FACard>
-        )}
       </div>
 
       {/* Transaction Modal */}
@@ -401,8 +638,6 @@ const TransactionsPage = () => {
         isOpen={showNewTransaction}
         onClose={() => setShowNewTransaction(false)}
         onSubmit={handleNewTransaction}
-        clientId="c1"
-        clientName="Sample Client"
         initialType={selectedTransactionType}
       />
     </AdvisorLayout>

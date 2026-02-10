@@ -5,6 +5,10 @@ sealed class Screen(val route: String) {
     data object Welcome : Screen("welcome")
     data object Login : Screen("login")
     data object Signup : Screen("signup")
+    data object OtpVerification : Screen("otp/{email}/{type}") {
+        fun createRoute(email: String, type: String) = "otp/$email/$type"
+    }
+    data object ForgotPassword : Screen("forgot-password")
 
     // Main screens
     data object Home : Screen("home")
@@ -35,6 +39,22 @@ sealed class Screen(val route: String) {
     data object NotificationSettings : Screen("settings/notifications")
     data object SecuritySettings : Screen("settings/security")
 
+    // Onboarding
+    data object RiskAssessment : Screen("onboarding/risk-assessment")
+    data object RiskResult : Screen("onboarding/risk-result/{category}/{score}") {
+        fun createRoute(category: String, score: Int) = "onboarding/risk-result/$category/$score"
+    }
+
+    // Advisor
+    data object AdvisorDirectory : Screen("explore/advisors")
+    data object AdvisorDetail : Screen("explore/advisor/{advisorId}") {
+        fun createRoute(advisorId: String) = "explore/advisor/$advisorId"
+    }
+    data object MyAdvisor : Screen("my-advisor")
+
+    // Points/Rewards
+    data object Points : Screen("points")
+
     // AI/Analysis
     data object PortfolioAnalysis : Screen("analysis")
     data object Recommendations : Screen("recommendations")
@@ -45,4 +65,9 @@ object NavArguments {
     const val SCHEME_CODE = "schemeCode"
     const val HOLDING_ID = "holdingId"
     const val GOAL_ID = "goalId"
+    const val EMAIL = "email"
+    const val VERIFICATION_TYPE = "type"
+    const val RISK_CATEGORY = "category"
+    const val RISK_SCORE = "score"
+    const val ADVISOR_ID = "advisorId"
 }

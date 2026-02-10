@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Import SF Pro Rounded style font (Nunito as web alternative) */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
+/* Import Manrope - modern, versatile, semi-rounded sans-serif */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 /* ============================================
    iOS 26 Liquid Glass Design System
@@ -11,8 +11,8 @@
    ============================================ */
 
 :root {
-  /* Typography - Rounded Font (SF Pro Rounded style) */
-  --font-main: 'Nunito', -apple-system-rounded, 'SF Pro Rounded', system-ui, -apple-system, sans-serif;
+  /* Typography - Manrope (modern, semi-rounded sans-serif) */
+  --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Font Sizes (V4 Scale - 15px base) */
@@ -657,6 +657,42 @@ h3, .h3 {
 /* ============================================
    Form Elements
    ============================================ */
+
+/* Disable spellcheck wavy underlines on all form elements */
+input,
+select,
+textarea,
+option,
+[contenteditable] {
+  -webkit-text-decoration-skip: none;
+  text-decoration-skip-ink: none;
+  text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+}
+
+/* Remove webkit grammar and spelling underlines */
+input::-webkit-input-spell-check,
+textarea::-webkit-input-spell-check,
+select::-webkit-input-spell-check {
+  -webkit-text-decoration: none !important;
+}
+
+/* Prevent autocomplete/autofill styling that may cause visual artifacts */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: inherit;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Remove any text decoration from option elements */
+option {
+  text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+}
 
 .input-glass {
   width: 100%;

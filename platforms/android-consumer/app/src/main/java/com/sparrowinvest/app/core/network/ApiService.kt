@@ -101,4 +101,17 @@ interface ApiService {
 
     @POST("recommendations/blended")
     suspend fun getRecommendations(@Body request: RecommendationsRequest): Response<RecommendationsResponse>
+
+    // Chat endpoints
+    @POST("chat/sessions")
+    suspend fun createChatSession(@Body request: com.sparrowinvest.app.data.model.CreateSessionRequest): Response<com.sparrowinvest.app.data.model.ChatSession>
+
+    @GET("chat/sessions/{sessionId}/messages")
+    suspend fun getChatHistory(@Path("sessionId") sessionId: String): Response<List<com.sparrowinvest.app.data.model.ChatHistoryMessage>>
+
+    @POST("chat/messages")
+    suspend fun sendChatMessage(@Body request: com.sparrowinvest.app.data.model.SendMessageRequest): Response<com.sparrowinvest.app.data.model.ChatMessageResponse>
+
+    @GET("chat/messages/{messageId}/status")
+    suspend fun getChatMessageStatus(@Path("messageId") messageId: String): Response<com.sparrowinvest.app.data.model.ChatMessageStatus>
 }

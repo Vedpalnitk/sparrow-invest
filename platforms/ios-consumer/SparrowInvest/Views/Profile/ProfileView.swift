@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var biometricManager: BiometricManager
     @EnvironmentObject var appearanceManager: AppearanceManager
     @EnvironmentObject var advisorStore: AdvisorStore
     @EnvironmentObject var navigationStore: NavigationStore
@@ -42,6 +43,19 @@ struct ProfileView: View {
                     ProfileMenuSection(title: "Preferences", items: [
                         ProfileMenuItem(icon: "bell.fill", title: "Notifications", destination: AnyView(NotificationsSettingsView())),
                         ProfileMenuItem(icon: "lock.fill", title: "Security", destination: AnyView(SecuritySettingsView()))
+                    ])
+
+                    // Biometric Authentication Toggle
+                    if biometricManager.isBiometricAvailable {
+                        BiometricToggleSection(
+                            biometricManager: biometricManager,
+                            authManager: authManager
+                        )
+                    }
+
+                    ProfileMenuSection(title: "Storage & Data", items: [
+                        ProfileMenuItem(icon: "globe", title: "Language", destination: AnyView(LanguageSettingsView())),
+                        ProfileMenuItem(icon: "internaldrive", title: "Storage & Cache", destination: AnyView(CacheManagementView()))
                     ])
 
                     ProfileMenuSection(title: "Support", items: [
@@ -1840,9 +1854,118 @@ struct AdvisorRatingSheet: View {
     }
 }
 
+// MARK: - Biometric Toggle Section
+
+struct BiometricToggleSection: View {
+    @ObservedObject var biometricManager: BiometricManager
+    @ObservedObject var authManager: AuthManager
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var sectionShadow: Color {
+        colorScheme == .dark ? Color.clear : Color.black.opacity(0.08)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
+            Text("BIOMETRIC LOGIN")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.blue)
+                .tracking(1)
+
+            VStack(spacing: 0) {
+                HStack(spacing: AppTheme.Spacing.medium) {
+                    // Icon Container
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color.blue.opacity(0.15))
+                            .frame(width: 32, height: 32)
+
+                        Image(systemName: biometricManager.biometricIconName)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.blue)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(biometricManager.biometricDisplayName)
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundColor(.primary)
+
+                        Text("Quick sign-in with \(biometricManager.biometricDisplayName)")
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    Toggle("", isOn: Binding(
+                        get: { biometricManager.isBiometricEnabled },
+                        set: { newValue in
+                            if newValue {
+                                biometricManager.enableBiometric(userId: authManager.user?.id ?? "")
+                            } else {
+                                biometricManager.disableBiometric()
+                            }
+                        }
+                    ))
+                    .labelsHidden()
+                    .tint(.blue)
+                }
+                .padding(AppTheme.Spacing.medium)
+            }
+            .background(sectionBackground)
+            .overlay(sectionBorder)
+            .shadow(color: sectionShadow, radius: 12, x: 0, y: 4)
+        }
+    }
+
+    @ViewBuilder
+    private var sectionBackground: some View {
+        if colorScheme == .dark {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                )
+        } else {
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                .fill(Color(uiColor: .white))
+        }
+    }
+
+    private var sectionBorder: some View {
+        RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+            .stroke(
+                colorScheme == .dark
+                    ? LinearGradient(
+                        stops: [
+                            .init(color: .white.opacity(0.4), location: 0),
+                            .init(color: .white.opacity(0.15), location: 0.3),
+                            .init(color: .white.opacity(0.05), location: 0.7),
+                            .init(color: .white.opacity(0.1), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      )
+                    : LinearGradient(
+                        stops: [
+                            .init(color: .black.opacity(0.1), location: 0),
+                            .init(color: .black.opacity(0.05), location: 0.3),
+                            .init(color: .black.opacity(0.03), location: 0.7),
+                            .init(color: .black.opacity(0.07), location: 1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                      ),
+                lineWidth: 1
+            )
+    }
+}
+
 #Preview {
     ProfileView()
         .environmentObject(AuthManager())
+        .environmentObject(BiometricManager())
         .environmentObject(AppearanceManager())
         .environmentObject(AdvisorStore())
         .environmentObject(NavigationStore())

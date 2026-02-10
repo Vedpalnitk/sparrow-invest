@@ -232,7 +232,7 @@ const TransactionDetailPage = () => {
               </div>
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                  <h1 className="text-lg font-bold" style={{ color: colors.textPrimary }}>
                     {transaction.type} Transaction
                   </h1>
                   <FAChip color={getStatusColor(transaction.status)} size="sm">
@@ -276,7 +276,7 @@ const TransactionDetailPage = () => {
               <FASectionHeader title="Fund Details" />
               <div className="space-y-4">
                 <div>
-                  <p className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+                  <p className="text-base font-semibold" style={{ color: colors.textPrimary }}>
                     {transaction.fundName}
                   </p>
                   <div className="flex items-center gap-3 mt-1">
@@ -310,7 +310,7 @@ const TransactionDetailPage = () => {
                   <p className="text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>
                     Amount
                   </p>
-                  <p className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                  <p className="text-lg font-bold" style={{ color: colors.textPrimary }}>
                     {formatCurrency(transaction.amount)}
                   </p>
                 </div>
@@ -318,7 +318,7 @@ const TransactionDetailPage = () => {
                   <p className="text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>
                     Units
                   </p>
-                  <p className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+                  <p className="text-lg font-bold" style={{ color: colors.textPrimary }}>
                     {transaction.units.toFixed(3)}
                   </p>
                 </div>
@@ -326,7 +326,7 @@ const TransactionDetailPage = () => {
                   <p className="text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>
                     NAV
                   </p>
-                  <p className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+                  <p className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
                     {formatCurrency(transaction.nav)}
                   </p>
                 </div>
@@ -334,7 +334,7 @@ const TransactionDetailPage = () => {
                   <p className="text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>
                     Transaction Date
                   </p>
-                  <p className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+                  <p className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
                     {formatDate(transaction.date)}
                   </p>
                 </div>
@@ -343,7 +343,7 @@ const TransactionDetailPage = () => {
                     <p className="text-xs uppercase tracking-wider" style={{ color: colors.textTertiary }}>
                       Payment Mode
                     </p>
-                    <p className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+                    <p className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
                       {transaction.paymentMode}
                     </p>
                   </div>
@@ -507,7 +507,7 @@ const TransactionDetailPage = () => {
                 boxShadow: `0 25px 50px -12px ${colors.glassShadow}`,
               }}
             >
-              <h3 className="text-lg font-semibold mb-2" style={{ color: colors.textPrimary }}>
+              <h3 className="text-base font-semibold mb-2" style={{ color: colors.textPrimary }}>
                 Cancel Transaction?
               </h3>
               <p className="text-sm mb-6" style={{ color: colors.textSecondary }}>

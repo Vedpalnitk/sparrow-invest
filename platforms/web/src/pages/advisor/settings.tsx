@@ -5,41 +5,26 @@
  * Includes: Profile info, Notifications, Display, Security
  */
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import AdvisorLayout from '@/components/layout/AdvisorLayout'
 import { useFATheme, formatDate } from '@/utils/fa'
-import { AdvisorProfile, AdvisorPreferences, ReportFormat } from '@/utils/faTypes'
+import { AdvisorPreferences, ReportFormat } from '@/utils/faTypes'
+import { notificationPreferencesApi, NotificationPreferences, authProfileApi, AuthProfile } from '@/services/api'
 import {
   FACard,
   FALabel,
   FAInput,
-  FATextarea,
   FASelect,
   FAButton,
-  FACheckbox,
 } from '@/components/advisor/shared'
 
 // Settings tabs
 type SettingsTab = 'profile' | 'notifications' | 'display' | 'security'
 
-// Mock advisor data
-const mockAdvisor: AdvisorProfile = {
-  id: 'adv1',
-  name: 'Rajesh Kumar',
-  email: 'rajesh.kumar@sparrowinvest.com',
-  phone: '+91 98765 43210',
-  arn: 'ARN-123456',
-  euin: 'E123456',
-  firmName: 'Sparrow Wealth Advisors',
-  address: '123 Financial District, Bandra Kurla Complex',
-  city: 'Mumbai',
-  state: 'Maharashtra',
-  pincode: '400051',
-  photoUrl: '',
-  joinedDate: '2020-03-15',
-}
+// Display preferences key in localStorage
+const DISPLAY_PREFS_KEY = 'fa-display-preferences'
 
-const mockPreferences: AdvisorPreferences = {
+const defaultPreferences: AdvisorPreferences = {
   theme: 'system',
   defaultReportFormat: 'PDF',
   emailNotifications: true,
@@ -48,6 +33,50 @@ const mockPreferences: AdvisorPreferences = {
   goalAlerts: true,
   marketAlerts: false,
   dashboardWidgets: ['kpi', 'pending-actions', 'recent-transactions', 'insights'],
+}
+
+function loadDisplayPrefs(): AdvisorPreferences {
+  if (typeof window === 'undefined') return defaultPreferences
+  try {
+    const saved = localStorage.getItem(DISPLAY_PREFS_KEY)
+    if (saved) return { ...defaultPreferences, ...JSON.parse(saved) }
+  } catch {}
+  return defaultPreferences
+}
+
+function saveDisplayPrefs(prefs: AdvisorPreferences) {
+  try {
+    localStorage.setItem(DISPLAY_PREFS_KEY, JSON.stringify(prefs))
+  } catch {}
+}
+
+// Map backend categories to frontend preference keys
+const NOTIFICATION_CATEGORY_MAP: Record<string, { label: string; description: string; section: 'channel' | 'alert' }> = {
+  TRADE_ALERTS: { label: 'Trade Alerts', description: 'Order execution and trade updates', section: 'alert' },
+  SIP_REMINDERS: { label: 'SIP Reminders', description: 'Get notified about upcoming SIP dates', section: 'alert' },
+  CLIENT_REQUESTS: { label: 'Client Requests', description: 'New trade requests from clients', section: 'alert' },
+  MARKET_UPDATES: { label: 'Market Alerts', description: 'Significant market movements and news', section: 'alert' },
+  DAILY_DIGEST: { label: 'Daily Digest', description: 'Daily summary of portfolio activity', section: 'alert' },
+  PORTFOLIO_ALERTS: { label: 'Portfolio Alerts', description: 'Updates on client goal progress and milestones', section: 'alert' },
+  KYC_ALERTS: { label: 'KYC Alerts', description: 'KYC status changes and reminders', section: 'alert' },
+}
+
+const CHANNEL_LABELS: Record<string, { label: string; description: string; icon: string }> = {
+  EMAIL: {
+    label: 'Email Notifications',
+    description: 'Receive updates via email',
+    icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+  },
+  PUSH: {
+    label: 'Push Notifications',
+    description: 'Receive push notifications',
+    icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9',
+  },
+  WHATSAPP: {
+    label: 'WhatsApp Notifications',
+    description: 'Receive updates via WhatsApp',
+    icon: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z',
+  },
 }
 
 const DASHBOARD_WIDGETS = [
@@ -64,15 +93,73 @@ const DASHBOARD_WIDGETS = [
 const SettingsPage = () => {
   const { colors, isDark } = useFATheme()
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
-  const [profile, setProfile] = useState<AdvisorProfile>(mockAdvisor)
-  const [preferences, setPreferences] = useState<AdvisorPreferences>(mockPreferences)
+  const [preferences, setPreferences] = useState<AdvisorPreferences>(loadDisplayPrefs)
   const [isSaving, setIsSaving] = useState(false)
   const [savedMessage, setSavedMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+
+  // Profile from API
+  const [profile, setProfile] = useState<AuthProfile | null>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '' })
+  const [profileDirty, setProfileDirty] = useState(false)
+
+  // Notification preferences from API
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences | null>(null)
+  const [notifLoading, setNotifLoading] = useState(false)
+  const [notifDirty, setNotifDirty] = useState(false)
 
   // Security state
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+
+  const showSuccess = (msg: string) => {
+    setSavedMessage(msg)
+    setErrorMessage('')
+    setTimeout(() => setSavedMessage(''), 3000)
+  }
+
+  const showError = (msg: string) => {
+    setErrorMessage(msg)
+    setSavedMessage('')
+    setTimeout(() => setErrorMessage(''), 4000)
+  }
+
+  // Load profile from API
+  const loadProfile = useCallback(async () => {
+    setProfileLoading(true)
+    try {
+      const data = await authProfileApi.get()
+      setProfile(data)
+      setProfileForm({ name: data.name || '', phone: data.phone || '' })
+      setProfileDirty(false)
+    } catch (err) {
+      console.error('Failed to load profile:', err)
+    } finally {
+      setProfileLoading(false)
+    }
+  }, [])
+
+  // Load notification preferences from API
+  const loadNotifPrefs = useCallback(async () => {
+    setNotifLoading(true)
+    try {
+      const data = await notificationPreferencesApi.get()
+      setNotifPrefs(data)
+      setNotifDirty(false)
+    } catch (err) {
+      console.error('Failed to load notification preferences:', err)
+    } finally {
+      setNotifLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadProfile()
+    loadNotifPrefs()
+  }, [loadProfile, loadNotifPrefs])
 
   const tabs: { id: SettingsTab; label: string; icon: string }[] = [
     { id: 'profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
@@ -81,13 +168,104 @@ const SettingsPage = () => {
     { id: 'security', label: 'Security', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
   ]
 
-  const handleSave = async () => {
+  const toggleNotifPref = (category: string, channel: string) => {
+    if (!notifPrefs) return
+    setNotifPrefs(prev => {
+      if (!prev) return prev
+      const current = prev[category]?.[channel] ?? false
+      return {
+        ...prev,
+        [category]: {
+          ...prev[category],
+          [channel]: !current,
+        },
+      }
+    })
+    setNotifDirty(true)
+  }
+
+  // Check if any channel is enabled for a category (for the category-level toggle)
+  const isCategoryEnabled = (category: string): boolean => {
+    if (!notifPrefs || !notifPrefs[category]) return false
+    return Object.values(notifPrefs[category]).some(v => v)
+  }
+
+  // Toggle all channels for a category
+  const toggleCategory = (category: string) => {
+    if (!notifPrefs) return
+    const allEnabled = isCategoryEnabled(category)
+    setNotifPrefs(prev => {
+      if (!prev || !prev[category]) return prev
+      const updated: Record<string, boolean> = {}
+      for (const channel of Object.keys(prev[category])) {
+        updated[channel] = !allEnabled
+      }
+      return { ...prev, [category]: updated }
+    })
+    setNotifDirty(true)
+  }
+
+  const handleSaveNotifPrefs = async () => {
+    if (!notifPrefs || !notifDirty) return
     setIsSaving(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setIsSaving(false)
-    setSavedMessage('Settings saved successfully!')
-    setTimeout(() => setSavedMessage(''), 3000)
+    try {
+      const updates: { category: string; channel: string; enabled: boolean }[] = []
+      for (const [category, channels] of Object.entries(notifPrefs)) {
+        for (const [channel, enabled] of Object.entries(channels)) {
+          updates.push({ category, channel, enabled })
+        }
+      }
+      const result = await notificationPreferencesApi.update(updates)
+      setNotifPrefs(result)
+      setNotifDirty(false)
+      showSuccess('Notification preferences saved!')
+    } catch (err) {
+      console.error('Failed to save notification preferences:', err)
+      showError('Failed to save preferences')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    if (!profileDirty) return
+    setIsSaving(true)
+    try {
+      const updated = await authProfileApi.update({
+        name: profileForm.name,
+        phone: profileForm.phone,
+      })
+      setProfile(updated)
+      setProfileDirty(false)
+      showSuccess('Profile saved successfully!')
+    } catch (err) {
+      console.error('Failed to save profile:', err)
+      showError('Failed to save profile')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || newPassword !== confirmPassword) return
+    setPasswordSaving(true)
+    try {
+      await authProfileApi.changePassword(currentPassword, newPassword)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      showSuccess('Password changed successfully!')
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to change password'
+      showError(msg.includes('incorrect') ? 'Current password is incorrect' : msg)
+    } finally {
+      setPasswordSaving(false)
+    }
+  }
+
+  const handleSaveDisplayPrefs = () => {
+    saveDisplayPrefs(preferences)
+    showSuccess('Display settings saved!')
   }
 
   const toggleWidget = (widgetId: string) => {
@@ -116,6 +294,17 @@ const SettingsPage = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               <span className="text-sm font-medium">{savedMessage}</span>
+            </div>
+          )}
+          {errorMessage && (
+            <div
+              className="flex items-center gap-2 px-4 py-2 rounded-full"
+              style={{ background: `${colors.error}15`, color: colors.error }}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="text-sm font-medium">{errorMessage}</span>
             </div>
           )}
         </div>
@@ -150,321 +339,260 @@ const SettingsPage = () => {
             {/* Profile Tab */}
             {activeTab === 'profile' && (
               <>
-                {/* Personal Information */}
-                <FACard>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: `${colors.primary}15`, color: colors.primary }}
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Personal Information</h3>
-                      <p className="text-sm" style={{ color: colors.textSecondary }}>Update your personal details</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <FALabel>Full Name</FALabel>
-                      <FAInput
-                        value={profile.name}
-                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <FALabel>Email Address</FALabel>
-                      <FAInput
-                        type="email"
-                        value={profile.email}
-                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <FALabel>Phone Number</FALabel>
-                      <FAInput
-                        type="tel"
-                        value={profile.phone}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <FALabel>Member Since</FALabel>
-                      <FAInput
-                        value={formatDate(profile.joinedDate)}
-                        disabled
-                      />
-                    </div>
-                  </div>
-                </FACard>
-
-                {/* Professional Details */}
-                <FACard>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: `${colors.secondary}15`, color: colors.secondary }}
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Professional Details</h3>
-                      <p className="text-sm" style={{ color: colors.textSecondary }}>Your AMFI registration information</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <FALabel>ARN Number</FALabel>
-                      <FAInput
-                        value={profile.arn}
-                        onChange={(e) => setProfile({ ...profile, arn: e.target.value })}
-                        placeholder="ARN-XXXXXX"
-                      />
-                    </div>
-                    <div>
-                      <FALabel>EUIN</FALabel>
-                      <FAInput
-                        value={profile.euin}
-                        onChange={(e) => setProfile({ ...profile, euin: e.target.value })}
-                        placeholder="EXXXXXX"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <FALabel>Firm Name</FALabel>
-                      <FAInput
-                        value={profile.firmName || ''}
-                        onChange={(e) => setProfile({ ...profile, firmName: e.target.value })}
-                        placeholder="Your firm or company name"
-                      />
-                    </div>
-                  </div>
-                </FACard>
-
-                {/* Address */}
-                <FACard>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: `${colors.warning}15`, color: colors.warning }}
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Business Address</h3>
-                      <p className="text-sm" style={{ color: colors.textSecondary }}>Your office or business location</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <FALabel>Street Address</FALabel>
-                      <FAInput
-                        value={profile.address || ''}
-                        onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                        placeholder="Enter your street address"
-                      />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <FALabel>City</FALabel>
-                        <FAInput
-                          value={profile.city || ''}
-                          onChange={(e) => setProfile({ ...profile, city: e.target.value })}
+                {profileLoading && !profile ? (
+                  <FACard>
+                    <div className="flex items-center justify-center py-12">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
+                          style={{ borderColor: `${colors.primary} transparent ${colors.primary} ${colors.primary}` }}
                         />
-                      </div>
-                      <div>
-                        <FALabel>State</FALabel>
-                        <FAInput
-                          value={profile.state || ''}
-                          onChange={(e) => setProfile({ ...profile, state: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <FALabel>Pincode</FALabel>
-                        <FAInput
-                          value={profile.pincode || ''}
-                          onChange={(e) => setProfile({ ...profile, pincode: e.target.value })}
-                          maxLength={6}
-                        />
+                        <span className="text-sm" style={{ color: colors.textSecondary }}>Loading profile...</span>
                       </div>
                     </div>
-                  </div>
-                </FACard>
+                  </FACard>
+                ) : profile ? (
+                  <>
+                    {/* Personal Information */}
+                    <FACard>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center"
+                          style={{ background: `${colors.primary}15`, color: colors.primary }}
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Personal Information</h3>
+                          <p className="text-sm" style={{ color: colors.textSecondary }}>Update your personal details</p>
+                        </div>
+                      </div>
 
-                {/* Save Button */}
-                <div className="flex justify-end">
-                  <FAButton onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Profile'}
-                  </FAButton>
-                </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <FALabel>Full Name</FALabel>
+                          <FAInput
+                            value={profileForm.name}
+                            onChange={(e) => { setProfileForm(f => ({ ...f, name: e.target.value })); setProfileDirty(true) }}
+                          />
+                        </div>
+                        <div>
+                          <FALabel>Email Address</FALabel>
+                          <FAInput
+                            type="email"
+                            value={profile.email}
+                            disabled
+                          />
+                        </div>
+                        <div>
+                          <FALabel>Phone Number</FALabel>
+                          <FAInput
+                            type="tel"
+                            value={profileForm.phone}
+                            onChange={(e) => { setProfileForm(f => ({ ...f, phone: e.target.value })); setProfileDirty(true) }}
+                            placeholder="+91 XXXXX XXXXX"
+                          />
+                        </div>
+                        <div>
+                          <FALabel>Role</FALabel>
+                          <FAInput
+                            value={profile.role === 'advisor' ? 'Financial Advisor' : profile.role}
+                            disabled
+                          />
+                        </div>
+                      </div>
+                    </FACard>
+
+                    {/* Account Info */}
+                    <FACard>
+                      <div className="flex items-center gap-3 mb-6">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center"
+                          style={{ background: `${colors.secondary}15`, color: colors.secondary }}
+                        >
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Account Status</h3>
+                          <p className="text-sm" style={{ color: colors.textSecondary }}>Your account verification and ID</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <FALabel>Account ID</FALabel>
+                          <FAInput value={profile.id} disabled />
+                        </div>
+                        <div>
+                          <FALabel>Verification</FALabel>
+                          <div className="flex items-center gap-2 h-10">
+                            <span
+                              className="px-3 py-1 rounded-full text-xs font-semibold"
+                              style={{
+                                background: profile.isVerified ? `${colors.success}15` : `${colors.warning}15`,
+                                color: profile.isVerified ? colors.success : colors.warning,
+                              }}
+                            >
+                              {profile.isVerified ? 'Verified' : 'Pending Verification'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </FACard>
+
+                    {/* Save Button */}
+                    <div className="flex justify-end">
+                      <FAButton onClick={handleSaveProfile} disabled={isSaving || !profileDirty}>
+                        {isSaving ? 'Saving...' : profileDirty ? 'Save Profile' : 'Saved'}
+                      </FAButton>
+                    </div>
+                  </>
+                ) : (
+                  <FACard>
+                    <div className="text-center py-8">
+                      <p className="text-sm" style={{ color: colors.textSecondary }}>Failed to load profile.</p>
+                      <button onClick={loadProfile} className="mt-2 text-sm font-medium" style={{ color: colors.primary }}>
+                        Retry
+                      </button>
+                    </div>
+                  </FACard>
+                )}
               </>
             )}
 
             {/* Notifications Tab */}
             {activeTab === 'notifications' && (
               <>
-                <FACard>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: `${colors.primary}15`, color: colors.primary }}
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Notification Channels</h3>
-                      <p className="text-sm" style={{ color: colors.textSecondary }}>Choose how you want to be notified</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div
-                      className="p-4 rounded-xl flex items-center justify-between"
-                      style={{ background: colors.chipBg, border: `1px solid ${colors.cardBorder}` }}
-                    >
+                {notifLoading && !notifPrefs ? (
+                  <FACard>
+                    <div className="flex items-center justify-center py-12">
                       <div className="flex items-center gap-3">
                         <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ background: `${colors.primary}15`, color: colors.primary }}
-                        >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="font-medium" style={{ color: colors.textPrimary }}>Email Notifications</p>
-                          <p className="text-sm" style={{ color: colors.textSecondary }}>Receive updates via email</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setPreferences({ ...preferences, emailNotifications: !preferences.emailNotifications })}
-                        className="w-12 h-6 rounded-full relative transition-all"
-                        style={{
-                          background: preferences.emailNotifications
-                            ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
-                            : colors.chipBg,
-                          border: `1px solid ${preferences.emailNotifications ? 'transparent' : colors.cardBorder}`,
-                        }}
-                      >
-                        <div
-                          className="w-5 h-5 rounded-full absolute top-0.5 transition-all shadow"
-                          style={{
-                            background: 'white',
-                            left: preferences.emailNotifications ? '26px' : '2px',
-                          }}
+                          className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin"
+                          style={{ borderColor: `${colors.primary} transparent ${colors.primary} ${colors.primary}` }}
                         />
+                        <span className="text-sm" style={{ color: colors.textSecondary }}>Loading preferences...</span>
+                      </div>
+                    </div>
+                  </FACard>
+                ) : notifPrefs ? (
+                  <>
+                    {/* Per-category notification settings */}
+                    {Object.entries(NOTIFICATION_CATEGORY_MAP).map(([category, meta]) => {
+                      const channels = notifPrefs[category]
+                      if (!channels) return null
+                      const enabled = isCategoryEnabled(category)
+                      return (
+                        <FACard key={category}>
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                style={{ background: `${enabled ? colors.primary : colors.textTertiary}15`, color: enabled ? colors.primary : colors.textTertiary }}
+                              >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold" style={{ color: colors.textPrimary }}>{meta.label}</h3>
+                                <p className="text-sm" style={{ color: colors.textSecondary }}>{meta.description}</p>
+                              </div>
+                            </div>
+                            {/* Master toggle for category */}
+                            <button
+                              onClick={() => toggleCategory(category)}
+                              className="w-12 h-6 rounded-full relative transition-all flex-shrink-0"
+                              style={{
+                                background: enabled
+                                  ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
+                                  : colors.chipBg,
+                                border: `1px solid ${enabled ? 'transparent' : colors.cardBorder}`,
+                              }}
+                            >
+                              <div
+                                className="w-5 h-5 rounded-full absolute top-0.5 transition-all shadow"
+                                style={{
+                                  background: 'white',
+                                  left: enabled ? '26px' : '2px',
+                                }}
+                              />
+                            </button>
+                          </div>
+
+                          {/* Channel toggles */}
+                          {enabled && (
+                            <div className="space-y-2 ml-13 pl-4" style={{ borderLeft: `2px solid ${colors.cardBorder}` }}>
+                              {Object.entries(channels).map(([channel, isEnabled]) => {
+                                const channelMeta = CHANNEL_LABELS[channel]
+                                if (!channelMeta) return null
+                                return (
+                                  <div
+                                    key={channel}
+                                    className="p-3 rounded-lg flex items-center justify-between"
+                                    style={{ background: colors.chipBg }}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                        style={{ background: `${isEnabled ? colors.secondary : colors.textTertiary}15`, color: isEnabled ? colors.secondary : colors.textTertiary }}
+                                      >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d={channelMeta.icon} />
+                                        </svg>
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>{channelMeta.label}</p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => toggleNotifPref(category, channel)}
+                                      className="w-10 h-5 rounded-full relative transition-all"
+                                      style={{
+                                        background: isEnabled ? colors.secondary : colors.cardBorder,
+                                      }}
+                                    >
+                                      <div
+                                        className="w-4 h-4 rounded-full absolute top-0.5 transition-all shadow"
+                                        style={{
+                                          background: 'white',
+                                          left: isEnabled ? '22px' : '2px',
+                                        }}
+                                      />
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          )}
+                        </FACard>
+                      )
+                    })}
+
+                    <div className="flex justify-end">
+                      <FAButton onClick={handleSaveNotifPrefs} disabled={isSaving || !notifDirty}>
+                        {isSaving ? 'Saving...' : notifDirty ? 'Save Preferences' : 'Saved'}
+                      </FAButton>
+                    </div>
+                  </>
+                ) : (
+                  <FACard>
+                    <div className="text-center py-8">
+                      <p className="text-sm" style={{ color: colors.textSecondary }}>Failed to load notification preferences.</p>
+                      <button
+                        onClick={loadNotifPrefs}
+                        className="mt-2 text-sm font-medium"
+                        style={{ color: colors.primary }}
+                      >
+                        Retry
                       </button>
                     </div>
-
-                    <div
-                      className="p-4 rounded-xl flex items-center justify-between"
-                      style={{ background: colors.chipBg, border: `1px solid ${colors.cardBorder}` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ background: `${colors.secondary}15`, color: colors.secondary }}
-                        >
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="font-medium" style={{ color: colors.textPrimary }}>SMS Notifications</p>
-                          <p className="text-sm" style={{ color: colors.textSecondary }}>Receive updates via SMS</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setPreferences({ ...preferences, smsNotifications: !preferences.smsNotifications })}
-                        className="w-12 h-6 rounded-full relative transition-all"
-                        style={{
-                          background: preferences.smsNotifications
-                            ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`
-                            : colors.chipBg,
-                          border: `1px solid ${preferences.smsNotifications ? 'transparent' : colors.cardBorder}`,
-                        }}
-                      >
-                        <div
-                          className="w-5 h-5 rounded-full absolute top-0.5 transition-all shadow"
-                          style={{
-                            background: 'white',
-                            left: preferences.smsNotifications ? '26px' : '2px',
-                          }}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </FACard>
-
-                <FACard>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ background: `${colors.warning}15`, color: colors.warning }}
-                    >
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Alert Types</h3>
-                      <p className="text-sm" style={{ color: colors.textSecondary }}>Choose which alerts you want to receive</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {[
-                      { key: 'sipReminders', label: 'SIP Reminders', description: 'Get notified about upcoming SIP dates' },
-                      { key: 'goalAlerts', label: 'Goal Alerts', description: 'Updates on client goal progress and milestones' },
-                      { key: 'marketAlerts', label: 'Market Alerts', description: 'Significant market movements and news' },
-                    ].map(alert => (
-                      <div
-                        key={alert.key}
-                        className="p-3 rounded-lg flex items-center justify-between"
-                        style={{ background: colors.chipBg }}
-                      >
-                        <div>
-                          <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>{alert.label}</p>
-                          <p className="text-xs" style={{ color: colors.textTertiary }}>{alert.description}</p>
-                        </div>
-                        <button
-                          onClick={() => setPreferences({ ...preferences, [alert.key]: !preferences[alert.key as keyof AdvisorPreferences] })}
-                          className="w-10 h-5 rounded-full relative transition-all"
-                          style={{
-                            background: preferences[alert.key as keyof AdvisorPreferences]
-                              ? colors.primary
-                              : colors.cardBorder,
-                          }}
-                        >
-                          <div
-                            className="w-4 h-4 rounded-full absolute top-0.5 transition-all shadow"
-                            style={{
-                              background: 'white',
-                              left: preferences[alert.key as keyof AdvisorPreferences] ? '22px' : '2px',
-                            }}
-                          />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </FACard>
-
-                <div className="flex justify-end">
-                  <FAButton onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Preferences'}
-                  </FAButton>
-                </div>
+                  </FACard>
+                )}
               </>
             )}
 
@@ -607,8 +735,8 @@ const SettingsPage = () => {
                 </FACard>
 
                 <div className="flex justify-end">
-                  <FAButton onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Display Settings'}
+                  <FAButton onClick={handleSaveDisplayPrefs}>
+                    Save Display Settings
                   </FAButton>
                 </div>
               </>
@@ -661,18 +789,14 @@ const SettingsPage = () => {
                         placeholder="Confirm new password"
                       />
                     </div>
+                    {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                      <p className="text-xs" style={{ color: colors.error }}>Passwords do not match</p>
+                    )}
                     <FAButton
-                      onClick={() => {
-                        // Password change logic would go here
-                        setCurrentPassword('')
-                        setNewPassword('')
-                        setConfirmPassword('')
-                        setSavedMessage('Password updated successfully!')
-                        setTimeout(() => setSavedMessage(''), 3000)
-                      }}
-                      disabled={!currentPassword || !newPassword || newPassword !== confirmPassword}
+                      onClick={handleChangePassword}
+                      disabled={passwordSaving || !currentPassword || !newPassword || newPassword !== confirmPassword || newPassword.length < 6}
                     >
-                      Update Password
+                      {passwordSaving ? 'Updating...' : 'Update Password'}
                     </FAButton>
                   </div>
                 </FACard>

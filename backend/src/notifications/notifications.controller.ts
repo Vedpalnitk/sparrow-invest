@@ -8,18 +8,18 @@ export class NotificationsController {
 
   @Get('preferences')
   async getPreferences(@Request() req: any) {
-    return this.notificationsService.getPreferences(req.user.userId);
+    return this.notificationsService.getPreferences(req.user.id);
   }
 
   @Put('preferences')
   async updatePreferences(@Request() req: any, @Body() dto: UpdatePreferencesDto) {
-    return this.notificationsService.updatePreferences(req.user.userId, dto.updates);
+    return this.notificationsService.updatePreferences(req.user.id, dto.updates);
   }
 
   @Get('logs')
   async getLogs(@Request() req: any, @Query() query: NotificationLogsQueryDto) {
     const limit = parseInt(query.limit || '50', 10);
     const offset = parseInt(query.offset || '0', 10);
-    return this.notificationsService.getLogs(req.user.userId, limit, offset);
+    return this.notificationsService.getLogs(req.user.id, limit, offset);
   }
 }

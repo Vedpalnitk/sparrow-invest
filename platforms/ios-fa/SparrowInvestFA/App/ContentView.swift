@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showAvyaChat = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
@@ -17,7 +19,13 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemGroupedBackground))
+            .background(Color(UIColor.systemGroupedBackground))
+            .overlay {
+                AvyaFABContainer(showAvyaChat: $showAvyaChat)
+            }
+            .sheet(isPresented: $showAvyaChat) {
+                AIChatView()
+            }
         }
     }
 }

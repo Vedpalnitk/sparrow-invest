@@ -6,6 +6,7 @@ import com.sparrowinvest.app.core.network.ApiResult
 import com.sparrowinvest.app.data.model.User
 import com.sparrowinvest.app.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +30,9 @@ class AuthViewModel @Inject constructor(
 
     private val _signupState = MutableStateFlow<AuthState>(AuthState.Idle)
     val signupState: StateFlow<AuthState> = _signupState.asStateFlow()
+
+    private val _otpState = MutableStateFlow<AuthState>(AuthState.Idle)
+    val otpState: StateFlow<AuthState> = _otpState.asStateFlow()
 
     init {
         authRepository.restoreAuthState()
@@ -80,6 +84,41 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun sendOtp(email: String) {
+        viewModelScope.launch {
+            _otpState.value = AuthState.Loading
+            // Simulated OTP send - replace with real API call when backend is ready
+            delay(1500)
+            _otpState.value = AuthState.OtpSent(email)
+        }
+    }
+
+    fun verifyOtp(email: String, otp: String) {
+        viewModelScope.launch {
+            _otpState.value = AuthState.Loading
+            // Simulated OTP verification - replace with real API call when backend is ready
+            delay(1000)
+            if (otp == "123456") {
+                _otpState.value = AuthState.OtpVerified(email)
+            } else {
+                _otpState.value = AuthState.Error("Invalid verification code. Please try again.")
+            }
+        }
+    }
+
+    fun resetPassword(email: String, otp: String, newPassword: String) {
+        viewModelScope.launch {
+            _otpState.value = AuthState.Loading
+            // Simulated password reset - replace with real API call when backend is ready
+            delay(1500)
+            _otpState.value = AuthState.PasswordResetSuccess
+        }
+    }
+
+    fun resendOtp(email: String) {
+        sendOtp(email)
+    }
+
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
@@ -95,9 +134,14 @@ class AuthViewModel @Inject constructor(
         _signupState.value = AuthState.Idle
     }
 
+    fun resetOtpState() {
+        _otpState.value = AuthState.Idle
+    }
+
     private fun resetState() {
         _loginState.value = AuthState.Idle
         _signupState.value = AuthState.Idle
+        _otpState.value = AuthState.Idle
     }
 }
 
@@ -106,5 +150,8 @@ sealed class AuthState {
     data object Loading : AuthState()
     data class LoginSuccess(val user: User?) : AuthState()
     data class SignupComplete(val user: User?) : AuthState()
+    data class OtpSent(val email: String) : AuthState()
+    data class OtpVerified(val email: String) : AuthState()
+    data object PasswordResetSuccess : AuthState()
     data class Error(val message: String) : AuthState()
 }

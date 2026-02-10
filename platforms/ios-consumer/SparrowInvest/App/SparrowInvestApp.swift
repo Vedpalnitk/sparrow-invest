@@ -10,6 +10,7 @@ struct SparrowInvestApp: App {
     @StateObject private var familyStore = FamilyStore()
     @StateObject private var pointsStore = PointsStore()
     @StateObject private var advisorStore = AdvisorStore()
+    @StateObject private var biometricManager = BiometricManager()
     @StateObject private var appearanceManager = AppearanceManager()
     @StateObject private var navigationStore = NavigationStore()
 
@@ -20,6 +21,7 @@ struct SparrowInvestApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authManager)
+                .environmentObject(biometricManager)
                 .environmentObject(portfolioStore)
                 .environmentObject(goalsStore)
                 .environmentObject(fundsStore)

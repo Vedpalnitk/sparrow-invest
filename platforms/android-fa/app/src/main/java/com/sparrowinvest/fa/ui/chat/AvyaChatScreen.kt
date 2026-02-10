@@ -233,10 +233,10 @@ fun AvyaChatScreen(
 
 private object AvyaSuggestions {
     val defaultQuestions = listOf(
+        "Give me an overview of my client book",
         "Which clients need portfolio rebalancing?",
-        "Show me clients with underperforming funds",
-        "What are the top tax-saving opportunities?",
-        "Summarize my clients' risk exposure"
+        "How is Priya Patel's portfolio doing?",
+        "Any goals at risk this quarter?"
     )
 }
 

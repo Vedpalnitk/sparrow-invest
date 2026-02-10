@@ -48,7 +48,8 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     onSignupClick: () -> Unit,
     onSkip: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit = {}
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -182,7 +183,22 @@ fun LoginScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(Spacing.xxLarge))
+            Spacer(modifier = Modifier.height(Spacing.small))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onForgotPasswordClick) {
+                    Text(
+                        text = "Forgot Password?",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Primary
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.large))
 
             PrimaryButton(
                 text = "Sign In",

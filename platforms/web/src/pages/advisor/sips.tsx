@@ -633,7 +633,7 @@ const SIPsDashboard = () => {
             ) : (
               <FACard>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+                  <h3 className="text-base font-semibold" style={{ color: colors.textPrimary }}>
                     {selectedMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
                   </h3>
                   <div className="flex gap-2">
@@ -828,7 +828,7 @@ const SIPsDashboard = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+                  <h3 className="text-base font-semibold" style={{ color: colors.textPrimary }}>
                     Cancel SIP?
                   </h3>
                   <p className="text-sm" style={{ color: colors.textSecondary }}>

@@ -98,9 +98,9 @@ module.exports = {
         '4xl': '40px',
       },
       fontFamily: {
-        sans: ['Nunito', '-apple-system-rounded', 'SF Pro Rounded', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['SF Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
-        rounded: ['Nunito', '-apple-system-rounded', 'SF Pro Rounded', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        rounded: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       fontSize: {
         'large-title': ['32px', { lineHeight: '38px', letterSpacing: '0.37px', fontWeight: '700' }],

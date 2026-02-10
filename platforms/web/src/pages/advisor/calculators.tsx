@@ -253,7 +253,7 @@ const CalculatorsPage = () => {
                 <div className="h-px" style={{ background: colors.cardBorder }} />
                 <div className="flex justify-between items-center">
                   <span className="font-medium" style={{ color: colors.textPrimary }}>Future Value</span>
-                  <span className="text-2xl font-bold" style={{ color: colors.primary }}>
+                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
                     {formatCurrency(sipResult.futureValue)}
                   </span>
                 </div>
@@ -317,7 +317,7 @@ const CalculatorsPage = () => {
                 <div className="h-px" style={{ background: colors.cardBorder }} />
                 <div className="flex justify-between items-center">
                   <span className="font-medium" style={{ color: colors.textPrimary }}>Future Value</span>
-                  <span className="text-2xl font-bold" style={{ color: colors.primary }}>
+                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
                     {formatCurrency(lumpsumResult.futureValue)}
                   </span>
                 </div>
@@ -376,7 +376,7 @@ const CalculatorsPage = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span style={{ color: colors.textSecondary }}>Required Monthly SIP</span>
-                  <span className="text-2xl font-bold" style={{ color: colors.primary }}>
+                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
                     {formatCurrency(goalResult.sipRequired)}
                   </span>
                 </div>
@@ -446,7 +446,7 @@ const CalculatorsPage = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span style={{ color: colors.textSecondary }}>Corpus Lasts</span>
-                  <span className="text-2xl font-bold" style={{ color: colors.primary }}>
+                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
                     {swpResult.exhausted
                       ? `${swpResult.years} yrs ${swpResult.months} mo`
                       : '100+ years'}
@@ -548,7 +548,7 @@ const CalculatorsPage = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span style={{ color: colors.textSecondary }}>Corpus Needed</span>
-                  <span className="text-2xl font-bold" style={{ color: colors.primary }}>
+                  <span className="text-xl font-bold" style={{ color: colors.primary }}>
                     {formatCurrency(retirementResult.corpusNeeded)}
                   </span>
                 </div>

@@ -572,7 +572,7 @@ const GoalDetailPage = () => {
               className="flex items-center justify-between px-6 py-4 border-b"
               style={{ borderColor: colors.cardBorder }}
             >
-              <h2 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+              <h2 className="text-base font-semibold" style={{ color: colors.textPrimary }}>
                 Edit Goal
               </h2>
               <button
@@ -668,7 +668,7 @@ const GoalDetailPage = () => {
               className="flex items-center justify-between px-6 py-4 border-b"
               style={{ borderColor: colors.cardBorder }}
             >
-              <h2 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+              <h2 className="text-base font-semibold" style={{ color: colors.textPrimary }}>
                 Add Contribution
               </h2>
               <button

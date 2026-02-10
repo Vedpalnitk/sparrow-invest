@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.sparrowinvest.app.ui.theme.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,82 +35,41 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 /**
- * Avya AI Chat Screen with voice and text input
+ * Avya AI Chat Screen with real backend integration
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvyaChatScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    viewModel: AvyaChatViewModel = hiltViewModel()
 ) {
     val isDark = LocalIsDarkTheme.current
     var messageText by remember { mutableStateOf("") }
-    var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
-    var isTyping by remember { mutableStateOf(false) }
-    var isRecording by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Dummy AI responses
-    val dummyResponses = listOf(
-        "Based on your portfolio, I recommend increasing your large-cap allocation by 5% to reduce volatility.",
-        "Your current SIP of ₹10,000 is on track. Consider increasing it by 10% annually to reach your retirement goal faster.",
-        "I've analyzed your holdings. The Parag Parikh Flexi Cap Fund has outperformed its benchmark by 3.2% this year.",
-        "Looking at your risk profile, you might want to consider adding some debt funds for better diversification.",
-        "Your portfolio health score is 78/100. The main areas for improvement are international exposure and sector diversification.",
-        "Tax-saving tip: You can invest up to ₹1.5 lakhs in ELSS funds before March to save on taxes under Section 80C.",
-        "I notice your mid-cap allocation has drifted 8% above target. Would you like me to suggest a rebalancing strategy?",
-        "Great question! Based on current market conditions, hybrid funds could be a good option for moderate risk investors."
-    )
-
-    fun sendMessage() {
-        if (messageText.isBlank()) return
-
-        val userMessage = ChatMessage(
-            content = messageText.trim(),
-            isUser = true
-        )
-        messages = messages + userMessage
-        messageText = ""
-
-        // Scroll to bottom
-        coroutineScope.launch {
-            delay(100)
-            listState.animateScrollToItem(messages.size)
-        }
-
-        // Simulate AI typing
-        isTyping = true
-        coroutineScope.launch {
-            delay((1000..2500).random().toLong())
-            isTyping = false
-
-            val aiResponse = ChatMessage(
-                content = dummyResponses.random(),
-                isUser = false
-            )
-            messages = messages + aiResponse
-
-            delay(100)
-            listState.animateScrollToItem(messages.size)
+    // Scroll to bottom when messages change
+    LaunchedEffect(uiState.messages.size, uiState.isProcessing) {
+        if (uiState.messages.isNotEmpty()) {
+            listState.animateScrollToItem(uiState.messages.size - 1)
         }
     }
 
-    fun toggleRecording() {
-        isRecording = !isRecording
-        if (isRecording) {
-            // Simulate voice recording
-            coroutineScope.launch {
-                delay(2000)
-                isRecording = false
-                val voiceQueries = listOf(
-                    "How is my portfolio performing?",
-                    "Should I increase my SIP?",
-                    "What funds do you recommend?",
-                    "Tell me about tax saving options"
-                )
-                messageText = voiceQueries.random()
-            }
+    // Error snackbar
+    uiState.errorMessage?.let { error ->
+        LaunchedEffect(error) {
+            // Auto-dismiss after 3 seconds
+            delay(3000)
+            viewModel.dismissError()
         }
+    }
+
+    fun sendMessage() {
+        if (messageText.isBlank()) return
+        val content = messageText.trim()
+        messageText = ""
+        viewModel.sendMessage(content)
     }
 
     Scaffold(
@@ -155,7 +115,7 @@ fun AvyaChatScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { messages = emptyList() }) {
+                    IconButton(onClick = { viewModel.clearChat() }) {
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
                             contentDescription = "Clear chat"
@@ -174,6 +134,21 @@ fun AvyaChatScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Error banner
+            uiState.errorMessage?.let { error ->
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Error.copy(alpha = 0.1f)
+                ) {
+                    Text(
+                        text = error,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        fontSize = 13.sp,
+                        color = Error
+                    )
+                }
+            }
+
             // Messages List
             LazyColumn(
                 modifier = Modifier
@@ -184,7 +159,7 @@ fun AvyaChatScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Welcome Card (shown when no messages)
-                if (messages.isEmpty()) {
+                if (uiState.messages.isEmpty()) {
                     item {
                         WelcomeCard(onStartChat = { prompt ->
                             messageText = prompt
@@ -194,25 +169,25 @@ fun AvyaChatScreen(
                 }
 
                 // Chat Messages
-                items(messages, key = { it.id }) { message ->
+                items(uiState.messages, key = { it.id }) { message ->
                     ChatBubble(message = message)
                 }
 
                 // Typing Indicator
-                if (isTyping) {
+                if (uiState.isProcessing) {
                     item {
                         TypingIndicator()
                     }
                 }
             }
 
-            // Input Area
+            // Input Area (text-only, no voice)
             ChatInputBar(
                 messageText = messageText,
                 onMessageChange = { messageText = it },
                 onSend = { sendMessage() },
-                onVoiceToggle = { toggleRecording() },
-                isRecording = isRecording,
+                onVoiceToggle = { },
+                isRecording = false,
                 isDark = isDark
             )
         }
@@ -227,9 +202,9 @@ private fun WelcomeCard(
 
     val suggestedPrompts = listOf(
         "How is my portfolio performing?",
-        "Should I rebalance my investments?",
-        "What tax-saving options do I have?",
-        "Recommend funds for my goals"
+        "What are the best funds for my risk profile?",
+        "Should I increase my SIP amount?",
+        "Explain my asset allocation"
     )
 
     Column(

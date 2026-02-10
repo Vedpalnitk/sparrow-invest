@@ -62,6 +62,11 @@ import com.sparrowinvest.app.ui.components.TradingPlatformSheet
 import com.sparrowinvest.app.ui.components.UpcomingActionsCard
 import com.sparrowinvest.app.ui.components.formatCompactCurrency
 import com.sparrowinvest.app.ui.components.AvyaHomeCard
+import com.sparrowinvest.app.ui.components.DividendIncomeCard
+import com.sparrowinvest.app.ui.components.MarketOverviewCard
+import com.sparrowinvest.app.ui.components.PortfolioGrowthChart
+import com.sparrowinvest.app.ui.components.TaxSummaryCard
+import com.sparrowinvest.app.ui.components.TopMoversCard
 import com.sparrowinvest.app.ui.theme.AppColors
 import com.sparrowinvest.app.ui.theme.CornerRadius
 import com.sparrowinvest.app.ui.theme.Primary
@@ -92,6 +97,11 @@ fun HomeScreen(
     val profileCompletion by viewModel.profileCompletion.collectAsState()
     val advisor by viewModel.advisor.collectAsState()
     val clientType by viewModel.clientType.collectAsState()
+    val portfolioHistory by viewModel.portfolioHistory.collectAsState()
+    val selectedHistoryPeriod by viewModel.selectedHistoryPeriod.collectAsState()
+    val taxSummary by viewModel.taxSummary.collectAsState()
+    val dividendSummary by viewModel.dividendSummary.collectAsState()
+    val marketOverview by viewModel.marketOverview.collectAsState()
 
     // Determine if user is managed by FA
     val isManagedClient = viewModel.isManagedClient
@@ -202,6 +212,46 @@ fun HomeScreen(
                         Spacer(modifier = Modifier.height(Spacing.medium))
                     }
                 }
+
+                // Portfolio Growth Chart
+                if (portfolioHistory.dataPoints.isNotEmpty()) {
+                    PortfolioGrowthChart(
+                        history = portfolioHistory,
+                        selectedPeriod = selectedHistoryPeriod,
+                        onPeriodChange = { viewModel.setHistoryPeriod(it) },
+                        modifier = Modifier.padding(horizontal = Spacing.medium)
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.medium))
+                }
+
+                // Tax Summary
+                TaxSummaryCard(
+                    taxSummary = taxSummary,
+                    modifier = Modifier.padding(horizontal = Spacing.medium)
+                )
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                // Dividend Income
+                DividendIncomeCard(
+                    dividendSummary = dividendSummary,
+                    modifier = Modifier.padding(horizontal = Spacing.medium)
+                )
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                // Market Overview
+                MarketOverviewCard(
+                    marketOverview = marketOverview,
+                    modifier = Modifier.padding(horizontal = Spacing.medium)
+                )
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                // Top Movers
+                TopMoversCard(
+                    gainers = viewModel.topGainers,
+                    losers = viewModel.topLosers,
+                    modifier = Modifier.padding(horizontal = Spacing.medium)
+                )
+                Spacer(modifier = Modifier.height(Spacing.medium))
 
                 // AI Analysis Card
                 AIAnalysisCard(

@@ -131,7 +131,7 @@ const ReportsPage = () => {
             style={{ borderColor: colors.cardBorder }}
           >
             <div>
-              <h2 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+              <h2 className="text-base font-semibold" style={{ color: colors.textPrimary }}>
                 Report Preview
               </h2>
               <p className="text-sm" style={{ color: colors.textSecondary }}>

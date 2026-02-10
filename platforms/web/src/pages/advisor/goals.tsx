@@ -648,7 +648,7 @@ const GoalsDashboard = () => {
               className="flex items-center justify-between px-6 py-4 border-b"
               style={{ borderColor: colors.cardBorder }}
             >
-              <h2 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+              <h2 className="text-base font-semibold" style={{ color: colors.textPrimary }}>
                 Create New Goal
               </h2>
               <button

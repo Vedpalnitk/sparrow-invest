@@ -27,8 +27,6 @@ data class FADashboard(
     val upcomingSips: List<FASip> = emptyList(),
     @SerialName("failed_sips")
     val failedSips: List<FASip> = emptyList(),
-    @SerialName("market_indices")
-    val marketIndices: List<MarketIndex> = emptyList(),
     // Growth metrics
     @SerialName("aum_growth")
     val aumGrowth: KpiGrowth? = null,
@@ -162,20 +160,3 @@ data class MarketInsight(
     val createdAt: String
 )
 
-@Serializable
-data class MarketIndex(
-    val name: String,
-    val symbol: String = "",
-    val currentValue: Double = 0.0,
-    val change: Double = 0.0,
-    val changePercent: Double = 0.0,
-    val previousClose: Double = 0.0,
-    val dayHigh: Double? = null,
-    val dayLow: Double? = null,
-    val lastUpdated: String? = null
-) {
-    val isPositive: Boolean get() = change >= 0
-    val formattedValue: String get() = "%,.2f".format(currentValue)
-    val formattedChange: String get() = "${if (isPositive) "+" else ""}%,.2f".format(change)
-    val formattedChangePercent: String get() = "${if (isPositive) "+" else ""}%.2f%%".format(changePercent)
-}

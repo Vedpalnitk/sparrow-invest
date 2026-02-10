@@ -259,12 +259,12 @@ export default function FundDetailsPage() {
               style={{
                 background: isDark
                   ? 'linear-gradient(135deg, rgba(147, 197, 253, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%)'
-                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(56, 189, 248, 0.02) 100%)',
+                  : '#FFFFFF',
                 border: `1px solid ${colors.cardBorder}`,
-                boxShadow: `0 4px 20px ${colors.glassShadow}`
+                boxShadow: isDark ? `0 4px 20px ${colors.glassShadow}` : '0 4px 20px rgba(0, 0, 0, 0.06)'
               }}
             >
-              <h2 className="text-lg font-semibold mb-4" style={{ color: colors.textPrimary }}>
+              <h2 className="text-base font-semibold mb-4" style={{ color: colors.textPrimary }}>
                 NAV Performance
               </h2>
               <FundNavChart schemeCode={Number(schemeCode)} isDark={isDark} />
@@ -276,12 +276,12 @@ export default function FundDetailsPage() {
               style={{
                 background: isDark
                   ? 'linear-gradient(135deg, rgba(147, 197, 253, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%)'
-                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(56, 189, 248, 0.02) 100%)',
+                  : '#FFFFFF',
                 border: `1px solid ${colors.cardBorder}`,
-                boxShadow: `0 4px 20px ${colors.glassShadow}`
+                boxShadow: isDark ? `0 4px 20px ${colors.glassShadow}` : '0 4px 20px rgba(0, 0, 0, 0.06)'
               }}
             >
-              <h2 className="text-lg font-semibold mb-4" style={{ color: colors.textPrimary }}>
+              <h2 className="text-base font-semibold mb-4" style={{ color: colors.textPrimary }}>
                 Returns
               </h2>
               <div className="grid grid-cols-4 gap-4">
@@ -320,12 +320,12 @@ export default function FundDetailsPage() {
               style={{
                 background: isDark
                   ? 'linear-gradient(135deg, rgba(147, 197, 253, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%)'
-                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(56, 189, 248, 0.02) 100%)',
+                  : '#FFFFFF',
                 border: `1px solid ${colors.cardBorder}`,
-                boxShadow: `0 4px 20px ${colors.glassShadow}`
+                boxShadow: isDark ? `0 4px 20px ${colors.glassShadow}` : '0 4px 20px rgba(0, 0, 0, 0.06)'
               }}
             >
-              <h2 className="text-lg font-semibold mb-4" style={{ color: colors.textPrimary }}>
+              <h2 className="text-base font-semibold mb-4" style={{ color: colors.textPrimary }}>
                 Fund Information
               </h2>
               <div className="grid grid-cols-2 gap-4">
@@ -354,9 +354,9 @@ export default function FundDetailsPage() {
               style={{
                 background: isDark
                   ? 'linear-gradient(135deg, rgba(147, 197, 253, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%)'
-                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(56, 189, 248, 0.02) 100%)',
+                  : '#FFFFFF',
                 border: `1px solid ${colors.cardBorder}`,
-                boxShadow: `0 4px 20px ${colors.glassShadow}`
+                boxShadow: isDark ? `0 4px 20px ${colors.glassShadow}` : '0 4px 20px rgba(0, 0, 0, 0.06)'
               }}
             >
               <h3 className="text-base font-semibold mb-4" style={{ color: colors.textPrimary }}>
@@ -521,9 +521,9 @@ export default function FundDetailsPage() {
               style={{
                 background: isDark
                   ? 'linear-gradient(135deg, rgba(147, 197, 253, 0.08) 0%, rgba(96, 165, 250, 0.04) 100%)'
-                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(56, 189, 248, 0.02) 100%)',
+                  : '#FFFFFF',
                 border: `1px solid ${colors.cardBorder}`,
-                boxShadow: `0 4px 20px ${colors.glassShadow}`
+                boxShadow: isDark ? `0 4px 20px ${colors.glassShadow}` : '0 4px 20px rgba(0, 0, 0, 0.06)'
               }}
             >
               <h3 className="text-base font-semibold mb-4" style={{ color: colors.textPrimary }}>

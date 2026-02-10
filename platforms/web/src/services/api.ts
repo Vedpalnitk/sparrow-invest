@@ -1190,8 +1190,8 @@ export const transactionsApi = {
     if (params?.status) query.append('status', params.status);
     if (params?.type) query.append('type', params.type);
     if (params?.clientId) query.append('clientId', params.clientId);
-    if (params?.dateFrom) query.append('dateFrom', params.dateFrom);
-    if (params?.dateTo) query.append('dateTo', params.dateTo);
+    if (params?.dateFrom) query.append('fromDate', params.dateFrom);
+    if (params?.dateTo) query.append('toDate', params.dateTo);
     if (params?.search) query.append('search', params.search);
     const queryString = query.toString();
     return request<FAPaginatedResponse<T>>(`/api/v1/transactions${queryString ? `?${queryString}` : ''}`);
@@ -1434,4 +1434,182 @@ export const actionsApi = {
 
   dismiss: (id: string) =>
     request<UserActionResponse>(`/api/v1/actions/${id}/dismiss`, { method: 'POST' }),
+};
+
+// ============= Advisor Dashboard API =============
+
+export interface KpiGrowth {
+  momChange: number;
+  momAbsolute: number;
+  yoyChange: number;
+  yoyAbsolute: number;
+  prevMonthValue: number;
+  prevYearValue: number;
+  trend: { date: string; value: number }[];
+}
+
+export interface DashboardClient {
+  id: string;
+  name: string;
+  email: string;
+  aum: number;
+  returns: number;
+  riskProfile: string;
+  status: string;
+  sipCount: number;
+  lastActive: string;
+}
+
+export interface DashboardTransaction {
+  id: string;
+  clientId: string;
+  clientName: string;
+  fundName: string;
+  type: string;
+  amount: number;
+  status: string;
+  date: string;
+}
+
+export interface DashboardSip {
+  id: string;
+  clientId: string;
+  clientName: string;
+  fundName: string;
+  amount: number;
+  nextDate: string;
+  status: string;
+}
+
+export interface AdvisorDashboard {
+  totalAum: number;
+  totalClients: number;
+  activeSips: number;
+  pendingActions: number;
+  avgReturns: number;
+  monthlySipValue: number;
+  recentClients: DashboardClient[];
+  pendingTransactions: DashboardTransaction[];
+  topPerformers: DashboardClient[];
+  upcomingSips: DashboardSip[];
+  failedSips: DashboardSip[];
+  aumGrowth: KpiGrowth | null;
+  clientsGrowth: KpiGrowth | null;
+  sipsGrowth: KpiGrowth | null;
+}
+
+export const advisorDashboardApi = {
+  get: () => request<AdvisorDashboard>('/api/v1/advisor/dashboard'),
+};
+
+// ============= Advisor Insights API =============
+
+export interface PortfolioHealthItem {
+  clientId: string;
+  clientName: string;
+  score: number;
+  status: string;
+  issues: string[];
+  aum: number;
+}
+
+export interface RebalancingAlert {
+  clientId: string;
+  clientName: string;
+  assetClass: string;
+  currentAllocation: number;
+  targetAllocation: number;
+  deviation: number;
+  action: string;
+  amount: number;
+}
+
+export interface TaxHarvestingOpportunity {
+  clientId: string;
+  clientName: string;
+  fundName: string;
+  holdingId: string;
+  investedValue: number;
+  currentValue: number;
+  unrealizedLoss: number;
+  potentialSavings: number;
+  holdingPeriod: string;
+}
+
+export interface GoalAlert {
+  clientId: string;
+  clientName: string;
+  goalId: string;
+  goalName: string;
+  status: string;
+  progress: number;
+  targetAmount: number;
+  currentAmount: number;
+  daysRemaining: number;
+}
+
+export interface MarketInsight {
+  id: string;
+  title: string;
+  summary: string;
+  category: string;
+  impact: string;
+  date: string;
+}
+
+export interface AdvisorInsights {
+  portfolioHealth: PortfolioHealthItem[];
+  rebalancingAlerts: RebalancingAlert[];
+  taxHarvesting: TaxHarvestingOpportunity[];
+  goalAlerts: GoalAlert[];
+  marketInsights: MarketInsight[];
+}
+
+export const advisorInsightsApi = {
+  get: () => request<AdvisorInsights>('/api/v1/advisor/insights'),
+};
+
+// ============= Notification Preferences API =============
+
+export type NotificationPreferences = Record<string, Record<string, boolean>>;
+
+export interface NotificationPreferenceUpdate {
+  category: string;
+  channel: string;
+  enabled: boolean;
+}
+
+export const notificationPreferencesApi = {
+  get: () => request<NotificationPreferences>('/notifications/preferences'),
+  update: (updates: NotificationPreferenceUpdate[]) =>
+    request<NotificationPreferences>('/notifications/preferences', {
+      method: 'PUT',
+      body: { updates },
+    }),
+};
+
+// ============= Auth Profile API =============
+
+export interface AuthProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  isVerified: boolean;
+  clientType?: string;
+}
+
+export const authProfileApi = {
+  get: () => request<AuthProfile>('/api/v1/auth/me'),
+  update: (data: { name?: string; phone?: string }) =>
+    request<AuthProfile>('/api/v1/auth/me', {
+      method: 'PUT',
+      body: data,
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ message: string }>('/api/v1/auth/me/change-password', {
+      method: 'POST',
+      body: { currentPassword, newPassword },
+    }),
 };

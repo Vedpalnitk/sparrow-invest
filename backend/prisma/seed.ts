@@ -424,7 +424,12 @@ async function main() {
   // =============================================
   await seedFAPortalData(admin.id);
 
+  // Seed pending actions for the advisor
+  await seedAdvisorActions(advisor.id);
+
   console.log('✅ Database seeding completed!');
+  console.log('\n💡 For P2/P3 data, run: npx ts-node prisma/seed-p2p3.ts');
+  console.log('💡 For fund data, run: npx ts-node prisma/seed-funds.ts');
 }
 
 // Sample funds for holdings
@@ -629,6 +634,132 @@ async function seedFAPortalData(advisorId: string) {
   console.log('✅ FA Portal data seeded!');
 }
 
+async function seedAdvisorActions(advisorId: string) {
+  console.log('\n📋 Seeding advisor pending actions...');
+
+  // Check if advisor already has actions
+  const existingActions = await prisma.userAction.findFirst({
+    where: { userId: advisorId },
+  });
+
+  if (existingActions) {
+    console.log('  ⏭ Advisor actions already exist');
+    return;
+  }
+
+  // Get some clients to reference in actions
+  const clients = await prisma.fAClient.findMany({
+    where: { advisorId },
+    take: 5,
+  });
+
+  const actions = [
+    // SIP Due actions
+    {
+      type: 'SIP_DUE' as const,
+      priority: 'URGENT' as const,
+      title: `SIP Due: ${clients[0]?.name || 'Rajesh Sharma'}`,
+      description: 'Monthly SIP of ₹25,000 for HDFC Flexi Cap Fund is due tomorrow',
+      dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Tomorrow
+      referenceId: clients[0]?.id,
+    },
+    {
+      type: 'SIP_DUE' as const,
+      priority: 'HIGH' as const,
+      title: `SIP Due: ${clients[1]?.name || 'Priya Patel'}`,
+      description: 'Monthly SIP of ₹15,000 for Axis Midcap Fund is due in 3 days',
+      dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      referenceId: clients[1]?.id,
+    },
+
+    // Rebalance recommendations
+    {
+      type: 'REBALANCE_RECOMMENDED' as const,
+      priority: 'HIGH' as const,
+      title: `Portfolio Drift: ${clients[2]?.name || 'Amit Kumar'}`,
+      description: 'Portfolio has drifted 8% from target allocation. Equity exposure above limit.',
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      referenceId: clients[2]?.id,
+    },
+    {
+      type: 'REBALANCE_RECOMMENDED' as const,
+      priority: 'MEDIUM' as const,
+      title: `Rebalance Due: ${clients[3]?.name || 'Sneha Gupta'}`,
+      description: 'Quarterly rebalancing recommended. Current allocation drifted 5% from target.',
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      referenceId: clients[3]?.id,
+    },
+
+    // Goal review
+    {
+      type: 'GOAL_REVIEW' as const,
+      priority: 'MEDIUM' as const,
+      title: `Quarterly Review: ${clients[0]?.name || 'Rajesh Sharma'}`,
+      description: 'Quarterly goal progress review is due. Retirement goal at 68% progress.',
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      referenceId: clients[0]?.id,
+    },
+    {
+      type: 'GOAL_REVIEW' as const,
+      priority: 'LOW' as const,
+      title: `Annual Review: ${clients[4]?.name || 'Vikram Singh'}`,
+      description: 'Annual portfolio review and goal assessment is due this month.',
+      dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
+      referenceId: clients[4]?.id,
+    },
+
+    // KYC expiry
+    {
+      type: 'KYC_EXPIRY' as const,
+      priority: 'MEDIUM' as const,
+      title: `KYC Renewal: ${clients[3]?.name || 'Sneha Gupta'}`,
+      description: 'Client KYC will expire in 30 days. Please initiate renewal process.',
+      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      referenceId: clients[3]?.id,
+    },
+
+    // Tax harvesting
+    {
+      type: 'TAX_HARVESTING' as const,
+      priority: 'MEDIUM' as const,
+      title: `Tax Harvesting Opportunity: ${clients[1]?.name || 'Priya Patel'}`,
+      description: 'Unrealized losses of ₹45,000 available for tax harvesting before March 31.',
+      dueDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      referenceId: clients[1]?.id,
+    },
+    {
+      type: 'TAX_HARVESTING' as const,
+      priority: 'HIGH' as const,
+      title: `ELSS Investment: ${clients[2]?.name || 'Amit Kumar'}`,
+      description: 'Client has ₹50,000 remaining in Section 80C limit. Recommend ELSS investment.',
+      dueDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+      referenceId: clients[2]?.id,
+    },
+
+    // SIP Failed
+    {
+      type: 'SIP_FAILED' as const,
+      priority: 'URGENT' as const,
+      title: `SIP Failed: ${clients[4]?.name || 'Vikram Singh'}`,
+      description: 'SIP debit failed due to insufficient balance. Immediate action required.',
+      dueDate: new Date(),
+      referenceId: clients[4]?.id,
+    },
+  ];
+
+  for (const action of actions) {
+    await prisma.userAction.create({
+      data: {
+        userId: advisorId,
+        ...action,
+        actionUrl: `/advisor/clients/${action.referenceId}`,
+      },
+    });
+  }
+
+  console.log(`  ✓ Created ${actions.length} pending actions for advisor`);
+}
+
 function generateFolioNumber(): string {
   return `${Math.floor(Math.random() * 9000000000000) + 1000000000000}`;
 }
@@ -646,6 +777,223 @@ function getStateFromCity(city: string): string {
     'Jaipur': 'Rajasthan',
   };
   return cityStateMap[city] || 'Unknown';
+}
+
+async function seedDemoUserData() {
+  console.log('\n💰 Seeding P2/P3 demo data...');
+
+  // Find demo users
+  const demoUsers = await prisma.user.findMany({
+    where: {
+      email: {
+        in: ['amit.verma@demo.com', 'priya.patel@demo.com', 'rajesh.sharma@demo.com'],
+      },
+    },
+  });
+
+  for (const user of demoUsers) {
+    // Create tax summary for current FY
+    const currentFY = '2025-26';
+    const existingTax = await prisma.userTaxSummary.findUnique({
+      where: { userId_financialYear: { userId: user.id, financialYear: currentFY } },
+    });
+
+    if (!existingTax) {
+      await prisma.userTaxSummary.create({
+        data: {
+          userId: user.id,
+          financialYear: currentFY,
+          ltcgRealized: 85000 + Math.floor(Math.random() * 50000),
+          stcgRealized: 25000 + Math.floor(Math.random() * 30000),
+          ltcgUnrealized: 120000 + Math.floor(Math.random() * 80000),
+          stcgUnrealized: 15000 + Math.floor(Math.random() * 20000),
+          elssInvested: 50000 + Math.floor(Math.random() * 100000),
+          dividendReceived: 5000 + Math.floor(Math.random() * 10000),
+          taxHarvestingDone: Math.floor(Math.random() * 50000),
+        },
+      });
+      console.log(`  ✓ Created tax summary for ${user.email}`);
+    }
+
+    // Create user actions
+    const existingActions = await prisma.userAction.findFirst({
+      where: { userId: user.id },
+    });
+
+    if (!existingActions) {
+      const actions = [
+        {
+          type: 'SIP_DUE' as const,
+          priority: 'HIGH' as const,
+          title: 'SIP Due: HDFC Flexi Cap Fund',
+          description: 'Monthly SIP of ₹10,000 is due on the 5th',
+          dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        },
+        {
+          type: 'REBALANCE_RECOMMENDED' as const,
+          priority: 'MEDIUM' as const,
+          title: 'Portfolio Rebalancing Recommended',
+          description: 'Your equity allocation has drifted 8% above target',
+          dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+        {
+          type: 'TAX_HARVESTING' as const,
+          priority: 'MEDIUM' as const,
+          title: 'Tax Harvesting Opportunity',
+          description: 'Book ₹15,000 LTCG before March 31',
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+        {
+          type: 'GOAL_REVIEW' as const,
+          priority: 'LOW' as const,
+          title: 'Goal Review: Emergency Fund',
+          description: "You're 85% towards your goal",
+          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        },
+        {
+          type: 'KYC_EXPIRY' as const,
+          priority: 'LOW' as const,
+          title: 'KYC Update Required',
+          description: 'Your KYC will expire in 45 days',
+          dueDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
+        },
+      ];
+
+      for (const action of actions) {
+        await prisma.userAction.create({
+          data: {
+            userId: user.id,
+            ...action,
+          },
+        });
+      }
+      console.log(`  ✓ Created ${actions.length} actions for ${user.email}`);
+    }
+  }
+
+  console.log('✅ P2/P3 demo data seeded!');
+}
+
+async function seedAdvisorProfiles(advisorUserId: string) {
+  console.log('\n👔 Seeding advisor profiles...');
+
+  // Check if advisor profile exists
+  const existingProfile = await prisma.advisorProfile.findUnique({
+    where: { userId: advisorUserId },
+  });
+
+  if (!existingProfile) {
+    await prisma.advisorProfile.create({
+      data: {
+        userId: advisorUserId,
+        displayName: 'Rahul Sharma, CFP',
+        bio: 'Certified Financial Planner with 12+ years of experience in wealth management. Specializing in retirement planning and tax-efficient investing.',
+        specializations: ['Retirement Planning', 'Tax Planning', 'ELSS', 'Portfolio Optimization'],
+        experienceYears: 12,
+        sebiRegNo: 'INH000012345',
+        arnNo: 'ARN-123456',
+        rating: 4.5,
+        totalReviews: 48,
+        totalClients: 156,
+        aumManaged: 85000000, // 8.5 Cr
+        isAcceptingNew: true,
+        minInvestment: 100000,
+        feeStructure: '0.5% AUM annually',
+        city: 'Mumbai',
+        languages: ['English', 'Hindi', 'Marathi'],
+        isVerified: true,
+      },
+    });
+    console.log('  ✓ Created advisor profile: Rahul Sharma, CFP');
+  }
+
+  // Create additional sample advisor profiles
+  const additionalAdvisors = [
+    {
+      email: 'neha.mehta@sparrowinvest.com',
+      password: 'Advisor@123',
+      name: 'Neha Mehta',
+      displayName: 'Neha Mehta, CFA',
+      bio: 'CFA charterholder with expertise in equity markets and systematic investing. Focused on helping young professionals build wealth.',
+      specializations: ['Equity Investing', 'SIP Planning', 'Goal-based Investing'],
+      experienceYears: 8,
+      sebiRegNo: 'INH000023456',
+      arnNo: 'ARN-234567',
+      rating: 4.7,
+      totalReviews: 32,
+      totalClients: 89,
+      aumManaged: 45000000,
+      city: 'Bengaluru',
+      languages: ['English', 'Hindi', 'Kannada'],
+    },
+    {
+      email: 'arun.kumar@sparrowinvest.com',
+      password: 'Advisor@123',
+      name: 'Arun Kumar',
+      displayName: 'Arun Kumar, MBA Finance',
+      bio: 'MBA from IIM-B with 15 years in financial services. Expert in debt markets and conservative wealth management.',
+      specializations: ['Debt Funds', 'Fixed Income', 'Capital Preservation', 'Retirement'],
+      experienceYears: 15,
+      sebiRegNo: 'INH000034567',
+      arnNo: 'ARN-345678',
+      rating: 4.3,
+      totalReviews: 67,
+      totalClients: 234,
+      aumManaged: 120000000,
+      city: 'Delhi',
+      languages: ['English', 'Hindi'],
+    },
+  ];
+
+  for (const advisor of additionalAdvisors) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email: advisor.email },
+    });
+
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash(advisor.password, 10);
+      const user = await prisma.user.create({
+        data: {
+          email: advisor.email,
+          passwordHash: hashedPassword,
+          role: 'advisor',
+          isActive: true,
+          isVerified: true,
+          profile: {
+            create: {
+              name: advisor.name,
+              city: advisor.city,
+            },
+          },
+        },
+      });
+
+      await prisma.advisorProfile.create({
+        data: {
+          userId: user.id,
+          displayName: advisor.displayName,
+          bio: advisor.bio,
+          specializations: advisor.specializations,
+          experienceYears: advisor.experienceYears,
+          sebiRegNo: advisor.sebiRegNo,
+          arnNo: advisor.arnNo,
+          rating: advisor.rating,
+          totalReviews: advisor.totalReviews,
+          totalClients: advisor.totalClients,
+          aumManaged: advisor.aumManaged,
+          isAcceptingNew: true,
+          minInvestment: 50000,
+          feeStructure: '0.5% AUM annually',
+          city: advisor.city,
+          languages: advisor.languages,
+          isVerified: true,
+        },
+      });
+      console.log(`  ✓ Created advisor: ${advisor.displayName}`);
+    }
+  }
+
+  console.log('✅ Advisor profiles seeded!');
 }
 
 main()
