@@ -29,13 +29,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +57,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,6 +66,7 @@ import com.sparrowinvest.fa.data.model.Client
 import com.sparrowinvest.fa.data.model.Fund
 import com.sparrowinvest.fa.ui.components.GlassCard
 import com.sparrowinvest.fa.ui.components.GlassTextField
+import com.sparrowinvest.fa.ui.components.IconContainer
 import com.sparrowinvest.fa.ui.components.ListItemCard
 import com.sparrowinvest.fa.ui.components.LoadingIndicator
 import com.sparrowinvest.fa.ui.components.PrimaryButton
@@ -66,10 +74,13 @@ import com.sparrowinvest.fa.ui.components.SecondaryButton
 import com.sparrowinvest.fa.ui.components.WizardStepIndicator
 import com.sparrowinvest.fa.ui.theme.CornerRadius
 import com.sparrowinvest.fa.ui.theme.Error
+import com.sparrowinvest.fa.ui.theme.GradientEndCyan
+import com.sparrowinvest.fa.ui.theme.GradientStartBlue
 import com.sparrowinvest.fa.ui.theme.Primary
 import com.sparrowinvest.fa.ui.theme.Secondary
 import com.sparrowinvest.fa.ui.theme.Spacing
 import com.sparrowinvest.fa.ui.theme.Success
+import com.sparrowinvest.fa.ui.theme.Warning
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -234,10 +245,11 @@ private fun SelectClientStep(
             .fillMaxSize()
             .padding(horizontal = Spacing.medium)
     ) {
-        Text(
-            text = "Select Client",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+        StepHeader(
+            icon = Icons.Default.People,
+            iconColor = Primary,
+            title = "Select Client",
+            subtitle = "Choose a client for this transaction"
         )
         Spacer(modifier = Modifier.height(Spacing.compact))
 
@@ -378,10 +390,11 @@ private fun SelectFundStep(
             .fillMaxSize()
             .padding(horizontal = Spacing.medium)
     ) {
-        Text(
-            text = "Select Fund",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+        StepHeader(
+            icon = Icons.AutoMirrored.Filled.ShowChart,
+            iconColor = Secondary,
+            title = "Select Fund",
+            subtitle = "Search and select a mutual fund"
         )
         Spacer(modifier = Modifier.height(Spacing.compact))
 
@@ -475,49 +488,75 @@ private fun FundSelectCard(
     ListItemCard(
         modifier = Modifier.clickable(onClick = onClick)
     ) {
-        Column {
-            Text(
-                text = fund.schemeName,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(Spacing.compact),
-                verticalAlignment = Alignment.CenterVertically
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Spacing.compact)
+        ) {
+            // Fund icon container
+            IconContainer(
+                size = 40.dp,
+                backgroundColor = Secondary.copy(alpha = 0.1f)
             ) {
-                fund.nav?.let { nav ->
-                    Text(
-                        text = "NAV: ₹${"%.2f".format(nav)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                fund.returns1y?.let { ret ->
-                    val color = if (ret >= 0) Success else Error
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(color.copy(alpha = 0.1f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ShowChart,
+                    contentDescription = null,
+                    tint = Secondary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = fund.schemeName,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    fund.nav?.let { nav ->
                         Text(
-                            text = "%+.1f%% 1Y".format(ret),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = color
+                            text = "NAV: ₹${"%.2f".format(nav)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-                fund.schemeCategory?.let { cat ->
-                    Text(
-                        text = cat,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    fund.returns1y?.let { ret ->
+                        val color = if (ret >= 0) Success else Error
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(color.copy(alpha = 0.1f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "%+.1f%% 1Y".format(ret),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = color
+                            )
+                        }
+                    }
+                    fund.schemeCategory?.let { cat ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(Primary.copy(alpha = 0.08f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = cat,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Primary,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -548,149 +587,160 @@ private fun EnterDetailsStep(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.medium)
     ) {
-        Text(
-            text = "Transaction Details",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
+        StepHeader(
+            icon = Icons.Default.Description,
+            iconColor = Warning,
+            title = "Transaction Details",
+            subtitle = "Configure the trade parameters"
         )
         Spacer(modifier = Modifier.height(Spacing.medium))
 
-        // Transaction Type
-        Text(
-            text = "TYPE",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Primary
-        )
-        Spacer(modifier = Modifier.height(Spacing.small))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-            verticalArrangement = Arrangement.spacedBy(Spacing.small)
-        ) {
-            TransactionType.entries.forEach { type ->
-                FilterChip(
-                    selected = transactionType == type,
-                    onClick = { onTransactionTypeChange(type) },
-                    label = { Text(type.label) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary.copy(alpha = 0.15f),
-                        selectedLabelColor = Primary
-                    )
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(Spacing.medium))
-
-        // Amount
-        Text(
-            text = "AMOUNT",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Primary
-        )
-        Spacer(modifier = Modifier.height(Spacing.small))
-        GlassTextField(
-            value = amount,
-            onValueChange = onAmountChange,
-            placeholder = "Enter amount",
-            prefix = {
+        // Transaction Type & Amount card
+        GlassCard {
+            Column {
                 Text(
-                    text = "₹",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "TYPE",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Primary
                 )
-            },
-            keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal,
-            singleLine = true
-        )
+                Spacer(modifier = Modifier.height(Spacing.small))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    TransactionType.entries.forEach { type ->
+                        FilterChip(
+                            selected = transactionType == type,
+                            onClick = { onTransactionTypeChange(type) },
+                            label = { Text(type.label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                selectedLabelColor = Primary
+                            )
+                        )
+                    }
+                }
 
-        Spacer(modifier = Modifier.height(Spacing.medium))
+                Spacer(modifier = Modifier.height(Spacing.medium))
 
-        // Folio
-        Text(
-            text = "FOLIO NUMBER",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Primary
-        )
-        Spacer(modifier = Modifier.height(Spacing.small))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-        ) {
-            FilterChip(
-                selected = isNewFolio,
-                onClick = { onNewFolioToggle(true) },
-                label = { Text("New Folio") },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Primary.copy(alpha = 0.15f),
-                    selectedLabelColor = Primary
+                Text(
+                    text = "AMOUNT",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Primary
                 )
-            )
-            FilterChip(
-                selected = !isNewFolio,
-                onClick = { onNewFolioToggle(false) },
-                label = { Text("Existing") },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Primary.copy(alpha = 0.15f),
-                    selectedLabelColor = Primary
-                )
-            )
-        }
-        if (!isNewFolio) {
-            Spacer(modifier = Modifier.height(Spacing.small))
-            GlassTextField(
-                value = folioNumber,
-                onValueChange = onFolioChange,
-                placeholder = "Enter folio number",
-                singleLine = true
-            )
-        }
-
-        Spacer(modifier = Modifier.height(Spacing.medium))
-
-        // Payment Mode
-        Text(
-            text = "PAYMENT MODE",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Primary
-        )
-        Spacer(modifier = Modifier.height(Spacing.small))
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
-            verticalArrangement = Arrangement.spacedBy(Spacing.small)
-        ) {
-            PaymentMode.entries.forEach { mode ->
-                FilterChip(
-                    selected = paymentMode == mode,
-                    onClick = { onPaymentModeChange(mode) },
-                    label = { Text(mode.label) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary.copy(alpha = 0.15f),
-                        selectedLabelColor = Primary
-                    )
+                Spacer(modifier = Modifier.height(Spacing.small))
+                GlassTextField(
+                    value = amount,
+                    onValueChange = onAmountChange,
+                    placeholder = "Enter amount",
+                    prefix = {
+                        Text(
+                            text = "₹",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal,
+                    singleLine = true
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(Spacing.medium))
+        Spacer(modifier = Modifier.height(Spacing.compact))
 
-        // Notes
-        Text(
-            text = "NOTES (OPTIONAL)",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = Primary
-        )
-        Spacer(modifier = Modifier.height(Spacing.small))
-        GlassTextField(
-            value = notes,
-            onValueChange = onNotesChange,
-            placeholder = "Any additional notes...",
-            singleLine = false
-        )
+        // Folio & Payment card
+        GlassCard {
+            Column {
+                Text(
+                    text = "FOLIO NUMBER",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Primary
+                )
+                Spacer(modifier = Modifier.height(Spacing.small))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    FilterChip(
+                        selected = isNewFolio,
+                        onClick = { onNewFolioToggle(true) },
+                        label = { Text("New Folio") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary
+                        )
+                    )
+                    FilterChip(
+                        selected = !isNewFolio,
+                        onClick = { onNewFolioToggle(false) },
+                        label = { Text("Existing") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = Primary.copy(alpha = 0.15f),
+                            selectedLabelColor = Primary
+                        )
+                    )
+                }
+                if (!isNewFolio) {
+                    Spacer(modifier = Modifier.height(Spacing.small))
+                    GlassTextField(
+                        value = folioNumber,
+                        onValueChange = onFolioChange,
+                        placeholder = "Enter folio number",
+                        singleLine = true
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.medium))
+
+                Text(
+                    text = "PAYMENT MODE",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Primary
+                )
+                Spacer(modifier = Modifier.height(Spacing.small))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.small)
+                ) {
+                    PaymentMode.entries.forEach { mode ->
+                        FilterChip(
+                            selected = paymentMode == mode,
+                            onClick = { onPaymentModeChange(mode) },
+                            label = { Text(mode.label) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Primary.copy(alpha = 0.15f),
+                                selectedLabelColor = Primary
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.compact))
+
+        // Notes card
+        GlassCard {
+            Column {
+                Text(
+                    text = "NOTES (OPTIONAL)",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Primary
+                )
+                Spacer(modifier = Modifier.height(Spacing.small))
+                GlassTextField(
+                    value = notes,
+                    onValueChange = onNotesChange,
+                    placeholder = "Any additional notes...",
+                    singleLine = false
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(Spacing.xxLarge))
     }
@@ -715,37 +765,49 @@ private fun SelectPlatformStep(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.medium)
     ) {
-        Text(
-            text = "Select Platform & Execute",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = "Choose where to execute the transaction",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        StepHeader(
+            icon = Icons.Default.AccountBalance,
+            iconColor = GradientStartBlue,
+            title = "Select Platform & Execute",
+            subtitle = "Choose where to execute the transaction"
         )
         Spacer(modifier = Modifier.height(Spacing.medium))
 
         // Platform cards
         Platform.entries.forEach { platform ->
             val isSelected = selectedPlatform == platform
-            ListItemCard(
+            val platformColor = if (platform == Platform.BSE) GradientStartBlue else Secondary
+
+            GlassCard(
                 modifier = Modifier
                     .clickable { onSelectPlatform(platform) }
                     .then(
                         if (isSelected) Modifier.border(
                             width = 2.dp,
-                            color = Primary,
-                            shape = RoundedCornerShape(CornerRadius.medium)
+                            brush = Brush.linearGradient(
+                                colors = listOf(GradientStartBlue, GradientEndCyan)
+                            ),
+                            shape = RoundedCornerShape(CornerRadius.xLarge)
                         ) else Modifier
                     )
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.compact)
                 ) {
+                    IconContainer(
+                        size = 44.dp,
+                        backgroundColor = platformColor.copy(alpha = 0.1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountBalance,
+                            contentDescription = null,
+                            tint = platformColor,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = platform.label,
@@ -760,16 +822,24 @@ private fun SelectPlatformStep(
                         )
                     }
                     if (isSelected) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = "Selected",
-                            tint = Primary,
-                            modifier = Modifier.size(20.dp)
-                        )
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(Primary),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Selected",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(Spacing.small))
+            Spacer(modifier = Modifier.height(Spacing.compact))
         }
 
         // Open platform button
@@ -827,22 +897,22 @@ private fun ReviewStep(uiState: NewTransactionWizardUiState) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = Spacing.medium)
     ) {
-        Text(
-            text = "Review Transaction",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Text(
-            text = "Please verify all details before submitting",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        StepHeader(
+            icon = Icons.Default.Receipt,
+            iconColor = Success,
+            title = "Review Transaction",
+            subtitle = "Please verify all details before submitting"
         )
         Spacer(modifier = Modifier.height(Spacing.medium))
 
         // Client section
         GlassCard {
             Column {
-                SectionLabel("CLIENT")
+                ReviewSectionHeader(
+                    icon = Icons.Default.People,
+                    color = Primary,
+                    label = "CLIENT"
+                )
                 Spacer(modifier = Modifier.height(Spacing.small))
                 uiState.selectedClient?.let { client ->
                     Row(
@@ -884,7 +954,11 @@ private fun ReviewStep(uiState: NewTransactionWizardUiState) {
         // Fund section
         GlassCard {
             Column {
-                SectionLabel("FUND")
+                ReviewSectionHeader(
+                    icon = Icons.AutoMirrored.Filled.ShowChart,
+                    color = Secondary,
+                    label = "FUND"
+                )
                 Spacer(modifier = Modifier.height(Spacing.small))
                 uiState.selectedFund?.let { fund ->
                     Text(
@@ -901,11 +975,18 @@ private fun ReviewStep(uiState: NewTransactionWizardUiState) {
                             )
                         }
                         fund.schemeCategory?.let { cat ->
-                            Text(
-                                text = cat,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Primary
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Secondary.copy(alpha = 0.1f))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = cat,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Secondary
+                                )
+                            }
                         }
                     }
                 }
@@ -917,7 +998,11 @@ private fun ReviewStep(uiState: NewTransactionWizardUiState) {
         // Trade details section
         GlassCard {
             Column {
-                SectionLabel("TRADE DETAILS")
+                ReviewSectionHeader(
+                    icon = Icons.Default.Description,
+                    color = Warning,
+                    label = "TRADE DETAILS"
+                )
                 Spacer(modifier = Modifier.height(Spacing.small))
 
                 ReviewRow("Type", uiState.transactionType.label)
@@ -938,7 +1023,11 @@ private fun ReviewStep(uiState: NewTransactionWizardUiState) {
         // Platform section
         GlassCard {
             Column {
-                SectionLabel("PLATFORM")
+                ReviewSectionHeader(
+                    icon = Icons.Default.AccountBalance,
+                    color = GradientStartBlue,
+                    label = "PLATFORM"
+                )
                 Spacer(modifier = Modifier.height(Spacing.small))
                 ReviewRow("Platform", uiState.selectedPlatform?.label ?: "-")
                 if (uiState.orderId.isNotBlank()) {
@@ -954,13 +1043,70 @@ private fun ReviewStep(uiState: NewTransactionWizardUiState) {
 }
 
 @Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = Primary
-    )
+private fun StepHeader(
+    icon: ImageVector,
+    iconColor: Color,
+    title: String,
+    subtitle: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.compact)
+    ) {
+        IconContainer(
+            size = 40.dp,
+            backgroundColor = iconColor.copy(alpha = 0.1f)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun ReviewSectionHeader(
+    icon: ImageVector,
+    color: Color,
+    label: String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+    ) {
+        IconContainer(
+            size = 28.dp,
+            backgroundColor = color.copy(alpha = 0.1f)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(14.dp)
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = color
+        )
+    }
 }
 
 @Composable
@@ -996,14 +1142,16 @@ private fun WizardBottomBar(
     onNext: () -> Unit,
     onSubmit: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = Spacing.medium, vertical = Spacing.compact)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            thickness = 1.dp
+        )
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = Spacing.medium, vertical = Spacing.compact),
             horizontalArrangement = Arrangement.spacedBy(Spacing.compact)
         ) {
             SecondaryButton(
