@@ -24,6 +24,34 @@ class FundDetailViewModel @Inject constructor(
     private val _fundDetail = MutableStateFlow<FundDetail?>(null)
     val fundDetail: StateFlow<FundDetail?> = _fundDetail.asStateFlow()
 
+    private val _isInWatchlist = MutableStateFlow(false)
+    val isInWatchlist: StateFlow<Boolean> = _isInWatchlist.asStateFlow()
+
+    private val _selectedPeriod = MutableStateFlow("3Y")
+    val selectedPeriod: StateFlow<String> = _selectedPeriod.asStateFlow()
+
+    fun toggleWatchlist() {
+        _isInWatchlist.value = !_isInWatchlist.value
+    }
+
+    fun setSelectedPeriod(period: String) {
+        _selectedPeriod.value = period
+    }
+
+    fun getReturnForPeriod(fund: FundDetail, period: String): Double? {
+        return fund.returns?.let { returns ->
+            when (period) {
+                "1M" -> returns.oneMonth
+                "3M" -> returns.threeMonth
+                "6M" -> returns.sixMonth
+                "1Y" -> returns.oneYear
+                "3Y" -> returns.threeYear
+                "5Y" -> returns.fiveYear
+                else -> returns.threeYear
+            }
+        }
+    }
+
     fun loadFundDetails(schemeCode: Int) {
         viewModelScope.launch {
             _uiState.value = FundDetailUiState.Loading

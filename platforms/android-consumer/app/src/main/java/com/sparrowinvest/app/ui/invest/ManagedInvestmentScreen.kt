@@ -326,7 +326,7 @@ private fun AmountInputSection(
             shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Primary,
-                unfocusedBorderColor = if (isDark) Color.White.opacity(0.1f) else Color.Black.opacity(0.1f)
+                unfocusedBorderColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.1f)
             )
         )
 

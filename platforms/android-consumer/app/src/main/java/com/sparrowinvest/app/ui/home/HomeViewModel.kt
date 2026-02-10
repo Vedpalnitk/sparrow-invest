@@ -165,6 +165,7 @@ class HomeViewModel @Inject constructor(
                         else -> {}
                     }
                 }
+                is ApiResult.Loading -> {}
             }
 
             // Load goals

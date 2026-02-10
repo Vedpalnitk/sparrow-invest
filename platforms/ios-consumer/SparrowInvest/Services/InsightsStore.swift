@@ -58,7 +58,7 @@ struct PortfolioAlert: Identifiable {
 
 // MARK: - Insight Card Models
 
-enum InsightsCardType {
+enum InsightCardDataType {
     case diversification
     case riskAdjustedReturns
     case expenseRatio
@@ -70,7 +70,7 @@ enum InsightsCardType {
         case .diversification: return .blue
         case .riskAdjustedReturns: return .green
         case .expenseRatio: return .orange
-        case .taxEfficiency: return Color(hex: "8B5CF6")
+        case .taxEfficiency: return Color(red: 0.545, green: 0.361, blue: 0.965)
         case .goalProgress: return .blue
         }
     }
@@ -86,11 +86,11 @@ enum InsightsCardType {
     }
 }
 
-struct InsightsCard: Identifiable {
+struct InsightCardData: Identifiable {
     let id: String
     let title: String
     let description: String
-    let type: InsightsCardType
+    let type: InsightCardDataType
     var value: String?
     var trend: Double?
 }
@@ -101,12 +101,12 @@ struct ActionTypeData {
     let displayName: String
     let color: Color
 
-    static let buy = ActionTypeData(displayName: "Buy", color: Color(hex: "10B981"))
-    static let sell = ActionTypeData(displayName: "Sell", color: Color(hex: "EF4444"))
-    static let hold = ActionTypeData(displayName: "Hold", color: Color(hex: "64748B"))
-    static let increaseSIP = ActionTypeData(displayName: "Increase SIP", color: Color(hex: "10B981"))
-    static let startSIP = ActionTypeData(displayName: "Start SIP", color: Color(hex: "10B981"))
-    static let rebalance = ActionTypeData(displayName: "Rebalance", color: Color(hex: "F59E0B"))
+    static let buy = ActionTypeData(displayName: "Buy", color: .green)
+    static let sell = ActionTypeData(displayName: "Sell", color: .red)
+    static let hold = ActionTypeData(displayName: "Hold", color: .gray)
+    static let increaseSIP = ActionTypeData(displayName: "Increase SIP", color: .green)
+    static let startSIP = ActionTypeData(displayName: "Start SIP", color: .green)
+    static let rebalance = ActionTypeData(displayName: "Rebalance", color: .orange)
 }
 
 enum InsightsActionPriority: String {
@@ -159,7 +159,7 @@ class InsightsStore: ObservableObject {
     @Published var analysisResult: AnalysisResult?
     @Published var alerts: [PortfolioAlert] = []
     @Published var actionItems: [ActionItemData] = []
-    @Published var insightCards: [InsightsCard] = []
+    @Published var insightCards: [InsightCardData] = []
     @Published var lastAnalyzedDate: String?
     @Published var portfolioViewMode: InsightsViewMode = .individual
 
@@ -273,7 +273,7 @@ class InsightsStore: ObservableObject {
 
     private func loadInsightCards() {
         insightCards = [
-            InsightsCard(
+            InsightCardData(
                 id: "1",
                 title: "Diversification Score",
                 description: "Your portfolio is well-diversified across 5 asset classes",
@@ -281,7 +281,7 @@ class InsightsStore: ObservableObject {
                 value: "Good",
                 trend: 5.0
             ),
-            InsightsCard(
+            InsightCardData(
                 id: "2",
                 title: "Risk-Adjusted Returns",
                 description: "Sharpe Ratio of 1.2 indicates efficient risk management",
@@ -289,7 +289,7 @@ class InsightsStore: ObservableObject {
                 value: "1.2",
                 trend: 0.1
             ),
-            InsightsCard(
+            InsightCardData(
                 id: "3",
                 title: "Expense Ratio",
                 description: "Portfolio weighted average expense ratio",
@@ -297,7 +297,7 @@ class InsightsStore: ObservableObject {
                 value: "0.45%",
                 trend: -0.05
             ),
-            InsightsCard(
+            InsightCardData(
                 id: "4",
                 title: "Tax Efficiency",
                 description: "Estimated tax liability on current gains",

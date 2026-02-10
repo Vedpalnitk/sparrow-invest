@@ -1,7 +1,6 @@
 package com.sparrowinvest.app.core.auth
 
 import android.content.Context
-import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat

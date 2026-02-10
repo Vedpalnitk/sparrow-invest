@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
@@ -104,7 +105,10 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onLogout: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToGoals: () -> Unit
+    onNavigateToGoals: () -> Unit,
+    onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToKYC: () -> Unit = {},
+    onNavigateToRiskProfile: () -> Unit = {}
 ) {
     val currentUser by viewModel.currentUser.collectAsState()
     val userPoints by viewModel.userPoints.collectAsState()
@@ -140,7 +144,7 @@ fun ProfileScreen(
                 UserInfoCard(
                     user = user,
                     profileCompletion = profileCompletion,
-                    onEditClick = { }
+                    onEditClick = onNavigateToEditProfile
                 )
                 Spacer(modifier = Modifier.height(Spacing.medium))
             }
@@ -236,7 +240,10 @@ fun ProfileScreen(
             SettingsCard(
                 currentUser = currentUser,
                 onNavigateToGoals = onNavigateToGoals,
-                onNavigateToSettings = onNavigateToSettings
+                onNavigateToSettings = onNavigateToSettings,
+                onNavigateToEditProfile = onNavigateToEditProfile,
+                onNavigateToKYC = onNavigateToKYC,
+                onNavigateToRiskProfile = onNavigateToRiskProfile
             )
             Spacer(modifier = Modifier.height(Spacing.medium))
         }
@@ -995,7 +1002,10 @@ private fun DocumentsCard(
 private fun SettingsCard(
     currentUser: User?,
     onNavigateToGoals: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToEditProfile: () -> Unit = {},
+    onNavigateToKYC: () -> Unit = {},
+    onNavigateToRiskProfile: () -> Unit = {}
 ) {
     val isDark = LocalIsDarkTheme.current
     val shape = RoundedCornerShape(CornerRadius.large)
@@ -1011,7 +1021,7 @@ private fun SettingsCard(
         ProfileMenuItem(
             icon = Icons.Default.Person,
             title = "Personal Information",
-            onClick = { }
+            onClick = onNavigateToEditProfile
         )
         ProfileMenuItem(
             icon = Icons.Default.Security,
@@ -1022,7 +1032,14 @@ private fun SettingsCard(
                 "IN_PROGRESS" -> Warning
                 else -> Error
             },
-            onClick = { }
+            onClick = onNavigateToKYC
+        )
+        ProfileMenuItem(
+            icon = Icons.Default.Shield,
+            title = "Risk Profile",
+            badge = currentUser?.riskProfile?.category?.displayName,
+            badgeColor = Primary,
+            onClick = onNavigateToRiskProfile
         )
         ProfileMenuItem(
             icon = Icons.Default.Star,

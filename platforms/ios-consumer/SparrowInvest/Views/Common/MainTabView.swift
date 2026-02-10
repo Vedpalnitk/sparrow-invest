@@ -21,7 +21,7 @@ struct MainTabView: View {
                     }
                     .tag(NavigationStore.Tab.investments)
 
-                AIAnalysisView()
+                InsightsView()
                     .tabItem {
                         Label(NavigationStore.Tab.insights.rawValue, systemImage: NavigationStore.Tab.insights.icon)
                     }
@@ -73,4 +73,5 @@ struct MainTabView: View {
         .environmentObject(FundsStore())
         .environmentObject(FamilyStore())
         .environmentObject(AdvisorStore())
+        .environmentObject(InsightsStore())
 }

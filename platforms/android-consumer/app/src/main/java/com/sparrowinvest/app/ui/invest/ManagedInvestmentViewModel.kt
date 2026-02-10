@@ -99,6 +99,7 @@ class ManagedInvestmentViewModel @Inject constructor(
                         result.message ?: "Failed to submit trade request. Please try again."
                     )
                 }
+                is ApiResult.Loading -> {}
             }
         }
     }

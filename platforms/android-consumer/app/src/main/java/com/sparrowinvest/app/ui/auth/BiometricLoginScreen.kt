@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import com.sparrowinvest.app.core.auth.BiometricHelper
 import com.sparrowinvest.app.core.auth.BiometricResult
-import com.sparrowinvest.app.ui.theme.AppGradients
 import com.sparrowinvest.app.ui.theme.AppTextStyles
 import com.sparrowinvest.app.ui.theme.CornerRadius
 import com.sparrowinvest.app.ui.theme.GlassBorderEndDark

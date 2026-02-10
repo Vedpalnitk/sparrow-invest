@@ -39,6 +39,10 @@ class PreferencesManager @Inject constructor(
         get() = ThemeMode.fromString(sharedPreferences.getString(KEY_THEME_MODE, ThemeMode.SYSTEM.name))
         set(value) = sharedPreferences.edit().putString(KEY_THEME_MODE, value.name).apply()
 
+    var biometricEnabled: Boolean
+        get() = sharedPreferences.getBoolean(KEY_BIOMETRIC_ENABLED, false)
+        set(value) = sharedPreferences.edit().putBoolean(KEY_BIOMETRIC_ENABLED, value).apply()
+
     fun saveUser(user: User) {
         try {
             val userJson = json.encodeToString(user)

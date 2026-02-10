@@ -21,7 +21,7 @@ class SettingsViewModel @Inject constructor(
     private val _notificationsEnabled = MutableStateFlow(true)
     val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
 
-    private val _biometricEnabled = MutableStateFlow(false)
+    private val _biometricEnabled = MutableStateFlow(preferencesManager.biometricEnabled)
     val biometricEnabled: StateFlow<Boolean> = _biometricEnabled.asStateFlow()
 
     fun setThemeMode(mode: ThemeMode) {
@@ -41,6 +41,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun setBiometricEnabled(enabled: Boolean) {
+        preferencesManager.biometricEnabled = enabled
         _biometricEnabled.value = enabled
     }
 

@@ -280,7 +280,7 @@ export default function AdvisorLayout({ children, title }: AdvisorLayoutProps) {
 
   return (
     <FANotificationProvider>
-    <div className="min-h-screen flex" style={{ background: colors.background }}>
+    <div className="min-h-screen flex" style={{ background: colors.background, fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" }}>
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full z-40 transition-all duration-300 ${

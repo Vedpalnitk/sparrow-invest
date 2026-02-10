@@ -23,8 +23,11 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +46,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sparrowinvest.app.core.auth.BiometricHelper
 import com.sparrowinvest.app.core.storage.ThemeMode
 import com.sparrowinvest.app.ui.theme.CornerRadius
 import com.sparrowinvest.app.ui.theme.Primary
@@ -51,7 +57,11 @@ import com.sparrowinvest.app.ui.theme.Spacing
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToLanguage: () -> Unit = {},
+    onNavigateToCache: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToSecurity: () -> Unit = {}
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
@@ -91,7 +101,8 @@ fun SettingsScreen(
             icon = Icons.Default.Language,
             iconColor = Color(0xFF3B82F6),
             title = "Language",
-            subtitle = "English"
+            subtitle = "English",
+            onClick = onNavigateToLanguage
         )
 
         Spacer(modifier = Modifier.height(Spacing.medium))
@@ -108,18 +119,42 @@ fun SettingsScreen(
             onToggle = { viewModel.setNotificationsEnabled(it) }
         )
 
+        SettingsNavigationItem(
+            icon = Icons.Default.NotificationsActive,
+            iconColor = Color(0xFF2563EB),
+            title = "Notification Settings",
+            subtitle = "Manage notification preferences",
+            onClick = onNavigateToNotifications
+        )
+
         Spacer(modifier = Modifier.height(Spacing.medium))
 
         // Security Section
         SettingsSectionHeader(title = "Security")
 
+        val context = LocalContext.current
+        val biometricAvailable = remember { BiometricHelper.canAuthenticate(context) }
+        val biometricType = remember { BiometricHelper.getBiometricType(context) }
+
         SettingsToggleItem(
-            icon = Icons.Default.Lock,
+            icon = Icons.Default.Fingerprint,
             iconColor = Color(0xFF10B981),
             title = "Biometric Login",
-            subtitle = "Use fingerprint or Face ID",
-            isEnabled = biometricEnabled,
-            onToggle = { viewModel.setBiometricEnabled(it) }
+            subtitle = if (biometricAvailable) "Use $biometricType to sign in" else "Biometric not available on this device",
+            isEnabled = biometricEnabled && biometricAvailable,
+            onToggle = { enabled ->
+                if (biometricAvailable) {
+                    viewModel.setBiometricEnabled(enabled)
+                }
+            }
+        )
+
+        SettingsNavigationItem(
+            icon = Icons.Default.Security,
+            iconColor = Color(0xFF8B5CF6),
+            title = "Security",
+            subtitle = "Password, 2FA, sessions",
+            onClick = onNavigateToSecurity
         )
 
         Spacer(modifier = Modifier.height(Spacing.medium))
@@ -131,7 +166,8 @@ fun SettingsScreen(
             icon = Icons.Default.Storage,
             iconColor = Color(0xFFEF4444),
             title = "Clear Cache",
-            subtitle = "Free up storage space"
+            subtitle = "Free up storage space",
+            onClick = onNavigateToCache
         )
 
         Spacer(modifier = Modifier.height(Spacing.xLarge))

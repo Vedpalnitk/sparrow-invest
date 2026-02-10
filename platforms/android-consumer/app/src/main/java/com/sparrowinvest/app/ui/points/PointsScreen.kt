@@ -197,7 +197,7 @@ private fun TierCard(
         modifier = modifier
             .fillMaxWidth()
             .then(
-                if (!isDark) Modifier.shadow(12.dp, shape, ShadowColor, ShadowColor)
+                if (!isDark) Modifier.shadow(12.dp, shape, ambientColor = ShadowColor, spotColor = ShadowColor)
                 else Modifier
             )
             .clip(shape)
@@ -358,7 +358,7 @@ private fun SummaryTile(
     Column(
         modifier = modifier
             .then(
-                if (!isDark) Modifier.shadow(8.dp, shape, ShadowColor, ShadowColor)
+                if (!isDark) Modifier.shadow(8.dp, shape, ambientColor = ShadowColor, spotColor = ShadowColor)
                 else Modifier
             )
             .clip(shape)
@@ -440,7 +440,7 @@ private fun TierBenefitsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(
-                    if (!isDark) Modifier.shadow(12.dp, shape, ShadowColor, ShadowColor)
+                    if (!isDark) Modifier.shadow(12.dp, shape, ambientColor = ShadowColor, spotColor = ShadowColor)
                     else Modifier
                 )
                 .clip(shape)
@@ -527,7 +527,7 @@ private fun AllTiersSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(
-                    if (!isDark) Modifier.shadow(12.dp, shape, ShadowColor, ShadowColor)
+                    if (!isDark) Modifier.shadow(12.dp, shape, ambientColor = ShadowColor, spotColor = ShadowColor)
                     else Modifier
                 )
                 .clip(shape)

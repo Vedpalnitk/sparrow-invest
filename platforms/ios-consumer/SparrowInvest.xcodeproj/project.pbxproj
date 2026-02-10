@@ -42,6 +42,7 @@
 		5CA5D29324FA0F5A261AAE73 /* MyAdvisorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8A67AF9C99C8B87CE135A55 /* MyAdvisorView.swift */; };
 		6369A0F816DF15117EE8C926 /* PortfolioAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 966DB19AA5DD2D3C1B9967BE /* PortfolioAnalysisView.swift */; };
 		678B056672884E10103DB918 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F1AAAE9FDA55E0BC7F0BB7 /* MainTabView.swift */; };
+		6AA87AD4389CB41C814289FF /* InsightsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0472331F6F4E2215C5A8061 /* InsightsStore.swift */; };
 		6BEA6D98CB32FCB05FF38965 /* AppearanceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B08FBEA4CF8BB0756F5047 /* AppearanceManager.swift */; };
 		758095F1FFA066DC8DA384C7 /* FundDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5871312DA009B2F231F64F3B /* FundDetailView.swift */; };
 		781396D69B7D8EFC8A9351A3 /* Portfolio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14C54EBBAFBF75A9FDB6F7DA /* Portfolio.swift */; };
@@ -81,6 +82,7 @@
 		D43ECAC8194C6FB9ACE9028D /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7FA67BBD6AE6C69BA79ADB3 /* ProfileView.swift */; };
 		D9645C5845296E391D3563B3 /* BrokerSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18BF723E965109CBC422A7A1 /* BrokerSelectionView.swift */; };
 		DB0DC2B927357463A01427A1 /* TaxSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF6D484578A035D632B90EB /* TaxSummary.swift */; };
+		DB92E830813FD82AD3937A72 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8353DCB6D95AC0B0D0AF685C /* InsightsView.swift */; };
 		E039118E68DF4B8B3BBA32AC /* DividendSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0D8A5BDA62C82648A61D1D /* DividendSummary.swift */; };
 		E293EBB40FBCEA6F8215F1B3 /* GoalProgressCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32F9F14FDAD0E01F6BC1ECE0 /* GoalProgressCard.swift */; };
 		EAEC7EBB7C986A81A015307F /* AvyaHomeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E300D6B3596AC0AC487FFE3B /* AvyaHomeCard.swift */; };
@@ -139,6 +141,7 @@
 		715F47B451F6E521DC177A7A /* InvestorProfileSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestorProfileSetupView.swift; sourceTree = "<group>"; };
 		7380E6B1A413B37E48AD9C9F /* Goal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Goal.swift; sourceTree = "<group>"; };
 		7AE09C99DC44DB13DC6B30A9 /* LanguageSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageSettingsView.swift; sourceTree = "<group>"; };
+		8353DCB6D95AC0B0D0AF685C /* InsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsView.swift; sourceTree = "<group>"; };
 		86A72B7325432C9AE5ED6FAA /* TradeRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TradeRequest.swift; sourceTree = "<group>"; };
 		86E3CFB28E2A25E1B2B7C7FB /* SparrowInvest.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SparrowInvest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		88F1AAAE9FDA55E0BC7F0BB7 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
@@ -170,6 +173,7 @@
 		DB7C43C08E9C48CE9D079C82 /* PortfolioStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortfolioStore.swift; sourceTree = "<group>"; };
 		DC954C92CED2E6D24B883547 /* AnalysisProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisProfileStore.swift; sourceTree = "<group>"; };
 		DDB65EF8A1DC237465DE9070 /* FamilyPortfolioCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FamilyPortfolioCard.swift; sourceTree = "<group>"; };
+		E0472331F6F4E2215C5A8061 /* InsightsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InsightsStore.swift; sourceTree = "<group>"; };
 		E300D6B3596AC0AC487FFE3B /* AvyaHomeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AvyaHomeCard.swift; sourceTree = "<group>"; };
 		E4A8CB1B6674DB879FA4207C /* CacheManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManagementView.swift; sourceTree = "<group>"; };
 		E590526CDDDB16746DA954CB /* InvestorProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestorProfile.swift; sourceTree = "<group>"; };
@@ -309,6 +313,7 @@
 				A6C7DF86224CEF6639C6629E /* Fund */,
 				9C6DFB5BD06803B58045EE10 /* Goals */,
 				4D6A01DF8EF847E8188141C9 /* Home */,
+				72D251E6BB46C3960EB84144 /* Insights */,
 				16B38E61174311CE362EAB05 /* Invest */,
 				1782E35376470E5EEDCF149F /* Investments */,
 				4C0470E5A294B5823CCB1C82 /* Onboarding */,
@@ -348,6 +353,14 @@
 				C66B1A2B6C6F61025DF6C196 /* User.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		72D251E6BB46C3960EB84144 /* Insights */ = {
+			isa = PBXGroup;
+			children = (
+				8353DCB6D95AC0B0D0AF685C /* InsightsView.swift */,
+			);
+			path = Insights;
 			sourceTree = "<group>";
 		};
 		746ADF8B712DCE5EC1DCD29A /* Components */ = {
@@ -407,6 +420,7 @@
 				B741CB3ED2710E516F453EEF /* FamilyStore.swift */,
 				D07F37B3AFB8C1C2F158BC0C /* FundsStore.swift */,
 				0B063AC3CF043531B02505AA /* GoalsStore.swift */,
+				E0472331F6F4E2215C5A8061 /* InsightsStore.swift */,
 				BB2E3C6B64D4A954061E121D /* NavigationStore.swift */,
 				407F2F4FB314CE006027EA51 /* PointsStore.swift */,
 				B19AA0E38F6669D38EFE8761 /* PortfolioAnalysisStore.swift */,
@@ -604,6 +618,8 @@
 				2B53C89F1334C70ADCDDA04B /* GoalsStore.swift in Sources */,
 				21E46F80B40CD63669095BEF /* GoalsView.swift in Sources */,
 				EFA032D5D116FCCFAB2A4DE3 /* HomeView.swift in Sources */,
+				6AA87AD4389CB41C814289FF /* InsightsStore.swift in Sources */,
+				DB92E830813FD82AD3937A72 /* InsightsView.swift in Sources */,
 				3B127A7A60C74B6E3BA2E61F /* InvestView.swift in Sources */,
 				3C793929613B6F3338125FDB /* InvestmentsView.swift in Sources */,
 				8F9330DDB516A962E86E1DE7 /* InvestorProfile.swift in Sources */,

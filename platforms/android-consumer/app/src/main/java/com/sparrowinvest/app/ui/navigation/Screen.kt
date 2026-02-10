@@ -1,9 +1,12 @@
 package com.sparrowinvest.app.ui.navigation
 
+import android.net.Uri
+
 sealed class Screen(val route: String) {
     // Auth screens
     data object Welcome : Screen("welcome")
     data object Login : Screen("login")
+    data object BiometricLogin : Screen("biometric-login")
     data object Signup : Screen("signup")
     data object OtpVerification : Screen("otp/{email}/{type}") {
         fun createRoute(email: String, type: String) = "otp/$email/$type"
@@ -38,6 +41,8 @@ sealed class Screen(val route: String) {
     data object Settings : Screen("settings")
     data object NotificationSettings : Screen("settings/notifications")
     data object SecuritySettings : Screen("settings/security")
+    data object LanguageSettings : Screen("settings/language")
+    data object CacheManagement : Screen("settings/cache")
 
     // Onboarding
     data object RiskAssessment : Screen("onboarding/risk-assessment")
@@ -52,6 +57,11 @@ sealed class Screen(val route: String) {
     }
     data object MyAdvisor : Screen("my-advisor")
 
+    // Profile sub-screens
+    data object EditProfile : Screen("profile/edit")
+    data object KYCStatus : Screen("profile/kyc")
+    data object RiskProfile : Screen("profile/risk")
+
     // Points/Rewards
     data object Points : Screen("points")
 
@@ -59,6 +69,13 @@ sealed class Screen(val route: String) {
     data object PortfolioAnalysis : Screen("analysis")
     data object Recommendations : Screen("recommendations")
     data object AvyaChat : Screen("avya_chat")
+
+    // Invest
+    data object BrokerSelection : Screen("broker-selection/{fundName}/{schemeCode}") {
+        fun createRoute(fundName: String, schemeCode: Int) =
+            "broker-selection/${Uri.encode(fundName)}/$schemeCode"
+    }
+    data object ManualInvestment : Screen("manual-investment")
 }
 
 object NavArguments {
@@ -70,4 +87,5 @@ object NavArguments {
     const val RISK_CATEGORY = "category"
     const val RISK_SCORE = "score"
     const val ADVISOR_ID = "advisorId"
+    const val FUND_NAME = "fundName"
 }
