@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsUUID, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID, IsOptional, IsBoolean, MaxLength } from 'class-validator';
 
 export class SendMessageDto {
   @IsUUID()
@@ -7,6 +7,7 @@ export class SendMessageDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(5000, { message: 'Message content must not exceed 5000 characters' })
   content: string;
 
   @IsBoolean()

@@ -389,6 +389,9 @@ class AuthManager: ObservableObject {
         userDefaults.removeObject(forKey: guestKey)
         userDefaults.removeObject(forKey: userKey)
         userDefaults.removeObject(forKey: refreshTokenKey)
+
+        // Notify all chat stores to clear data (prevents cross-user data leakage)
+        NotificationCenter.default.post(name: .userDidLogout, object: nil)
     }
 
     /// Refresh access token using refresh token

@@ -66,6 +66,12 @@ struct AvyaChatMessage: Identifiable, Equatable {
     }
 }
 
+// MARK: - Logout Notification
+
+extension Notification.Name {
+    static let userDidLogout = Notification.Name("userDidLogout")
+}
+
 // MARK: - AvyaChatStore
 
 @MainActor
@@ -77,9 +83,29 @@ class AvyaChatStore: ObservableObject {
 
     private var pollingTimer: Timer?
     private var pendingMessageId: String?
+    private var logoutObserver: NSObjectProtocol?
 
     private let pollingInterval: TimeInterval = 0.5
     private let maxPollingAttempts = 120
+
+    init() {
+        // Clear chat data when user logs out to prevent cross-user data leakage
+        logoutObserver = NotificationCenter.default.addObserver(
+            forName: .userDidLogout,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.clearMessages()
+            }
+        }
+    }
+
+    deinit {
+        if let observer = logoutObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
 
     // MARK: - Session Management
 

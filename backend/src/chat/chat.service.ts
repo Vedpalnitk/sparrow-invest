@@ -171,10 +171,23 @@ export class ChatService {
   }
 
   async getMessageStatus(userId: string, messageId: string): Promise<MessageStatusResponseDto> {
-    // Check in-memory processing status first
+    // Check in-memory processing status first, but only after verifying ownership
+    // We verify ownership via the database query below if not in processing map
     const processing = this.processingMessages.get(messageId);
 
     if (processing) {
+      // Verify the message actually belongs to this user before returning in-memory status
+      const message = await this.prisma.aIChatMessage.findFirst({
+        where: {
+          id: messageId,
+          session: { userId },
+        },
+      });
+
+      if (!message) {
+        throw new NotFoundException('Message not found');
+      }
+
       return {
         messageId,
         status: processing.status,
@@ -184,15 +197,15 @@ export class ChatService {
       };
     }
 
-    // Check database
-    const message = await this.prisma.aIChatMessage.findUnique({
-      where: { id: messageId },
-      include: {
-        session: true,
+    // Query with compound filter to prevent timing attacks — userId checked in same query
+    const message = await this.prisma.aIChatMessage.findFirst({
+      where: {
+        id: messageId,
+        session: { userId },
       },
     });
 
-    if (!message || message.session.userId !== userId) {
+    if (!message) {
       throw new NotFoundException('Message not found');
     }
 

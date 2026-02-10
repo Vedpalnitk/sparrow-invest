@@ -19,7 +19,8 @@ import javax.inject.Singleton
 class AuthRepository @Inject constructor(
     private val apiService: ApiService,
     private val tokenManager: TokenManager,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    private val chatRepository: ChatRepository
 ) {
     private val _isAuthenticated = MutableStateFlow(
         tokenManager.hasToken() && preferencesManager.isAuthenticated
@@ -82,6 +83,8 @@ class AuthRepository @Inject constructor(
         preferencesManager.clearAll()
         _currentUser.value = null
         _isAuthenticated.value = false
+        // Clear chat data to prevent cross-user data leakage
+        chatRepository.onUserLogout()
     }
 
     fun restoreAuthState() {

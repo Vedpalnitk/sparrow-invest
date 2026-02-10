@@ -9,8 +9,11 @@ import {
   Inject,
   UseInterceptors,
   UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { ChatService } from './chat.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -26,6 +29,7 @@ import {
 import type { LLMProvider } from './providers';
 
 @Controller('api/v1/chat')
+@UseGuards(ThrottlerGuard)
 export class ChatController {
   constructor(
     private readonly chatService: ChatService,
@@ -35,6 +39,7 @@ export class ChatController {
   // ===== SESSION ENDPOINTS =====
 
   @Post('sessions')
+  @Throttle({ 'chat-sessions': { ttl: 3600000, limit: 20 } })
   async createSession(
     @CurrentUser('id') userId: string,
     @Body() dto: CreateSessionDto,
@@ -66,6 +71,7 @@ export class ChatController {
   // ===== MESSAGE ENDPOINTS =====
 
   @Post('messages')
+  @Throttle({ 'chat-messages': { ttl: 60000, limit: 10 } })
   async sendMessage(
     @CurrentUser() user: { id: string; role: string },
     @Body() dto: SendMessageDto,
@@ -84,12 +90,24 @@ export class ChatController {
   // ===== VOICE ENDPOINTS =====
 
   @Post('transcribe')
+  @Throttle({ 'chat-voice': { ttl: 600000, limit: 5 } })
   @UseInterceptors(FileInterceptor('file'))
   async transcribe(
-    @UploadedFile() file: { buffer: Buffer; originalname?: string },
+    @CurrentUser('id') userId: string,
+    @UploadedFile() file: { buffer: Buffer; originalname?: string; mimetype?: string; size?: number },
   ): Promise<TranscribeResponseDto> {
     if (!file) {
-      throw new Error('No audio file provided');
+      throw new BadRequestException('No audio file provided');
+    }
+
+    // Validate file type
+    if (file.mimetype && !file.mimetype.startsWith('audio/')) {
+      throw new BadRequestException('Invalid file type. Only audio files are accepted.');
+    }
+
+    // Validate file size (10MB max)
+    if (file.size && file.size > 10 * 1024 * 1024) {
+      throw new BadRequestException('File too large. Maximum size is 10MB.');
     }
 
     const result = await this.chatService.transcribeAudio(file.buffer, file.originalname || 'audio.wav');
@@ -102,11 +120,19 @@ export class ChatController {
   }
 
   @Get('synthesize')
+  @Throttle({ 'chat-voice': { ttl: 600000, limit: 20 } })
   async synthesize(
+    @CurrentUser('id') userId: string,
     @Query('text') text: string,
     @Query('voice') voice: string = 'avya_voice',
     @Res() res: Response,
   ): Promise<void> {
+    // Validate text length
+    if (!text || text.length > 2000) {
+      res.status(400).send('Text is required and must be under 2000 characters.');
+      return;
+    }
+
     // Proxy to TTS server
     const ttsUrl = process.env.TTS_SERVER_URL || 'http://localhost:7860';
     const encodedText = encodeURIComponent(text);

@@ -24,9 +24,10 @@ object RepositoryModule {
     fun provideAuthRepository(
         apiService: ApiService,
         tokenManager: TokenManager,
-        preferencesManager: PreferencesManager
+        preferencesManager: PreferencesManager,
+        chatRepository: ChatRepository
     ): AuthRepository {
-        return AuthRepository(apiService, tokenManager, preferencesManager)
+        return AuthRepository(apiService, tokenManager, preferencesManager, chatRepository)
     }
 
     @Provides

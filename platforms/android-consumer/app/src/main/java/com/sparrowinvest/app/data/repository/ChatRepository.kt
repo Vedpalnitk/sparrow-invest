@@ -4,6 +4,9 @@ import com.sparrowinvest.app.core.network.ApiResult
 import com.sparrowinvest.app.core.network.ApiService
 import com.sparrowinvest.app.data.model.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,6 +15,13 @@ import javax.inject.Singleton
 class ChatRepository @Inject constructor(
     private val apiService: ApiService
 ) {
+    // Emits when user logs out — ViewModels observe this to clear chat state
+    private val _logoutEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val logoutEvent: SharedFlow<Unit> = _logoutEvent.asSharedFlow()
+
+    fun onUserLogout() {
+        _logoutEvent.tryEmit(Unit)
+    }
     suspend fun createSession(title: String? = null): ApiResult<ChatSession> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.createChatSession(CreateSessionRequest(title))

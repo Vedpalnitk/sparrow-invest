@@ -36,6 +36,15 @@ class AvyaChatViewModel @Inject constructor(
     private val pollingIntervalMs = 500L
     private val maxPollingAttempts = 120
 
+    init {
+        // Auto-clear chat state on logout to prevent cross-user data leakage
+        viewModelScope.launch {
+            chatRepository.logoutEvent.collect {
+                clearChat()
+            }
+        }
+    }
+
     fun sendMessage(content: String) {
         val trimmedContent = content.trim()
         if (trimmedContent.isEmpty()) return
