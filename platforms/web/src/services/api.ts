@@ -1063,16 +1063,13 @@ export const dbFundsApi = {
     return response.map(fund => ({
       schemeCode: fund.schemeCode,
       schemeName: fund.schemeName,
+      fundHouse: fund.schemeName.split(' ')[0] || '',
       category: '',
       subCategory: '',
-      amc: fund.schemeName.split(' ')[0] || '',
-      riskLevel: 'Moderate' as const,
-      nav: 0,
-      expenseRatio: 0,
-      aum: 0,
-      returns1y: 0,
-      returns3y: 0,
-      returns5y: 0,
+      assetClass: '',
+      currentNav: 0,
+      dayChange: 0,
+      dayChangePercent: 0,
     }));
   },
 };

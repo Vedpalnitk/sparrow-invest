@@ -20,6 +20,7 @@ interface Notification {
 
 interface NotificationContextType {
   notify: (notification: Omit<Notification, 'id'>) => void
+  showNotification: (type: NotificationType, title: string, message?: string) => void
   success: (title: string, message?: string) => void
   error: (title: string, message?: string) => void
   warning: (title: string, message?: string) => void
@@ -179,8 +180,12 @@ export const FANotificationProvider = ({ children }: { children: ReactNode }) =>
     notify({ type: 'info', title, message })
   }, [notify])
 
+  const showNotification = useCallback((type: NotificationType, title: string, message?: string) => {
+    notify({ type, title, message })
+  }, [notify])
+
   return (
-    <NotificationContext.Provider value={{ notify, success, error, warning, info, dismiss }}>
+    <NotificationContext.Provider value={{ notify, showNotification, success, error, warning, info, dismiss }}>
       {children}
       {/* Toast Container */}
       <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3">

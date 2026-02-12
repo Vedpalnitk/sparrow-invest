@@ -16,7 +16,27 @@ import {
   actionsApi,
   UserActionResponse,
   ActionType,
+  goalsApi,
+  GoalResponse,
 } from '@/services/api';
+
+// Display preferences key (shared with settings page)
+const DISPLAY_PREFS_KEY = 'fa-display-preferences';
+const ALL_WIDGETS = ['kpi', 'pending-actions', 'recent-transactions', 'top-clients', 'goal-progress', 'insights', 'upcoming-sips', 'market-summary'];
+
+function loadWidgetPrefs(): string[] {
+  if (typeof window === 'undefined') return ALL_WIDGETS;
+  try {
+    const saved = localStorage.getItem(DISPLAY_PREFS_KEY);
+    if (saved) {
+      const prefs = JSON.parse(saved);
+      if (prefs.dashboardWidgets && Array.isArray(prefs.dashboardWidgets)) {
+        return prefs.dashboardWidgets;
+      }
+    }
+  } catch {}
+  return ALL_WIDGETS;
+}
 
 // Pending action local interface
 interface PendingAction {
@@ -474,8 +494,26 @@ const AdvisorDashboard = () => {
 
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
+  const [goals, setGoals] = useState<GoalResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [enabledWidgets, setEnabledWidgets] = useState<string[]>(ALL_WIDGETS);
+
+  // Load widget preferences from localStorage
+  useEffect(() => {
+    setEnabledWidgets(loadWidgetPrefs());
+  }, []);
+
+  // Listen for settings changes (when user toggles widgets in another tab or same session)
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === DISPLAY_PREFS_KEY) setEnabledWidgets(loadWidgetPrefs());
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  const isWidgetEnabled = (id: string) => enabledWidgets.includes(id);
 
   // Expand state — one row per section at a time
   const [expandedKpi, setExpandedKpi] = useState<string | null>(null);
@@ -555,9 +593,10 @@ const AdvisorDashboard = () => {
       setError(null);
 
       try {
-        const [dashData, actionsData] = await Promise.allSettled([
+        const [dashData, actionsData, goalsData] = await Promise.allSettled([
           advisorDashboardApi.get(),
           actionsApi.list({ isCompleted: false, isDismissed: false, limit: 10 }),
+          goalsApi.list(),
         ]);
 
         if (dashData.status === 'fulfilled') {
@@ -569,6 +608,10 @@ const AdvisorDashboard = () => {
         if (actionsData.status === 'fulfilled') {
           const transformed = actionsData.value.map((a) => transformAction(a));
           setPendingActions(transformed);
+        }
+
+        if (goalsData.status === 'fulfilled') {
+          setGoals(goalsData.value);
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
@@ -595,7 +638,7 @@ const AdvisorDashboard = () => {
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
+        {isWidgetEnabled('kpi') && <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
           {[
             {
               label: 'TOTAL AUM',
@@ -698,10 +741,10 @@ const AdvisorDashboard = () => {
               </div>
             );
           })}
-        </div>
+        </div>}
 
         {/* KPI Expansion Panel */}
-        {expandedKpi && !loading && dashboard && (
+        {isWidgetEnabled('kpi') && expandedKpi && !loading && dashboard && (
           <KpiExpansionPanel
             expandedKpi={expandedKpi}
             dashboard={dashboard}
@@ -712,7 +755,7 @@ const AdvisorDashboard = () => {
         )}
 
         {/* Spacer when no KPI expanded */}
-        {!expandedKpi && <div className="mb-6" />}
+        {(!expandedKpi || !isWidgetEnabled('kpi')) && <div className="mb-6" />}
 
         {/* Quick Actions Bar */}
         <div className="flex items-center gap-3 mb-8 flex-wrap">
@@ -744,7 +787,7 @@ const AdvisorDashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Pending Actions */}
-            <div
+            {isWidgetEnabled('pending-actions') && <div
               className="p-5 rounded-xl"
               style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 4px 24px ${colors.glassShadow}` }}
             >
@@ -931,10 +974,65 @@ const AdvisorDashboard = () => {
                   })}
                 </div>
               )}
-            </div>
+            </div>}
+
+            {/* Recent Transactions */}
+            {isWidgetEnabled('recent-transactions') && !loading && dashboard && dashboard.pendingTransactions.length > 0 && (
+              <div
+                className="p-5 rounded-xl"
+                style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 4px 24px ${colors.glassShadow}` }}
+              >
+                <div
+                  className="flex items-center justify-between"
+                  style={{
+                    background: isDark ? 'rgba(147, 197, 253, 0.04)' : 'rgba(59, 130, 246, 0.03)',
+                    margin: '-1.25rem -1.25rem 1.25rem',
+                    padding: '0.875rem 1.25rem',
+                    borderBottom: `1px solid ${colors.cardBorder}`,
+                    borderRadius: '0.75rem 0.75rem 0 0',
+                  }}
+                >
+                  <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Recent Transactions</h3>
+                  <Link href="/advisor/transactions" className="text-sm font-medium hover:underline" style={{ color: colors.primary }}>
+                    View All
+                  </Link>
+                </div>
+                <div className="space-y-1">
+                  {dashboard.pendingTransactions.slice(0, 5).map((txn) => (
+                    <div
+                      key={txn.id}
+                      className="flex items-center gap-3 py-2.5 px-1"
+                      style={{ borderBottom: `1px solid ${colors.cardBorder}` }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{
+                          background: txn.type === 'BUY' || txn.type === 'SIP' ? `${colors.success}15` : `${colors.warning}15`,
+                        }}
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: txn.type === 'BUY' || txn.type === 'SIP' ? colors.success : colors.warning }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={txn.type === 'BUY' || txn.type === 'SIP' ? 'M12 4v16m8-8H4' : 'M20 12H4'} />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate" style={{ color: colors.textPrimary }}>{txn.clientName}</p>
+                        <p className="text-xs truncate" style={{ color: colors.textSecondary }}>{txn.fundName}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-sm font-semibold" style={{ color: colors.textPrimary }}>{formatCurrency(txn.amount)}</p>
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <FAChip color={txn.type === 'BUY' || txn.type === 'SIP' ? colors.success : colors.warning} size="xs">{txn.type}</FAChip>
+                          <span className="text-xs" style={{ color: colors.textTertiary }}>{txn.date}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Top Performers */}
-            {!loading && dashboard && dashboard.topPerformers.length > 0 && (
+            {isWidgetEnabled('top-clients') && !loading && dashboard && dashboard.topPerformers.length > 0 && (
               <div
                 className="p-5 rounded-xl"
                 style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 4px 24px ${colors.glassShadow}` }}
@@ -1136,12 +1234,71 @@ const AdvisorDashboard = () => {
                 </div>
               </div>
             )}
+
+            {/* Goal Progress */}
+            {isWidgetEnabled('goal-progress') && !loading && goals.length > 0 && (
+              <div
+                className="p-5 rounded-xl"
+                style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 4px 24px ${colors.glassShadow}` }}
+              >
+                <div
+                  className="flex items-center justify-between"
+                  style={{
+                    background: isDark ? 'rgba(147, 197, 253, 0.04)' : 'rgba(59, 130, 246, 0.03)',
+                    margin: '-1.25rem -1.25rem 1.25rem',
+                    padding: '0.875rem 1.25rem',
+                    borderBottom: `1px solid ${colors.cardBorder}`,
+                    borderRadius: '0.75rem 0.75rem 0 0',
+                  }}
+                >
+                  <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Goal Progress</h3>
+                  <Link href="/advisor/goals" className="text-sm font-medium hover:underline" style={{ color: colors.primary }}>
+                    View All
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {goals.slice(0, 5).map((goal) => {
+                    const progress = Math.min(goal.progress, 100);
+                    const isOnTrack = goal.status === 'ON_TRACK' || progress >= 50;
+                    return (
+                      <div key={goal.id} className="p-3 rounded-xl" style={{ background: colors.chipBg, border: `1px solid ${colors.cardBorder}` }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate" style={{ color: colors.textPrimary }}>{goal.name}</p>
+                            {goal.clientName && <p className="text-xs" style={{ color: colors.textTertiary }}>{goal.clientName}</p>}
+                          </div>
+                          <FAChip color={isOnTrack ? colors.success : colors.warning} size="xs">
+                            {isOnTrack ? 'On Track' : 'Behind'}
+                          </FAChip>
+                        </div>
+                        <div className="flex items-center justify-between text-xs mb-1.5">
+                          <span style={{ color: colors.textSecondary }}>{formatCurrency(goal.currentAmount)}</span>
+                          <span style={{ color: colors.textTertiary }}>{formatCurrency(goal.targetAmount)}</span>
+                        </div>
+                        <div className="h-2 rounded-full overflow-hidden" style={{ background: colors.chipBg }}>
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${progress}%`,
+                              background: `linear-gradient(90deg, ${isOnTrack ? colors.success : colors.warning} 0%, ${isOnTrack ? '#059669' : '#D97706'} 100%)`,
+                            }}
+                          />
+                        </div>
+                        <p className="text-xs mt-1" style={{ color: colors.textTertiary }}>
+                          {progress.toFixed(0)}% complete · {goal.daysRemaining > 0 ? `${goal.daysRemaining} days left` : 'Overdue'}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
             {/* SIP Overview */}
-            <div
+            {isWidgetEnabled('upcoming-sips') && <div
               className="p-5 rounded-xl"
               style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 4px 24px ${colors.glassShadow}` }}
             >
@@ -1219,10 +1376,10 @@ const AdvisorDashboard = () => {
                   )}
                 </>
               )}
-            </div>
+            </div>}
 
             {/* AI Insights — expandable cards */}
-            <div
+            {isWidgetEnabled('insights') && <div
               className="p-5 rounded-xl"
               style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 4px 24px ${colors.glassShadow}` }}
             >
@@ -1363,7 +1520,66 @@ const AdvisorDashboard = () => {
                   View Full Insights
                 </span>
               </Link>
-            </div>
+            </div>}
+
+            {/* Market Summary */}
+            {isWidgetEnabled('market-summary') && (
+              <div
+                className="p-5 rounded-xl"
+                style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 4px 24px ${colors.glassShadow}` }}
+              >
+                <div
+                  className="flex items-center justify-between"
+                  style={{
+                    background: isDark ? 'rgba(147, 197, 253, 0.04)' : 'rgba(59, 130, 246, 0.03)',
+                    margin: '-1.25rem -1.25rem 1.25rem',
+                    padding: '0.875rem 1.25rem',
+                    borderBottom: `1px solid ${colors.cardBorder}`,
+                    borderRadius: '0.75rem 0.75rem 0 0',
+                  }}
+                >
+                  <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Market Summary</h3>
+                  <span className="text-xs" style={{ color: colors.textTertiary }}>Indicative</span>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { name: 'Nifty 50', value: '24,857.30', change: '+0.42%', up: true },
+                    { name: 'Sensex', value: '81,765.86', change: '+0.38%', up: true },
+                    { name: 'Nifty Bank', value: '52,110.45', change: '-0.15%', up: false },
+                  ].map((idx) => (
+                    <div
+                      key={idx.name}
+                      className="flex items-center justify-between p-3 rounded-xl"
+                      style={{ background: colors.chipBg, border: `1px solid ${colors.cardBorder}` }}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ background: `${idx.up ? colors.success : colors.error}12` }}
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: idx.up ? colors.success : colors.error }} strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d={idx.up ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'} />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: colors.textPrimary }}>{idx.name}</p>
+                          <p className="text-xs" style={{ color: colors.textSecondary }}>{idx.value}</p>
+                        </div>
+                      </div>
+                      <span
+                        className="text-sm font-bold"
+                        style={{ color: idx.up ? colors.success : colors.error }}
+                      >
+                        {idx.change}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs mt-3 text-center" style={{ color: colors.textTertiary }}>
+                  Last updated: {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

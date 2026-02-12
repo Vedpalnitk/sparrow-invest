@@ -119,6 +119,22 @@ const SettingsPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordSaving, setPasswordSaving] = useState(false)
 
+  // 2FA state
+  const [show2FAModal, setShow2FAModal] = useState(false)
+  const [twoFAEnabled, setTwoFAEnabled] = useState(true)
+  const [twoFACode, setTwoFACode] = useState('')
+
+  // Sessions state
+  const [sessions, setSessions] = useState([
+    { device: 'MacBook Pro', location: 'Mumbai, India', time: 'Current session', current: true },
+    { device: 'iPhone 15 Pro', location: 'Mumbai, India', time: '2 hours ago', current: false },
+    { device: 'Chrome on Windows', location: 'Bangalore, India', time: '3 days ago', current: false },
+  ])
+
+  // Delete account state
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+
   const showSuccess = (msg: string) => {
     setSavedMessage(msg)
     setErrorMessage('')
@@ -837,10 +853,13 @@ const SettingsPage = () => {
                       </div>
                       <div>
                         <p className="font-medium" style={{ color: colors.textPrimary }}>Authenticator App</p>
-                        <p className="text-sm" style={{ color: colors.success }}>Enabled</p>
+                        <p className="text-sm" style={{ color: twoFAEnabled ? colors.success : colors.textTertiary }}>
+                          {twoFAEnabled ? 'Enabled' : 'Disabled'}
+                        </p>
                       </div>
                     </div>
                     <button
+                      onClick={() => setShow2FAModal(true)}
                       className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
                       style={{
                         background: colors.chipBg,
@@ -851,6 +870,77 @@ const SettingsPage = () => {
                       Configure
                     </button>
                   </div>
+
+                  {/* 2FA Configuration Modal */}
+                  {show2FAModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+                      <div
+                        className="w-full max-w-md mx-4 p-6 rounded-2xl"
+                        style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 8px 32px ${colors.glassShadow}` }}
+                      >
+                        <div className="flex items-center justify-between mb-5">
+                          <h3 className="text-lg font-semibold" style={{ color: colors.textPrimary }}>
+                            {twoFAEnabled ? 'Reconfigure 2FA' : 'Enable 2FA'}
+                          </h3>
+                          <button onClick={() => { setShow2FAModal(false); setTwoFACode('') }} className="p-1 rounded-lg" style={{ color: colors.textTertiary }}>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <div
+                          className="w-48 h-48 mx-auto mb-4 rounded-xl flex items-center justify-center"
+                          style={{ background: colors.chipBg, border: `2px dashed ${colors.cardBorder}` }}
+                        >
+                          <div className="text-center">
+                            <svg className="w-12 h-12 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: colors.textTertiary }} strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
+                            <p className="text-xs" style={{ color: colors.textTertiary }}>Scan with authenticator app</p>
+                          </div>
+                        </div>
+
+                        <FALabel>Verification Code</FALabel>
+                        <FAInput
+                          value={twoFACode}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          placeholder="Enter 6-digit code"
+                          maxLength={6}
+                        />
+
+                        <div className="flex gap-3 mt-5">
+                          {twoFAEnabled && (
+                            <button
+                              onClick={() => {
+                                setTwoFAEnabled(false)
+                                setShow2FAModal(false)
+                                setTwoFACode('')
+                                showSuccess('Two-factor authentication disabled')
+                              }}
+                              className="flex-1 py-2.5 rounded-full text-sm font-semibold transition-all"
+                              style={{ background: `${colors.error}15`, color: colors.error, border: `1px solid ${colors.error}30` }}
+                            >
+                              Disable 2FA
+                            </button>
+                          )}
+                          <FAButton
+                            onClick={() => {
+                              if (twoFACode.length === 6) {
+                                setTwoFAEnabled(true)
+                                setShow2FAModal(false)
+                                setTwoFACode('')
+                                showSuccess('Two-factor authentication ' + (twoFAEnabled ? 'reconfigured' : 'enabled') + ' successfully')
+                              }
+                            }}
+                            disabled={twoFACode.length !== 6}
+                          >
+                            Verify & Enable
+                          </FAButton>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </FACard>
 
                 <FACard>
@@ -870,13 +960,9 @@ const SettingsPage = () => {
                   </div>
 
                   <div className="space-y-3">
-                    {[
-                      { device: 'MacBook Pro', location: 'Mumbai, India', time: 'Current session', current: true },
-                      { device: 'iPhone 15 Pro', location: 'Mumbai, India', time: '2 hours ago', current: false },
-                      { device: 'Chrome on Windows', location: 'Bangalore, India', time: '3 days ago', current: false },
-                    ].map((session, i) => (
+                    {sessions.map((session, i) => (
                       <div
-                        key={i}
+                        key={`${session.device}-${i}`}
                         className="p-3 rounded-lg flex items-center justify-between"
                         style={{ background: colors.chipBg }}
                       >
@@ -908,6 +994,12 @@ const SettingsPage = () => {
                         </div>
                         {!session.current && (
                           <button
+                            onClick={() => {
+                              if (window.confirm(`Revoke session on ${session.device}?`)) {
+                                setSessions(prev => prev.filter((_, idx) => idx !== i))
+                                showSuccess(`Session on ${session.device} revoked`)
+                              }
+                            }}
                             className="text-sm font-medium transition-all hover:underline"
                             style={{ color: colors.error }}
                           >
@@ -936,6 +1028,7 @@ const SettingsPage = () => {
                   </div>
 
                   <button
+                    onClick={() => setShowDeleteModal(true)}
                     className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
                     style={{
                       background: `${colors.error}15`,
@@ -945,6 +1038,66 @@ const SettingsPage = () => {
                   >
                     Delete Account
                   </button>
+
+                  {/* Delete Account Confirmation Modal */}
+                  {showDeleteModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+                      <div
+                        className="w-full max-w-md mx-4 p-6 rounded-2xl"
+                        style={{ background: colors.cardBackground, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 8px 32px ${colors.glassShadow}` }}
+                      >
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${colors.error}15`, color: colors.error }}>
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold" style={{ color: colors.error }}>Delete Account</h3>
+                            <p className="text-sm" style={{ color: colors.textSecondary }}>This action cannot be undone</p>
+                          </div>
+                        </div>
+
+                        <div
+                          className="p-4 rounded-xl mb-4"
+                          style={{ background: `${colors.error}08`, border: `1px solid ${colors.error}20` }}
+                        >
+                          <p className="text-sm" style={{ color: colors.error }}>
+                            This will permanently delete your account, all client data, portfolio records, and transaction history. This action is irreversible.
+                          </p>
+                        </div>
+
+                        <FALabel>Type DELETE to confirm</FALabel>
+                        <FAInput
+                          value={deleteConfirmText}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDeleteConfirmText(e.target.value)}
+                          placeholder="DELETE"
+                        />
+
+                        <div className="flex gap-3 mt-5">
+                          <button
+                            onClick={() => { setShowDeleteModal(false); setDeleteConfirmText('') }}
+                            className="flex-1 py-2.5 rounded-full text-sm font-semibold transition-all"
+                            style={{ background: colors.chipBg, color: colors.textPrimary, border: `1px solid ${colors.cardBorder}` }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowDeleteModal(false)
+                              setDeleteConfirmText('')
+                              showError('Account deletion would be processed. This is a demo — no data was deleted.')
+                            }}
+                            disabled={deleteConfirmText !== 'DELETE'}
+                            className="flex-1 py-2.5 rounded-full text-sm font-semibold text-white transition-all disabled:opacity-40"
+                            style={{ background: colors.error }}
+                          >
+                            Delete My Account
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </FACard>
               </>
             )}
