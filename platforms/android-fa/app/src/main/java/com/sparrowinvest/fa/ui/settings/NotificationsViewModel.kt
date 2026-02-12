@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.sparrowinvest.fa.core.network.ApiResult
 import com.sparrowinvest.fa.data.model.NotificationCategory
 import com.sparrowinvest.fa.data.model.NotificationChannelType
+import com.sparrowinvest.fa.data.model.NotificationLogEntry
 import com.sparrowinvest.fa.data.model.NotificationPreferences
 import com.sparrowinvest.fa.data.model.PreferenceUpdate
 import com.sparrowinvest.fa.data.repository.NotificationRepository
@@ -29,8 +30,15 @@ class NotificationsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<NotificationsUiState>(NotificationsUiState.Loading)
     val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
+    private val _logs = MutableStateFlow<List<NotificationLogEntry>>(emptyList())
+    val logs: StateFlow<List<NotificationLogEntry>> = _logs.asStateFlow()
+
+    private val _logsLoading = MutableStateFlow(false)
+    val logsLoading: StateFlow<Boolean> = _logsLoading.asStateFlow()
+
     init {
         loadPreferences()
+        loadLogs()
     }
 
     fun loadPreferences() {
@@ -45,6 +53,22 @@ class NotificationsViewModel @Inject constructor(
                 }
                 else -> {}
             }
+        }
+    }
+
+    fun loadLogs() {
+        viewModelScope.launch {
+            _logsLoading.value = true
+            when (val result = notificationRepository.getLogs(limit = 20)) {
+                is ApiResult.Success -> {
+                    _logs.value = result.data.data
+                }
+                is ApiResult.Error -> {
+                    _logs.value = emptyList()
+                }
+                else -> {}
+            }
+            _logsLoading.value = false
         }
     }
 

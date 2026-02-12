@@ -47,6 +47,7 @@ import com.sparrowinvest.fa.ui.theme.Secondary
 import com.sparrowinvest.fa.ui.theme.Spacing
 import com.sparrowinvest.fa.ui.theme.Success
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun FundDetailScreen(
     schemeCode: Int,
@@ -58,26 +59,33 @@ fun FundDetailScreen(
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing = uiState is FundDetailUiState.Loading
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(title = "Fund Details", onBackClick = onBackClick)
 
-        when (val state = uiState) {
-            is FundDetailUiState.Loading -> {
-                LoadingIndicator(
-                    modifier = Modifier.fillMaxSize(),
-                    message = "Loading fund details..."
-                )
-            }
-            is FundDetailUiState.Error -> {
-                ErrorState(
-                    message = state.message,
-                    onRetry = { viewModel.loadFund(schemeCode) },
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            is FundDetailUiState.Success -> {
-                FundDetailContent(fund = state.fund)
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.loadFund(schemeCode) },
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when (val state = uiState) {
+                is FundDetailUiState.Loading -> {
+                    LoadingIndicator(
+                        modifier = Modifier.fillMaxSize(),
+                        message = "Loading fund details..."
+                    )
+                }
+                is FundDetailUiState.Error -> {
+                    ErrorState(
+                        message = state.message,
+                        onRetry = { viewModel.loadFund(schemeCode) },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                is FundDetailUiState.Success -> {
+                    FundDetailContent(fund = state.fund)
+                }
             }
         }
     }

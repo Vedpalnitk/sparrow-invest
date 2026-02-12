@@ -2,6 +2,7 @@ package com.sparrowinvest.fa.ui.settings
 
 import androidx.lifecycle.ViewModel
 import com.sparrowinvest.fa.BuildConfig
+import com.sparrowinvest.fa.MainActivity
 import com.sparrowinvest.fa.core.storage.PreferencesManager
 import com.sparrowinvest.fa.core.storage.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,6 +41,7 @@ class SettingsViewModel @Inject constructor(
     fun setThemeMode(mode: ThemeMode) {
         preferencesManager.themeMode = mode
         _themeMode.value = mode
+        MainActivity.themeModeFlow.value = mode
     }
 
     fun clearCache() {

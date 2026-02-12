@@ -2,6 +2,7 @@ package com.sparrowinvest.fa.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,7 @@ fun GlassCard(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = CornerRadius.xLarge,
     contentPadding: Dp = Spacing.medium,
+    onClick: (() -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit
 ) {
     val isDark = LocalIsDarkTheme.current
@@ -74,6 +76,9 @@ fun GlassCard(
             )
             .clip(shape)
             .background(backgroundColor)
+            .then(
+                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+            )
             .border(
                 width = 1.dp,
                 brush = borderBrush,

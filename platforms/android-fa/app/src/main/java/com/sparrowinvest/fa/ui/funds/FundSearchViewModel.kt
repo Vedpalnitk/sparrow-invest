@@ -25,7 +25,14 @@ class FundSearchViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _selectedCategory = MutableStateFlow<String?>(null)
+    val selectedCategory: StateFlow<String?> = _selectedCategory.asStateFlow()
+
     private var searchJob: Job? = null
+
+    companion object {
+        val categories = listOf("Equity", "Debt", "Hybrid", "Solution Oriented", "Other")
+    }
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
@@ -38,7 +45,38 @@ class FundSearchViewModel @Inject constructor(
                 search()
             }
         } else if (query.isEmpty()) {
+            if (_selectedCategory.value != null) {
+                loadByCategory(_selectedCategory.value!!)
+            } else {
+                _uiState.value = FundSearchUiState.Idle
+            }
+        }
+    }
+
+    fun selectCategory(category: String?) {
+        _selectedCategory.value = category
+        _searchQuery.value = ""
+        searchJob?.cancel()
+
+        if (category != null) {
+            loadByCategory(category)
+        } else {
             _uiState.value = FundSearchUiState.Idle
+        }
+    }
+
+    private fun loadByCategory(category: String) {
+        viewModelScope.launch {
+            _uiState.value = FundSearchUiState.Loading
+            when (val result = fundsRepository.getFundsByCategory(category)) {
+                is ApiResult.Success -> {
+                    _uiState.value = FundSearchUiState.Success(result.data)
+                }
+                is ApiResult.Error -> {
+                    _uiState.value = FundSearchUiState.Error(result.message)
+                }
+                else -> {}
+            }
         }
     }
 

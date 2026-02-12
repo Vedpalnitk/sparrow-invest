@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -47,6 +50,7 @@ import com.sparrowinvest.fa.ui.funds.FundDetailScreen
 import com.sparrowinvest.fa.ui.clients.EditClientScreen
 import com.sparrowinvest.fa.ui.transactions.ExecuteTradeScreen
 import com.sparrowinvest.fa.ui.sips.CreateSipScreen
+import com.sparrowinvest.fa.ui.actioncenter.ActionCenterScreen
 import com.sparrowinvest.fa.ui.settings.MoreScreen
 import com.sparrowinvest.fa.ui.settings.HelpSupportScreen
 import com.sparrowinvest.fa.ui.settings.NotificationsScreen
@@ -76,6 +80,8 @@ fun NavGraph(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    var actionBadgeCount by remember { mutableIntStateOf(0) }
+
     // Screens that show bottom nav
     val showBottomNav = currentRoute in listOf(
         Screen.Dashboard.route,
@@ -96,7 +102,8 @@ fun NavGraph(
                             launchSingleTop = true
                             restoreState = true
                         }
-                    }
+                    },
+                    actionBadgeCount = actionBadgeCount
                 )
             }
         },
@@ -198,6 +205,12 @@ fun NavGraph(
                         },
                         onNavigateToAvyaChat = {
                             navController.navigate(Screen.AvyaChat.createRoute())
+                        },
+                        onNavigateToActionCenter = {
+                            navController.navigate(Screen.ActionCenter.route)
+                        },
+                        onBadgeCountChanged = { count ->
+                            actionBadgeCount = count
                         }
                     )
                 }
@@ -256,6 +269,9 @@ fun NavGraph(
 
                 composable(Screen.More.route) {
                     MoreScreen(
+                        onNavigateToActionCenter = {
+                            navController.navigate(Screen.ActionCenter.route)
+                        },
                         onNavigateToSips = {
                             navController.navigate(Screen.SipList.route)
                         },
@@ -367,6 +383,16 @@ fun NavGraph(
                         },
                         onNavigateToEditClient = {
                             navController.navigate(Screen.EditClient.createRoute(clientId))
+                        }
+                    )
+                }
+
+                // Action Center
+                composable(Screen.ActionCenter.route) {
+                    ActionCenterScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onNavigateToClient = { clientId ->
+                            navController.navigate(Screen.ClientDetail.createRoute(clientId))
                         }
                     )
                 }

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Security
@@ -27,14 +28,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.sparrowinvest.fa.MainActivity
+import com.sparrowinvest.fa.core.storage.ThemeMode
 import com.sparrowinvest.fa.ui.auth.AuthViewModel
 import com.sparrowinvest.fa.ui.components.GlassCard
 import com.sparrowinvest.fa.ui.components.ListItemCard
@@ -50,10 +50,12 @@ fun MoreScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSecurity: () -> Unit = {},
     onNavigateToHelp: () -> Unit = {},
+    onNavigateToActionCenter: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
-    var darkMode by remember { mutableStateOf(false) }
+    val themeMode by MainActivity.themeModeFlow.collectAsState()
+    val darkMode = themeMode == ThemeMode.DARK
 
     Column(
         modifier = Modifier
@@ -109,6 +111,12 @@ fun MoreScreen(
         ) {
             Column {
                 MenuItem(
+                    icon = Icons.Default.NotificationsActive,
+                    title = "Action Center",
+                    subtitle = "Failed SIPs, pending actions",
+                    onClick = onNavigateToActionCenter
+                )
+                MenuItem(
                     icon = Icons.Default.Repeat,
                     title = "SIP Management",
                     subtitle = "View all SIPs",
@@ -126,7 +134,10 @@ fun MoreScreen(
                     trailing = {
                         Switch(
                             checked = darkMode,
-                            onCheckedChange = { darkMode = it }
+                            onCheckedChange = { enabled ->
+                                val newMode = if (enabled) ThemeMode.DARK else ThemeMode.LIGHT
+                                MainActivity.themeModeFlow.value = newMode
+                            }
                         )
                     }
                 )

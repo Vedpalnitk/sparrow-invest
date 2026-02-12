@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -49,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -58,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sparrowinvest.fa.data.model.Client
 import com.sparrowinvest.fa.data.model.FADashboard
+import com.sparrowinvest.fa.ui.actioncenter.shareSipFailure
 import com.sparrowinvest.fa.data.model.FASip
 import com.sparrowinvest.fa.data.model.FATransaction
 import com.sparrowinvest.fa.data.model.KpiGrowth
@@ -100,11 +103,21 @@ fun DashboardScreen(
     onNavigateToClient: (String) -> Unit,
     onNavigateToTransactions: () -> Unit,
     onNavigateToClients: () -> Unit,
-    onNavigateToAvyaChat: () -> Unit
+    onNavigateToAvyaChat: () -> Unit,
+    onNavigateToActionCenter: () -> Unit = {},
+    onBadgeCountChanged: (Int) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val breakdown by viewModel.breakdown.collectAsState()
     val isRefreshing = uiState is DashboardUiState.Loading
+
+    // Report badge count to parent
+    androidx.compose.runtime.LaunchedEffect(uiState) {
+        val state = uiState
+        if (state is DashboardUiState.Success) {
+            onBadgeCountChanged(state.dashboard.pendingActions)
+        }
+    }
 
     Scaffold(
         containerColor = Color.Transparent
@@ -137,7 +150,8 @@ fun DashboardScreen(
                         onNavigateToClient = onNavigateToClient,
                         onNavigateToTransactions = onNavigateToTransactions,
                         onNavigateToClients = onNavigateToClients,
-                        onNavigateToAvyaChat = onNavigateToAvyaChat
+                        onNavigateToAvyaChat = onNavigateToAvyaChat,
+                        onNavigateToActionCenter = onNavigateToActionCenter
                     )
                 }
             }
@@ -239,8 +253,10 @@ private fun DashboardContent(
     onNavigateToClient: (String) -> Unit,
     onNavigateToTransactions: () -> Unit,
     onNavigateToClients: () -> Unit,
-    onNavigateToAvyaChat: () -> Unit
+    onNavigateToAvyaChat: () -> Unit,
+    onNavigateToActionCenter: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     var showKpiDetailSheet by remember { mutableStateOf(false) }
     var selectedKpiType by remember { mutableStateOf<KpiDetailType?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -373,7 +389,7 @@ private fun DashboardContent(
                     icon = Icons.Default.Notifications,
                     iconColor = Warning,
                     modifier = Modifier.weight(1f),
-                    onClick = onNavigateToTransactions
+                    onClick = onNavigateToActionCenter
                 )
             }
         }
@@ -408,7 +424,8 @@ private fun DashboardContent(
                 SipOverviewCard(
                     upcomingSips = dashboard.upcomingSips,
                     failedSips = dashboard.failedSips,
-                    onSipClick = { sip -> onNavigateToClient(sip.clientId) }
+                    onSipClick = { sip -> onNavigateToClient(sip.clientId) },
+                    onShareFailedSip = { sip -> shareSipFailure(context, sip) }
                 )
             }
         }
@@ -419,15 +436,24 @@ private fun DashboardContent(
                 SectionHeader(
                     title = "Pending Actions",
                     actionText = "View All",
-                    onActionClick = onNavigateToTransactions
+                    onActionClick = onNavigateToActionCenter
                 )
             }
 
-            items(dashboard.pendingTransactions.take(3)) { transaction ->
-                PendingTransactionItem(
-                    transaction = transaction,
-                    onClick = { onNavigateToClient(transaction.clientId) }
-                )
+            item {
+                GlassCard(
+                    cornerRadius = CornerRadius.large,
+                    contentPadding = Spacing.small
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(Spacing.small)) {
+                        dashboard.pendingTransactions.take(3).forEach { transaction ->
+                            PendingTransactionItem(
+                                transaction = transaction,
+                                onClick = { onNavigateToClient(transaction.clientId) }
+                            )
+                        }
+                    }
+                }
             }
         }
 
@@ -568,11 +594,10 @@ private fun KpiCard(
     onLongClick: (() -> Unit)? = null
 ) {
     GlassCard(
-        modifier = modifier.then(
-            if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
-        ),
+        modifier = modifier,
         cornerRadius = CornerRadius.large,
-        contentPadding = Spacing.compact
+        contentPadding = Spacing.compact,
+        onClick = onClick
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -671,15 +696,36 @@ private fun PendingTransactionItem(
     transaction: FATransaction,
     onClick: () -> Unit
 ) {
-    ListItemCard(
-        modifier = Modifier.clickable(onClick = onClick)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(CornerRadius.small))
+            .background(Warning.copy(alpha = 0.05f))
+            .clickable(onClick = onClick)
+            .padding(Spacing.compact),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(CornerRadius.small))
+                    .background(Warning.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = Warning
+                )
+            }
+            Spacer(modifier = Modifier.width(Spacing.compact))
+            Column {
                 Text(
                     text = transaction.clientName,
                     style = MaterialTheme.typography.titleSmall,
@@ -695,14 +741,14 @@ private fun PendingTransactionItem(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = transaction.formattedAmount,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                StatusBadge(status = transaction.status)
-            }
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = transaction.formattedAmount,
+                style = MaterialTheme.typography.titleSmall,
+                color = Warning
+            )
+            StatusBadge(status = transaction.status)
         }
     }
 }
@@ -895,7 +941,8 @@ private fun UpcomingSipItem(
 private fun SipOverviewCard(
     upcomingSips: List<FASip>,
     failedSips: List<FASip>,
-    onSipClick: (FASip) -> Unit
+    onSipClick: (FASip) -> Unit,
+    onShareFailedSip: (FASip) -> Unit = {}
 ) {
     var showFailed by remember { mutableStateOf(failedSips.isNotEmpty()) }
 
@@ -974,7 +1021,8 @@ private fun SipOverviewCard(
                         SipListItem(
                             sip = sip,
                             isFailed = true,
-                            onClick = { onSipClick(sip) }
+                            onClick = { onSipClick(sip) },
+                            onShareClick = { onShareFailedSip(sip) }
                         )
                         if (sip != failedSips.take(3).last()) {
                             Spacer(modifier = Modifier.height(Spacing.small))
@@ -1048,7 +1096,8 @@ private fun SipToggleButton(
 private fun SipListItem(
     sip: FASip,
     isFailed: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onShareClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
@@ -1060,7 +1109,7 @@ private fun SipListItem(
             )
             .clickable(onClick = onClick)
             .padding(Spacing.compact),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.small),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
@@ -1126,6 +1175,20 @@ private fun SipListItem(
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isFailed) Error else MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+        // Share button for failed SIPs
+        if (isFailed && onShareClick != null) {
+            IconButton(
+                onClick = onShareClick,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Share with client",
+                    tint = Primary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
     }
 }

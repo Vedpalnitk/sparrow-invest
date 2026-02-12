@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Assessment
@@ -167,6 +168,7 @@ enum class ClientTab(val title: String, val icon: ImageVector) {
     REPORTS("Reports", Icons.Default.Description)
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun ClientDetailScreen(
     clientId: String,
@@ -183,6 +185,7 @@ fun ClientDetailScreen(
     val historyData by viewModel.historyState.collectAsState()
     val selectedPeriod by viewModel.selectedPeriod.collectAsState()
     var selectedTab by remember { mutableStateOf(ClientTab.OVERVIEW) }
+    val isRefreshing = uiState is ClientDetailUiState.Loading
 
     LaunchedEffect(clientId) {
         viewModel.loadClient(clientId)
@@ -203,34 +206,40 @@ fun ClientDetailScreen(
             }
         )
 
-        when (val state = uiState) {
-            is ClientDetailUiState.Loading -> {
-                LoadingIndicator(
-                    modifier = Modifier.fillMaxSize(),
-                    message = "Loading client..."
-                )
-            }
-            is ClientDetailUiState.Error -> {
-                ErrorState(
-                    message = state.message,
-                    onRetry = { viewModel.loadClient(clientId) },
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-            is ClientDetailUiState.Success -> {
-                ClientDetailContent(
-                    client = state.client,
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it },
-                    onNavigateToFund = onNavigateToFund,
-                    onExecuteTrade = onNavigateToExecuteTrade,
-                    onCreateSip = onNavigateToCreateSip,
-                    onNavigateToClient = onNavigateToClient,
-                    allocationData = allocationData,
-                    historyData = historyData,
-                    selectedPeriod = selectedPeriod,
-                    onPeriodChange = viewModel::onPeriodChange
-                )
+        androidx.compose.material3.pulltorefresh.PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refresh() },
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when (val state = uiState) {
+                is ClientDetailUiState.Loading -> {
+                    LoadingIndicator(
+                        modifier = Modifier.fillMaxSize(),
+                        message = "Loading client..."
+                    )
+                }
+                is ClientDetailUiState.Error -> {
+                    ErrorState(
+                        message = state.message,
+                        onRetry = { viewModel.loadClient(clientId) },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                is ClientDetailUiState.Success -> {
+                    ClientDetailContent(
+                        client = state.client,
+                        selectedTab = selectedTab,
+                        onTabSelected = { selectedTab = it },
+                        onNavigateToFund = onNavigateToFund,
+                        onExecuteTrade = onNavigateToExecuteTrade,
+                        onCreateSip = onNavigateToCreateSip,
+                        onNavigateToClient = onNavigateToClient,
+                        allocationData = allocationData,
+                        historyData = historyData,
+                        selectedPeriod = selectedPeriod,
+                        onPeriodChange = viewModel::onPeriodChange
+                    )
+                }
             }
         }
     }
@@ -368,6 +377,14 @@ private fun ClientDetailContent(
                 },
                 onEmailClick = {
                     shareViaEmail(context = context, client = client)
+                },
+                onCallClick = {
+                    client.phone?.let { phone ->
+                        val intent = Intent(Intent.ACTION_DIAL).apply {
+                            data = Uri.parse("tel:${phone.replace(" ", "")}")
+                        }
+                        context.startActivity(intent)
+                    }
                 },
                 onGeneratePdf = {
                     val file = PdfReportGenerator.generateClientReport(context, client)
@@ -574,6 +591,7 @@ private fun ClientHeaderCardV2(
     onSipClick: () -> Unit,
     onWhatsAppClick: () -> Unit,
     onEmailClick: () -> Unit,
+    onCallClick: () -> Unit = {},
     onGeneratePdf: () -> Unit = {}
 ) {
     GlassCard(
@@ -620,6 +638,16 @@ private fun ClientHeaderCardV2(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                // Call button
+                if (client.phone != null) {
+                    MiniIconButton(
+                        icon = Icons.Default.Call,
+                        color = Success,
+                        onClick = onCallClick
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                 }
 
                 // Share Button with dropdown

@@ -49,6 +49,9 @@ sealed class Screen(val route: String) {
         fun createRoute(schemeCode: Int) = "fund/$schemeCode"
     }
 
+    // Action Center
+    data object ActionCenter : Screen("action-center")
+
     // Settings
     data object Settings : Screen("settings")
     data object Notifications : Screen("notifications")

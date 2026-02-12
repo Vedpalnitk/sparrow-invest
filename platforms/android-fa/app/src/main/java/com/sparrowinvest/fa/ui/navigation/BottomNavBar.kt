@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Dashboard
@@ -46,7 +47,8 @@ data class BottomNavItem(
     val route: String,
     val label: String,
     val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
+    val unselectedIcon: ImageVector,
+    val badgeCount: Int = 0
 )
 
 val bottomNavItems = listOf(
@@ -86,7 +88,8 @@ val bottomNavItems = listOf(
 fun BottomNavBar(
     currentRoute: String?,
     onNavigate: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actionBadgeCount: Int = 0
 ) {
     val isDark = LocalIsDarkTheme.current
 
@@ -104,10 +107,12 @@ fun BottomNavBar(
         ) {
             bottomNavItems.forEach { item ->
                 val isSelected = currentRoute == item.route
+                val badgeCount = if (item.route == Screen.Dashboard.route) actionBadgeCount else 0
 
                 BottomNavItemView(
                     item = item,
                     isSelected = isSelected,
+                    badgeCount = badgeCount,
                     onClick = { onNavigate(item.route) }
                 )
             }
@@ -119,6 +124,7 @@ fun BottomNavBar(
 private fun BottomNavItemView(
     item: BottomNavItem,
     isSelected: Boolean,
+    badgeCount: Int = 0,
     onClick: () -> Unit
 ) {
     val icon = if (isSelected) item.selectedIcon else item.unselectedIcon
@@ -165,6 +171,24 @@ private fun BottomNavItemView(
                 modifier = Modifier.size(24.dp),
                 tint = color
             )
+            // Badge
+            if (badgeCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFEF4444)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (badgeCount > 9) "9+" else badgeCount.toString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontSize = androidx.compose.ui.unit.TextUnit(9f, androidx.compose.ui.unit.TextUnitType.Sp)
+                    )
+                }
+            }
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(

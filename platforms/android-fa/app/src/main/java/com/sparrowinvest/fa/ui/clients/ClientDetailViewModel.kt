@@ -51,6 +51,10 @@ class ClientDetailViewModel @Inject constructor(
         loadHistory(clientId, _selectedPeriod.value)
     }
 
+    fun refresh() {
+        currentClientId?.let { loadClient(it) }
+    }
+
     fun onPeriodChange(period: String) {
         _selectedPeriod.value = period
         currentClientId?.let { loadHistory(it, period) }

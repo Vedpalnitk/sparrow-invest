@@ -115,7 +115,7 @@ class DashboardViewModel @Inject constructor(
                 totalAum = totalAum,
                 totalClients = clients.size,
                 activeSips = activeSips,
-                pendingActions = _pendingTransactions.value.size,
+                pendingActions = _pendingTransactions.value.size + failedSips.size,
                 avgReturns = avgReturns,
                 monthlySipValue = monthlySipValue,
                 recentClients = clients.take(5),

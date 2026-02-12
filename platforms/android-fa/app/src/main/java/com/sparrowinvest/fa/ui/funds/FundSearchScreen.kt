@@ -1,6 +1,7 @@
 package com.sparrowinvest.fa.ui.funds
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,8 +12,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,6 +46,7 @@ fun FundSearchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopBar(
@@ -69,11 +74,42 @@ fun FundSearchScreen(
 
             Spacer(modifier = Modifier.height(Spacing.compact))
 
+            // Category filter chips
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+            ) {
+                FilterChip(
+                    selected = selectedCategory == null,
+                    onClick = { viewModel.selectCategory(null) },
+                    label = { Text("All") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                )
+                FundSearchViewModel.categories.forEach { category ->
+                    FilterChip(
+                        selected = selectedCategory == category,
+                        onClick = { viewModel.selectCategory(category) },
+                        label = { Text(category) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.compact))
+
             when (val state = uiState) {
                 is FundSearchUiState.Idle -> {
                     EmptyState(
                         title = "Search for funds",
-                        message = "Enter a fund name to search",
+                        message = "Enter a fund name or select a category",
                         modifier = Modifier.fillMaxSize()
                     )
                 }
