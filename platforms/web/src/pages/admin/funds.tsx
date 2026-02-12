@@ -498,7 +498,7 @@ export default function FundsUniversePage() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ background: colors.backgroundTertiary }}>
+                  <tr style={{ background: `${colors.primary}08` }}>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: colors.primary }}>Fund Name</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: colors.primary }}>Category</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: colors.primary }}>Asset Class</th>
@@ -514,12 +514,12 @@ export default function FundsUniversePage() {
                       key={fund.scheme_code}
                       className="transition-all cursor-pointer"
                       style={{
-                        background: idx % 2 === 0 ? 'transparent' : colors.backgroundSecondary,
+                        background: 'transparent',
                         borderBottom: `1px solid ${colors.cardBorder}`,
                       }}
                       onClick={() => router.push(`/admin/fund/${fund.scheme_code}`)}
                       onMouseEnter={(e) => e.currentTarget.style.background = colors.chipBg}
-                      onMouseLeave={(e) => e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : colors.backgroundSecondary}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                     >
                       <td className="px-4 py-4">
                         <div>

@@ -731,7 +731,7 @@ const MLConfigPage = () => {
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr style={{ background: colors.chipBg }}>
+                          <tr style={{ background: `${colors.primary}08` }}>
                             <th className="text-left text-xs font-semibold uppercase tracking-wide px-4 py-3" style={{ color: colors.primary }}>Date</th>
                             <th className="text-left text-xs font-semibold uppercase tracking-wide px-4 py-3" style={{ color: colors.primary }}>User</th>
                             <th className="text-left text-xs font-semibold uppercase tracking-wide px-4 py-3" style={{ color: colors.primary }}>Persona</th>
@@ -740,7 +740,16 @@ const MLConfigPage = () => {
                         </thead>
                         <tbody>
                           {classificationLogs.map((log, index) => (
-                            <tr key={log.id} style={{ borderBottom: index < classificationLogs.length - 1 ? `1px solid ${colors.chipBorder}` : undefined }}>
+                            <tr
+                              key={log.id}
+                              className="transition-all"
+                              style={{
+                                background: 'transparent',
+                                borderBottom: `1px solid ${colors.cardBorder}`,
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = colors.chipBg}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
                               <td className="px-4 py-3">
                                 <span className="text-sm" style={{ color: colors.textPrimary }}>{new Date(log.createdAt).toLocaleDateString()}</span>
                               </td>

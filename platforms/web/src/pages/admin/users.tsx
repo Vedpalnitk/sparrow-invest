@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
-import { AdminModal } from '@/components/admin/shared';
+import { AdminModal, AdminPagination } from '@/components/admin/shared';
 import { usersApi, SystemUser, CreateUserRequest, UpdateUserRequest } from '@/services/api';
 import { useAdminColors, useDarkMode } from '@/utils/useAdminColors';
 import {
@@ -670,7 +670,7 @@ const UsersPage = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr style={{ background: colors.chipBg }}>
+                  <tr style={{ background: `${colors.primary}08` }}>
                     <th className="w-12 px-4 py-3">
                       <input
                         type="checkbox"
@@ -706,9 +706,10 @@ const UsersPage = () => {
                     return (
                       <tr
                         key={user.id}
-                        className="transition-colors"
+                        className="transition-all cursor-pointer"
                         style={{
-                          borderBottom: index < paginatedUsers.length - 1 ? `1px solid ${colors.chipBorder}` : undefined,
+                          background: 'transparent',
+                          borderBottom: `1px solid ${colors.cardBorder}`,
                         }}
                         onMouseEnter={(e) => (e.currentTarget.style.background = colors.chipBg)}
                         onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
@@ -819,80 +820,20 @@ const UsersPage = () => {
             </div>
           )}
 
-          {/* Pagination Controls */}
+          {/* Pagination */}
           {filteredUsers.length > 0 && (
-            <div className="p-4 border-t flex items-center justify-between" style={{ borderColor: colors.chipBorder }}>
-              <div className="flex items-center gap-4">
-                <span className="text-sm" style={{ color: colors.textSecondary }}>
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs" style={{ color: colors.textTertiary }}>
-                    Per page:
-                  </span>
-                  <select
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="h-8 px-2 rounded-lg text-sm focus:outline-none"
-                    style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
-                  >
-                    <option value={5}>5</option>
-                    <option value={10}>10</option>
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg transition-all disabled:opacity-40"
-                  style={{ background: colors.chipBg }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: colors.textSecondary }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg transition-all disabled:opacity-40"
-                  style={{ background: colors.chipBg }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: colors.textSecondary }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <span className="px-3 text-sm" style={{ color: colors.textPrimary }}>
-                  Page {currentPage} of {totalPages || 1}
-                </span>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className="p-2 rounded-lg transition-all disabled:opacity-40"
-                  style={{ background: colors.chipBg }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: colors.textSecondary }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages || totalPages === 0}
-                  className="p-2 rounded-lg transition-all disabled:opacity-40"
-                  style={{ background: colors.chipBg }}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: colors.textSecondary }}>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
+            <AdminPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredUsers.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={(newItemsPerPage) => {
+                setItemsPerPage(newItemsPerPage);
+                setCurrentPage(1);
+              }}
+              itemsPerPageOptions={[5, 10, 25, 50]}
+            />
           )}
         </div>
 
