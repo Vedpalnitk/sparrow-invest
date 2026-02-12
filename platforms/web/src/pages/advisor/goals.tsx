@@ -587,7 +587,7 @@ const GoalsDashboard = () => {
         )}
 
         {/* Goal Summary by Type */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        {!loading && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
           {(['Retirement', 'Education', 'Home', 'Wealth'] as GoalType[]).map(type => {
             const typeGoals = goals.filter(g => g.type === type)
             const config = GOAL_CONFIG[type]
@@ -625,7 +625,7 @@ const GoalsDashboard = () => {
               </FATintedCard>
             )
           })}
-        </div>
+        </div>}
       </div>
 
       {/* New Goal Modal */}

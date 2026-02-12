@@ -110,6 +110,19 @@ const ClientDetailPage = () => {
   const [deletingGoalId, setDeletingGoalId] = useState<string | null>(null)
   const [deleteGoalSubmitting, setDeleteGoalSubmitting] = useState(false)
 
+  // Edit client profile state
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false)
+  const [editProfileForm, setEditProfileForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    pan: '',
+    address: '',
+    city: '',
+    riskProfile: '' as string,
+  })
+  const [editProfileSubmitting, setEditProfileSubmitting] = useState(false)
+
   // Report state
   const [reportType, setReportType] = useState<string>('portfolio-statement')
   const [reportDateFrom, setReportDateFrom] = useState('')
@@ -500,8 +513,8 @@ const ClientDetailPage = () => {
             currentNav: Number(h.currentNav),
             investedValue: Number(h.investedValue),
             currentValue: Number(h.currentValue),
-            absoluteGain: Number(h.absoluteGain),
-            absoluteGainPercent: Number(h.absoluteGainPct),
+            absoluteGain: Number(h.absoluteGain) || 0,
+            absoluteGainPercent: Number(h.absoluteGainPct) || 0,
             xirr: Number(h.xirr) || 0,
             lastTransactionDate: h.lastTxnDate?.split('T')[0] || '',
           })))
@@ -751,7 +764,20 @@ const ClientDetailPage = () => {
               <FAButton
                 size="sm"
                 variant="secondary"
-                onClick={() => {}}
+                onClick={() => {
+                  if (client) {
+                    setEditProfileForm({
+                      name: client.name,
+                      email: client.email,
+                      phone: client.phone,
+                      pan: client.pan || '',
+                      address: client.address || '',
+                      city: client.city || '',
+                      riskProfile: client.riskProfile,
+                    })
+                    setShowEditProfileModal(true)
+                  }
+                }}
                 icon={
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -870,10 +896,15 @@ const ClientDetailPage = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
-                          <th className="text-left py-2.5 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Fund</th>
-                          <th className="text-right py-2.5 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Value</th>
-                          <th className="text-right py-2.5 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Returns</th>
+                        <tr style={{
+                        background: isDark
+                          ? `linear-gradient(135deg, rgba(147,197,253,0.06) 0%, rgba(125,211,252,0.03) 100%)`
+                          : `linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(56,189,248,0.02) 100%)`,
+                        borderBottom: `1px solid ${colors.cardBorder}`,
+                      }}>
+                          <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Fund</th>
+                          <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Value</th>
+                          <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Returns</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -970,14 +1001,19 @@ const ClientDetailPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
-                      <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Member</th>
-                      <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Relationship</th>
-                      <th className="text-center py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>KYC</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Holdings</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>SIPs</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>AUM</th>
-                      <th className="text-right py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Returns</th>
+                    <tr style={{
+                        background: isDark
+                          ? `linear-gradient(135deg, rgba(147,197,253,0.06) 0%, rgba(125,211,252,0.03) 100%)`
+                          : `linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(56,189,248,0.02) 100%)`,
+                        borderBottom: `1px solid ${colors.cardBorder}`,
+                      }}>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Member</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Relationship</th>
+                      <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>KYC</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Holdings</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>SIPs</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>AUM</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Returns</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1102,13 +1138,18 @@ const ClientDetailPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
-                      <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Fund Name</th>
-                      <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Category</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Units</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>NAV</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Current Value</th>
-                      <th className="text-right py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Returns</th>
+                    <tr style={{
+                        background: isDark
+                          ? `linear-gradient(135deg, rgba(147,197,253,0.06) 0%, rgba(125,211,252,0.03) 100%)`
+                          : `linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(56,189,248,0.02) 100%)`,
+                        borderBottom: `1px solid ${colors.cardBorder}`,
+                      }}>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Fund Name</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Category</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Units</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>NAV</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Current Value</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Returns</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1218,13 +1259,18 @@ const ClientDetailPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
-                      <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Type</th>
-                      <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Fund Name</th>
-                      <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Date</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Amount</th>
-                      <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Units</th>
-                      <th className="text-left py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Status</th>
+                    <tr style={{
+                        background: isDark
+                          ? `linear-gradient(135deg, rgba(147,197,253,0.06) 0%, rgba(125,211,252,0.03) 100%)`
+                          : `linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(56,189,248,0.02) 100%)`,
+                        borderBottom: `1px solid ${colors.cardBorder}`,
+                      }}>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Type</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Fund Name</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Date</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Amount</th>
+                      <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Units</th>
+                      <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1334,14 +1380,19 @@ const ClientDetailPage = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
-                        <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Fund Name</th>
-                        <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Status</th>
-                        <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Amount</th>
-                        <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Invested</th>
-                        <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Current</th>
-                        <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Returns</th>
-                        <th className="text-right py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Actions</th>
+                      <tr style={{
+                        background: isDark
+                          ? `linear-gradient(135deg, rgba(147,197,253,0.06) 0%, rgba(125,211,252,0.03) 100%)`
+                          : `linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(56,189,248,0.02) 100%)`,
+                        borderBottom: `1px solid ${colors.cardBorder}`,
+                      }}>
+                        <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Fund Name</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Status</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Amount</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Invested</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Current</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Returns</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1476,14 +1527,19 @@ const ClientDetailPage = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr style={{ borderBottom: `1px solid ${colors.cardBorder}` }}>
-                        <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Goal</th>
-                        <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Status</th>
-                        <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Current</th>
-                        <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Target</th>
-                        <th className="text-left py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Progress</th>
-                        <th className="text-right py-3 pr-4 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Monthly SIP</th>
-                        <th className="text-right py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textTertiary }}>Actions</th>
+                      <tr style={{
+                        background: isDark
+                          ? `linear-gradient(135deg, rgba(147,197,253,0.06) 0%, rgba(125,211,252,0.03) 100%)`
+                          : `linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(56,189,248,0.02) 100%)`,
+                        borderBottom: `1px solid ${colors.cardBorder}`,
+                      }}>
+                        <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Goal</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Status</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Current</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Target</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Progress</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Monthly SIP</th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -2073,6 +2129,14 @@ const ClientDetailPage = () => {
                 >
                   Download Excel
                 </FAButton>
+                <FAShareButton
+                  clientId={id as string}
+                  clientName={client?.name || 'Client'}
+                  templateType="REPORT_SHARING"
+                  contextData={{ reportType: reportType }}
+                  label="Share Report"
+                  size="md"
+                />
               </div>
 
               {/* Recent Reports Placeholder */}
@@ -2103,6 +2167,153 @@ const ClientDetailPage = () => {
           clientName={client.name}
           initialType={transactionType}
         />
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditProfileModal && client && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div
+            className="w-full max-w-lg rounded-2xl p-6 mx-4"
+            style={{ background: colors.background, border: `1px solid ${colors.cardBorder}`, boxShadow: `0 24px 48px rgba(0,0,0,0.2)` }}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold" style={{ color: colors.textPrimary }}>Edit Client Profile</h2>
+              <button
+                onClick={() => setShowEditProfileModal(false)}
+                className="p-1.5 rounded-lg transition-colors hover:opacity-70"
+                style={{ color: colors.textTertiary }}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: colors.primary }}>Full Name</label>
+                <input
+                  type="text"
+                  value={editProfileForm.name}
+                  onChange={(e) => setEditProfileForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full h-10 px-4 rounded-xl text-sm focus:outline-none"
+                  style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: colors.primary }}>Email</label>
+                  <input
+                    type="email"
+                    value={editProfileForm.email}
+                    onChange={(e) => setEditProfileForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full h-10 px-4 rounded-xl text-sm focus:outline-none"
+                    style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: colors.primary }}>Phone</label>
+                  <input
+                    type="tel"
+                    value={editProfileForm.phone}
+                    onChange={(e) => setEditProfileForm(f => ({ ...f, phone: e.target.value }))}
+                    className="w-full h-10 px-4 rounded-xl text-sm focus:outline-none"
+                    style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: colors.primary }}>PAN</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.pan}
+                    onChange={(e) => setEditProfileForm(f => ({ ...f, pan: e.target.value.toUpperCase() }))}
+                    placeholder="ABCDE1234F"
+                    maxLength={10}
+                    className="w-full h-10 px-4 rounded-xl text-sm focus:outline-none"
+                    style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: colors.primary }}>Risk Profile</label>
+                  <select
+                    value={editProfileForm.riskProfile}
+                    onChange={(e) => setEditProfileForm(f => ({ ...f, riskProfile: e.target.value }))}
+                    className="w-full h-10 px-4 rounded-xl text-sm focus:outline-none"
+                    style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
+                  >
+                    <option value="Conservative">Conservative</option>
+                    <option value="Moderate">Moderate</option>
+                    <option value="Aggressive">Aggressive</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: colors.primary }}>Address</label>
+                <input
+                  type="text"
+                  value={editProfileForm.address}
+                  onChange={(e) => setEditProfileForm(f => ({ ...f, address: e.target.value }))}
+                  className="w-full h-10 px-4 rounded-xl text-sm focus:outline-none"
+                  style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: colors.primary }}>City</label>
+                <input
+                  type="text"
+                  value={editProfileForm.city}
+                  onChange={(e) => setEditProfileForm(f => ({ ...f, city: e.target.value }))}
+                  className="w-full h-10 px-4 rounded-xl text-sm focus:outline-none"
+                  style={{ background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.textPrimary }}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6 pt-4" style={{ borderTop: `1px solid ${colors.cardBorder}` }}>
+              <FAButton variant="secondary" size="sm" onClick={() => setShowEditProfileModal(false)}>
+                Cancel
+              </FAButton>
+              <FAButton
+                size="sm"
+                disabled={editProfileSubmitting || !editProfileForm.name || !editProfileForm.email}
+                onClick={async () => {
+                  setEditProfileSubmitting(true)
+                  try {
+                    await clientsApi.update(client.id, {
+                      name: editProfileForm.name,
+                      email: editProfileForm.email,
+                      phone: editProfileForm.phone,
+                      pan: editProfileForm.pan || undefined,
+                      address: editProfileForm.address || undefined,
+                      city: editProfileForm.city || undefined,
+                      riskProfile: editProfileForm.riskProfile as any,
+                    })
+                    setClient({
+                      ...client,
+                      name: editProfileForm.name,
+                      email: editProfileForm.email,
+                      phone: editProfileForm.phone,
+                      pan: editProfileForm.pan,
+                      address: editProfileForm.address,
+                      city: editProfileForm.city,
+                      riskProfile: editProfileForm.riskProfile as any,
+                    })
+                    notification.success('Profile updated successfully')
+                    setShowEditProfileModal(false)
+                  } catch {
+                    notification.error('Failed to update profile')
+                  } finally {
+                    setEditProfileSubmitting(false)
+                  }
+                }}
+              >
+                {editProfileSubmitting ? 'Saving...' : 'Save Changes'}
+              </FAButton>
+            </div>
+          </div>
+        </div>
       )}
     </AdvisorLayout>
   )
