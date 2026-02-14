@@ -218,10 +218,62 @@ class ClientStore: ObservableObject {
 
     func loadPendingActions(_ clientId: String) async {
         do {
-            pendingActions = try await APIService.shared.get("/clients/\(clientId)/pending-actions")
+            let result: [PendingAction] = try await APIService.shared.get("/clients/\(clientId)/pending-actions")
+            pendingActions = result
         } catch {
+            // Synthesize only for demo — in production, API would return real data
+            #if DEBUG
+            pendingActions = synthesizePendingActions(clientId)
+            #else
             pendingActions = []
+            #endif
         }
+    }
+
+    private func synthesizePendingActions(_ clientId: String) -> [PendingAction] {
+        guard let client = selectedClient else { return [] }
+
+        var actions: [PendingAction] = []
+
+        // KYC pending if client has pending KYC
+        if client.kycStatus?.lowercased() == "pending" || client.kycStatus == nil {
+            actions.append(PendingAction(
+                id: "\(clientId)-kyc",
+                clientId: clientId,
+                clientName: client.name,
+                type: "KYC_PENDING",
+                title: "Complete KYC",
+                message: "KYC verification is pending for this client",
+                priority: .high,
+                createdAt: nil
+            ))
+        }
+
+        // eMandate setup
+        actions.append(PendingAction(
+            id: "\(clientId)-emandate",
+            clientId: clientId,
+            clientName: client.name,
+            type: "TRADE_PENDING",
+            title: "Setup eMandate",
+            message: "eMandate required for SIP auto-debit",
+            priority: .medium,
+            createdAt: nil
+        ))
+
+        // Nominee
+        actions.append(PendingAction(
+            id: "\(clientId)-nominee",
+            clientId: clientId,
+            clientName: client.name,
+            type: "REBALANCE",
+            title: "Add Nominee",
+            message: "Nominee details are not updated",
+            priority: .low,
+            createdAt: nil
+        ))
+
+        return actions
     }
 
     func loadGoals(_ clientId: String) async {

@@ -1,6 +1,7 @@
 package com.sparrowinvest.fa.ui.clients
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +29,6 @@ import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Assessment
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Groups
@@ -43,9 +43,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Verified
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
@@ -260,8 +258,7 @@ private fun ClientDetailContent(
     onPeriodChange: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    var showShareMenu by remember { mutableStateOf(false) }
-    var showShareOptionsSheet by remember { mutableStateOf(false) }
+    var showShareSheet by remember { mutableStateOf(false) }
 
     // Generate pending actions based on client data
     val pendingActions = remember(client) {
@@ -372,12 +369,7 @@ private fun ClientDetailContent(
                 client = client,
                 onBuyClick = onExecuteTrade,
                 onSipClick = onCreateSip,
-                onWhatsAppClick = {
-                    shareViaWhatsApp(context = context, client = client, phone = client.phone)
-                },
-                onEmailClick = {
-                    shareViaEmail(context = context, client = client)
-                },
+                onShareClick = { showShareSheet = true },
                 onCallClick = {
                     client.phone?.let { phone ->
                         val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -582,6 +574,15 @@ private fun ClientDetailContent(
             }
         }
     }
+
+    // Share with Client bottom sheet
+    if (showShareSheet) {
+        ShareWithClientSheet(
+            clientId = client.id,
+            clientName = client.name,
+            onDismiss = { showShareSheet = false }
+        )
+    }
 }
 
 @Composable
@@ -589,8 +590,7 @@ private fun ClientHeaderCardV2(
     client: ClientDetail,
     onBuyClick: () -> Unit,
     onSipClick: () -> Unit,
-    onWhatsAppClick: () -> Unit,
-    onEmailClick: () -> Unit,
+    onShareClick: () -> Unit,
     onCallClick: () -> Unit = {},
     onGeneratePdf: () -> Unit = {}
 ) {
@@ -622,22 +622,31 @@ private fun ClientHeaderCardV2(
 
                 Spacer(modifier = Modifier.width(Spacing.compact))
 
-                // Name & Status
+                // Name & Inline Stats
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = client.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.width(Spacing.small))
-                        StatusBadge(status = client.kycStatus ?: "PENDING")
-                    }
                     Text(
-                        text = client.email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = client.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.small)
+                    ) {
+                        Text(
+                            text = "₹${formatAmount(client.aum)}",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Primary
+                        )
+                        ReturnBadge(returnValue = client.returns)
+                        Text(
+                            text = "${client.holdings.size} funds",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 // Call button
@@ -672,40 +681,17 @@ private fun ClientHeaderCardV2(
                                         imageVector = Icons.Default.Share,
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp),
-                                        tint = Color(0xFF25D366)
+                                        tint = Primary
                                     )
                                     Column {
-                                        Text("WhatsApp", style = MaterialTheme.typography.bodyMedium)
-                                        Text("Send portfolio summary", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text("Share with Client", style = MaterialTheme.typography.bodyMedium)
+                                        Text("Send via email or WhatsApp", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                             },
                             onClick = {
                                 showShareDropdown = false
-                                onWhatsAppClick()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Email,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
-                                        tint = Color(0xFF4285F4)
-                                    )
-                                    Column {
-                                        Text("Email Report", style = MaterialTheme.typography.bodyMedium)
-                                        Text("Send detailed portfolio report", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                            },
-                            onClick = {
-                                showShareDropdown = false
-                                onEmailClick()
+                                onShareClick()
                             }
                         )
                         DropdownMenuItem(
@@ -735,47 +721,7 @@ private fun ClientHeaderCardV2(
                 }
             }
 
-            // Row 2: Stats in 2x2 Tiles
-            Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.small)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                ) {
-                    StatTile(
-                        label = "AUM",
-                        value = "₹${formatAmount(client.aum)}",
-                        color = Primary,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatTile(
-                        label = "Returns",
-                        value = "${if (client.returns >= 0) "+" else ""}${"%.1f".format(client.returns)}%",
-                        color = if (client.returns >= 0) Success else Error,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.small)
-                ) {
-                    StatTile(
-                        label = "Holdings",
-                        value = "${client.holdings.size}",
-                        color = Info,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatTile(
-                        label = "Active SIPs",
-                        value = "${client.sips.count { it.isActive }}",
-                        color = Success,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-
-            // Row 3: Action Buttons
+            // Row 2: Action Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.compact)
@@ -861,10 +807,21 @@ private fun StatTile(
     color: Color,
     modifier: Modifier = Modifier
 ) {
+    val isDark = com.sparrowinvest.fa.ui.theme.LocalIsDarkTheme.current
+
+    val shape = RoundedCornerShape(CornerRadius.medium)
+
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(CornerRadius.medium))
-            .background(color.copy(alpha = 0.08f))
+            .clip(shape)
+            .background(color.copy(alpha = if (isDark) 0.12f else 0.08f))
+            .then(
+                if (isDark) Modifier.border(
+                    width = 1.dp,
+                    color = color.copy(alpha = 0.2f),
+                    shape = shape
+                ) else Modifier
+            )
             .padding(Spacing.compact)
     ) {
         Column(
@@ -893,10 +850,19 @@ private fun CompactActionButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val isDark = com.sparrowinvest.fa.ui.theme.LocalIsDarkTheme.current
+    val bgColor = if (isDark) color.copy(alpha = 0.15f) else color
+    val contentColor = if (isDark) color else Color.White
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(CornerRadius.medium))
-            .background(color)
+            .background(bgColor)
+            .then(
+                if (isDark) Modifier.then(
+                    Modifier.clip(RoundedCornerShape(CornerRadius.medium))
+                ) else Modifier
+            )
             .clickable(onClick = onClick)
             .padding(vertical = Spacing.small)
     ) {
@@ -909,13 +875,13 @@ private fun CompactActionButton(
                 imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp),
-                tint = Color.White
+                tint = contentColor
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color.White
+                color = contentColor
             )
         }
     }
@@ -1285,86 +1251,6 @@ private fun ShareButton(
                 color = backgroundColor
             )
         }
-    }
-}
-
-private fun shareViaWhatsApp(context: Context, client: ClientDetail, phone: String?) {
-    val message = buildString {
-        appendLine("📊 *Portfolio Summary - ${client.name}*")
-        appendLine()
-        appendLine("💰 Total AUM: ₹${formatAmount(client.aum)}")
-        appendLine("📈 Returns: ${if (client.returns >= 0) "+" else ""}${"%.2f".format(client.returns)}%")
-        appendLine("📁 Holdings: ${client.holdings.size} funds")
-        appendLine("🔄 Active SIPs: ${client.sips.count { it.isActive }}")
-        appendLine()
-        appendLine("_Sent via Sparrow Invest FA_")
-    }
-
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        val url = if (phone != null) {
-            "https://wa.me/${phone.replace("+", "").replace(" ", "")}?text=${Uri.encode(message)}"
-        } else {
-            "https://wa.me/?text=${Uri.encode(message)}"
-        }
-        data = Uri.parse(url)
-    }
-
-    try {
-        context.startActivity(intent)
-    } catch (e: Exception) {
-        // WhatsApp not installed, try generic share
-        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, message)
-        }
-        context.startActivity(Intent.createChooser(shareIntent, "Share via"))
-    }
-}
-
-private fun shareViaEmail(context: Context, client: ClientDetail) {
-    val subject = "Portfolio Summary - ${client.name}"
-    val body = buildString {
-        appendLine("Portfolio Summary for ${client.name}")
-        appendLine("=" .repeat(40))
-        appendLine()
-        appendLine("ACCOUNT OVERVIEW")
-        appendLine("-".repeat(20))
-        appendLine("Total AUM: ₹${formatAmount(client.aum)}")
-        appendLine("Overall Returns: ${if (client.returns >= 0) "+" else ""}${"%.2f".format(client.returns)}%")
-        appendLine("Risk Profile: ${client.riskProfile ?: "Not Set"}")
-        appendLine("KYC Status: ${client.kycStatus ?: "Pending"}")
-        appendLine()
-        appendLine("HOLDINGS (${client.holdings.size} funds)")
-        appendLine("-".repeat(20))
-        client.holdings.take(5).forEach { holding ->
-            appendLine("• ${holding.fundName}")
-            appendLine("  Value: ₹${formatAmount(holding.currentValue)} | Returns: ${"%.2f".format(holding.returnsPercentage)}%")
-        }
-        if (client.holdings.size > 5) {
-            appendLine("... and ${client.holdings.size - 5} more")
-        }
-        appendLine()
-        appendLine("ACTIVE SIPs (${client.sips.count { it.isActive }})")
-        appendLine("-".repeat(20))
-        client.sips.filter { it.isActive }.take(3).forEach { sip ->
-            appendLine("• ${sip.fundName}: ${sip.formattedAmount}/month")
-        }
-        appendLine()
-        appendLine("---")
-        appendLine("Report generated by Sparrow Invest FA")
-    }
-
-    val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:")
-        putExtra(Intent.EXTRA_EMAIL, arrayOf(client.email))
-        putExtra(Intent.EXTRA_SUBJECT, subject)
-        putExtra(Intent.EXTRA_TEXT, body)
-    }
-
-    try {
-        context.startActivity(Intent.createChooser(intent, "Send Email"))
-    } catch (e: Exception) {
-        // Handle error
     }
 }
 
@@ -2032,6 +1918,17 @@ private fun OverviewSection(
                 client.phone?.let { DetailRow(label = "Phone", value = it) }
                 client.panNumber?.let { DetailRow(label = "PAN", value = it) }
                 client.riskProfile?.let { DetailRow(label = "Risk Profile", value = it) }
+                client.kycStatus?.let { DetailRow(label = "KYC Status", value = it) }
+                if (client.nomineeName != null && client.nomineeName.isNotEmpty()) {
+                    val nomineeDisplay = if (client.nomineeRelation.isNullOrEmpty()) {
+                        client.nomineeName
+                    } else {
+                        "${client.nomineeName} (${client.nomineeRelation})"
+                    }
+                    DetailRow(label = "Nominee", value = nomineeDisplay)
+                } else {
+                    DetailRow(label = "Nominee", value = "Not Added")
+                }
                 client.address?.let { DetailRow(label = "Address", value = it) }
                 client.createdAt?.let { DetailRow(label = "Client Since", value = it.take(10)) }
             }

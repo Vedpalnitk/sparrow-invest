@@ -113,6 +113,8 @@ struct FAClientDetail: Codable, Identifiable {
     let recentTransactions: [FATransaction]
     let goals: [FAGoal]?
     let createdAt: String?
+    let nomineeName: String?
+    let nomineeRelation: String?
 
     init(id: String, name: String, email: String, phone: String? = nil,
          aum: Double = 0, returns: Double = 0, riskProfile: String? = nil,
@@ -120,14 +122,16 @@ struct FAClientDetail: Codable, Identifiable {
          address: String? = nil, holdings: [Holding] = [],
          sips: [FASip] = [], familyMembers: [FamilyMember] = [],
          recentTransactions: [FATransaction] = [], goals: [FAGoal]? = nil,
-         createdAt: String? = nil) {
+         createdAt: String? = nil, nomineeName: String? = nil,
+         nomineeRelation: String? = nil) {
         self.id = id; self.name = name; self.email = email; self.phone = phone
         self.aum = aum; self.returns = returns; self.riskProfile = riskProfile
         self.kycStatus = kycStatus; self.panNumber = panNumber
         self.address = address; self.holdings = holdings; self.sips = sips
         self.familyMembers = familyMembers
         self.recentTransactions = recentTransactions; self.goals = goals
-        self.createdAt = createdAt
+        self.createdAt = createdAt; self.nomineeName = nomineeName
+        self.nomineeRelation = nomineeRelation
     }
 
     var initials: String {

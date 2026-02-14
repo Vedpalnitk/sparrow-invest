@@ -54,7 +54,9 @@ data class ClientDetail(
     val sips: List<FASip> = emptyList(),
     val familyMembers: List<FamilyMember> = emptyList(),
     val recentTransactions: List<FATransaction> = emptyList(),
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    val nomineeName: String? = null,
+    val nomineeRelation: String? = null
 )
 
 @Serializable

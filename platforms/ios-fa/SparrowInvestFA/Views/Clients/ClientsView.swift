@@ -216,6 +216,8 @@ struct ClientDetailView: View {
     @State private var showExecuteTrade = false
     @State private var showCreateSip = false
     @State private var showShareSheet = false
+    @State private var showCallConfirmation = false
+    @State private var showGeneratePdf = false
     @State private var holdingsCategory = "All"
     @State private var holdingsSortBy = "Value"
     @State private var holdingsSortAscending = false
@@ -224,6 +226,7 @@ struct ClientDetailView: View {
     @State private var txStatusFilter = "All"
     @State private var txSortBy = "Date"
     @State private var txSortAscending = false
+    @State private var pendingActionsExpanded = false
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -233,6 +236,11 @@ struct ClientDetailView: View {
                 pinnedHeader(client)
                     .clipped()
 
+                // Pinned pending actions (between header and tabs, like Android)
+                if !store.pendingActions.isEmpty {
+                    pendingActionsSection
+                }
+
                 // Pinned tab selector
                 tabSelector
                     .padding(.vertical, AppTheme.Spacing.small)
@@ -240,12 +248,6 @@ struct ClientDetailView: View {
                 // Scrollable content area
                 ScrollView {
                     VStack(spacing: AppTheme.Spacing.small) {
-                        // Pending Actions
-                        if !store.pendingActions.isEmpty {
-                            PendingActionsBanner(actions: store.pendingActions)
-                                .padding(.horizontal, AppTheme.Spacing.medium)
-                        }
-
                         // Tab Content
                         switch selectedTab {
                         case 0: overviewTab(client)
@@ -299,12 +301,6 @@ struct ClientDetailView: View {
                     .font(AppTheme.Typography.accent(17))
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button { showShareSheet = true } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 14))
-                        .foregroundColor(AppTheme.primary)
-                }
-
                 Button { showEditClient = true } label: {
                     Image(systemName: "pencil")
                         .font(.system(size: 14))
@@ -325,8 +321,33 @@ struct ClientDetailView: View {
         }
         .sheet(isPresented: $showShareSheet) {
             if let client = store.selectedClient {
-                let summary = clientShareSummary(client)
-                ShareSheet(activityItems: [summary])
+                ShareWithClientSheet(client: client, onDismiss: { showShareSheet = false })
+            }
+        }
+        .confirmationDialog(
+            store.selectedClient?.phone ?? "No phone number",
+            isPresented: $showCallConfirmation,
+            titleVisibility: .visible
+        ) {
+            if let phone = store.selectedClient?.phone, !phone.isEmpty,
+               let url = URL(string: "tel:\(phone)") {
+                Button("Call") { UIApplication.shared.open(url) }
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+        .sheet(isPresented: $showGeneratePdf) {
+            if let client = store.selectedClient {
+                NavigationStack {
+                    ReportsTabView(client: client)
+                        .navigationTitle("Generate Report")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Done") { showGeneratePdf = false }
+                                    .foregroundColor(AppTheme.primary)
+                            }
+                        }
+                }
             }
         }
         .task {
@@ -412,80 +433,85 @@ struct ClientDetailView: View {
 
     private func fullHeader(_ client: FAClientDetail) -> some View {
         VStack(spacing: AppTheme.Spacing.compact) {
-            // Row 1: Avatar + Name + Contact actions
+            // Row 1: Avatar + Name/Stats + Contact actions
             HStack(spacing: AppTheme.Spacing.compact) {
                 ZStack {
                     Circle()
                         .fill(AppTheme.primary.opacity(0.1))
-                        .frame(width: 48, height: 48)
+                        .frame(width: 44, height: 44)
 
                     Text(client.initials)
-                        .font(AppTheme.Typography.accent(17))
+                        .font(AppTheme.Typography.accent(15))
                         .foregroundColor(AppTheme.primary)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(client.name)
-                        .font(AppTheme.Typography.headline(17))
+                        .font(AppTheme.Typography.headline(16))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
-                    Text(client.email)
-                        .font(AppTheme.Typography.label(12))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+                    HStack(spacing: AppTheme.Spacing.small) {
+                        Text(AppTheme.formatCurrencyWithSymbol(client.aum))
+                            .font(AppTheme.Typography.numeric(13))
+                            .foregroundColor(AppTheme.primary)
+
+                        returnBadge(client.returns)
+
+                        Text("\(client.holdings.count) funds")
+                            .font(AppTheme.Typography.label(11))
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 Spacer()
 
-                // Inline contact buttons
-                HStack(spacing: 8) {
+                // Contact & share buttons
+                HStack(spacing: 6) {
                     contactIconButton(icon: "phone.fill", color: AppTheme.success) {
-                        if let phone = client.phone, !phone.isEmpty,
-                           let url = URL(string: "tel:\(phone)") {
-                            UIApplication.shared.open(url)
-                        }
+                        showCallConfirmation = true
                     }
 
-                    contactIconButton(icon: "message.fill", color: AppTheme.whatsAppGreen) {
-                        if let phone = client.phone, !phone.isEmpty,
-                           let url = URL(string: "https://wa.me/\(phone.replacingOccurrences(of: "+", with: ""))") {
-                            UIApplication.shared.open(url)
+                    Menu {
+                        Button {
+                            showShareSheet = true
+                        } label: {
+                            Label {
+                                VStack(alignment: .leading) {
+                                    Text("Share with Client")
+                                    Text("Send via email or WhatsApp")
+                                        .font(.caption)
+                                }
+                            } icon: {
+                                Image(systemName: "paperplane.fill")
+                            }
                         }
+
+                        Button {
+                            showGeneratePdf = true
+                        } label: {
+                            Label {
+                                VStack(alignment: .leading) {
+                                    Text("Generate PDF")
+                                    Text("Create downloadable report")
+                                        .font(.caption)
+                                }
+                            } icon: {
+                                Image(systemName: "doc.text.fill")
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(AppTheme.primary)
+                            .frame(width: 32, height: 32)
+                            .background(AppTheme.primary.opacity(0.1))
+                            .clipShape(Circle())
                     }
                 }
             }
 
-            // Row 2: Stats grid (2x2)
-            let columns = [GridItem(.flexible()), GridItem(.flexible())]
-            LazyVGrid(columns: columns, spacing: AppTheme.Spacing.small) {
-                statTile(
-                    icon: "indianrupeesign.circle",
-                    label: "AUM",
-                    value: AppTheme.formatCurrencyWithSymbol(client.aum),
-                    color: AppTheme.primary
-                )
-                statTile(
-                    icon: "chart.line.uptrend.xyaxis",
-                    label: "Returns",
-                    value: client.returns.formattedPercent,
-                    color: AppTheme.returnColor(client.returns)
-                )
-                statTile(
-                    icon: "chart.pie",
-                    label: "Holdings",
-                    value: "\(client.holdings.count)",
-                    color: AppTheme.info
-                )
-                statTile(
-                    icon: "arrow.triangle.2.circlepath",
-                    label: "Active SIPs",
-                    value: "\(client.sips.filter { $0.isActive }.count)",
-                    color: AppTheme.success
-                )
-            }
-
-            // Row 3: Action Buttons
+            // Row 2: Action Buttons
             HStack(spacing: AppTheme.Spacing.small) {
                 Button { showExecuteTrade = true } label: {
                     HStack(spacing: 5) {
@@ -496,7 +522,7 @@ struct ClientDetailView: View {
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 9)
+                    .padding(.vertical, 8)
                     .background(AppTheme.primaryGradient)
                     .clipShape(Capsule())
                 }
@@ -510,7 +536,7 @@ struct ClientDetailView: View {
                     }
                     .foregroundColor(AppTheme.success)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 9)
+                    .padding(.vertical, 8)
                     .background(AppTheme.success.opacity(0.1))
                     .overlay(Capsule().stroke(AppTheme.success.opacity(0.3), lineWidth: 1))
                     .clipShape(Capsule())
@@ -518,6 +544,98 @@ struct ClientDetailView: View {
             }
         }
         .glassCard()
+        .padding(.horizontal, AppTheme.Spacing.medium)
+        .padding(.top, AppTheme.Spacing.small)
+    }
+
+    // MARK: - Pending Actions Section
+
+    private var pendingActionsSection: some View {
+        let urgentCount = store.pendingActions.filter { $0.priority == .high }.count
+
+        return VStack(spacing: 0) {
+            // Header bar
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { pendingActionsExpanded.toggle() }
+            } label: {
+                HStack(spacing: AppTheme.Spacing.small) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(AppTheme.error)
+
+                    Text("\(store.pendingActions.count) pending actions")
+                        .font(AppTheme.Typography.accent(14))
+                        .foregroundColor(AppTheme.error)
+
+                    if urgentCount > 0 {
+                        Text("\(urgentCount) urgent")
+                            .font(AppTheme.Typography.label(10))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(AppTheme.error))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: pendingActionsExpanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(AppTheme.error.opacity(0.7))
+                }
+                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.vertical, AppTheme.Spacing.compact)
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                        .fill(AppTheme.error.opacity(colorScheme == .dark ? 0.15 : 0.08))
+                )
+            }
+            .buttonStyle(.plain)
+
+            // Expanded action items
+            if pendingActionsExpanded {
+                VStack(spacing: 0) {
+                    ForEach(store.pendingActions) { action in
+                        HStack(spacing: AppTheme.Spacing.compact) {
+                            Image(systemName: action.typeIcon)
+                                .font(.system(size: 14))
+                                .foregroundColor(Color(hex: action.priority.color))
+                                .frame(width: 28, height: 28)
+                                .background(Color(hex: action.priority.color).opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+                            Text(action.title)
+                                .font(AppTheme.Typography.accent(13))
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            if action.priority == .high {
+                                Text("URGENT")
+                                    .font(AppTheme.Typography.label(9))
+                                    .foregroundColor(AppTheme.error)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(AppTheme.error.opacity(0.1))
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        .padding(.horizontal, AppTheme.Spacing.medium)
+                        .padding(.vertical, AppTheme.Spacing.compact)
+
+                        if action.id != store.pendingActions.last?.id {
+                            Divider()
+                                .padding(.leading, 50)
+                        }
+                    }
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                        .fill(colorScheme == .dark ? Color.white.opacity(0.04) : Color.white.opacity(0.7))
+                )
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
         .padding(.horizontal, AppTheme.Spacing.medium)
         .padding(.top, AppTheme.Spacing.small)
     }
@@ -532,6 +650,21 @@ struct ClientDetailView: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
+    }
+
+    private func returnBadge(_ returns: Double) -> some View {
+        HStack(spacing: 2) {
+            Image(systemName: returns >= 0 ? "arrow.up.right" : "arrow.down.right")
+                .font(.system(size: 9))
+            Text(returns.formattedPercent)
+                .font(AppTheme.Typography.label(11))
+        }
+        .fixedSize()
+        .foregroundColor(AppTheme.returnColor(returns))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .background(AppTheme.returnColor(returns).opacity(0.1))
+        .clipShape(Capsule())
     }
 
     private func statTile(icon: String, label: String, value: String, color: Color) -> some View {
@@ -714,6 +847,16 @@ struct ClientDetailView: View {
                 }
                 if let kyc = client.kycStatus {
                     clientInfoRow(label: "KYC Status", value: kyc, icon: "checkmark.shield")
+                }
+                if let nominee = client.nomineeName, !nominee.isEmpty {
+                    let relation = client.nomineeRelation ?? ""
+                    let display = relation.isEmpty ? nominee : "\(nominee) (\(relation))"
+                    clientInfoRow(label: "Nominee", value: display, icon: "person.badge.shield.checkmark")
+                } else {
+                    clientInfoRow(label: "Nominee", value: "Not Added", icon: "person.badge.shield.checkmark")
+                }
+                if let address = client.address, !address.isEmpty {
+                    clientInfoRow(label: "Address", value: address, icon: "mappin.and.ellipse")
                 }
                 if let memberSince = client.createdAt {
                     clientInfoRow(label: "Member Since", value: formatMemberSince(memberSince), icon: "calendar")
