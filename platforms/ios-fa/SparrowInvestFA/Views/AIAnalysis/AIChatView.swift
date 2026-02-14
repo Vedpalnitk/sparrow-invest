@@ -25,11 +25,14 @@ private enum ChatCornerRadius {
 // MARK: - AI Chat View
 
 struct AIChatView: View {
+    var initialQuery: String? = nil
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @StateObject private var chatStore = AvyaChatStore()
 
     @State private var messageText = ""
+    @State private var hasProcessedInitialQuery = false
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
@@ -87,14 +90,14 @@ struct AIChatView: View {
                     onSend: sendMessage
                 )
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(AppTheme.groupedBackground)
             .navigationTitle("Avya")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 14, weight: .medium))
+                            .font(.system(size: 14))
                             .foregroundColor(.primary)
                     }
                 }
@@ -106,7 +109,7 @@ struct AIChatView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 16, weight: .regular))
+                            .font(.system(size: 16))
                             .foregroundColor(.primary)
                     }
                 }
@@ -117,6 +120,13 @@ struct AIChatView: View {
                 }
             } message: {
                 Text(chatStore.errorMessage ?? "")
+            }
+            .onAppear {
+                if let query = initialQuery, !query.isEmpty, !hasProcessedInitialQuery {
+                    hasProcessedInitialQuery = true
+                    messageText = query
+                    sendMessage()
+                }
             }
         }
     }
@@ -161,39 +171,30 @@ struct WelcomeCard: View {
             ZStack {
                 Circle()
                     .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.4, green: 0.3, blue: 0.9),
-                                Color(red: 0.2, green: 0.5, blue: 1.0),
-                                Color(red: 0.0, green: 0.7, blue: 0.9)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        AppTheme.avyaGradient
                     )
                     .frame(width: 72, height: 72)
 
                 Image(systemName: "sparkles")
-                    .font(.system(size: 32, weight: .medium))
+                    .font(.system(size: 32))
                     .foregroundColor(.white)
             }
 
             VStack(spacing: ChatSpacing.small) {
                 Text("Avya")
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(AppTheme.Typography.numeric(20))
                     .foregroundColor(.primary)
 
                 Text("Your intelligent advisor assistant")
-                    .font(.system(size: 14, weight: .light))
+                    .font(AppTheme.Typography.caption())
                     .foregroundColor(.secondary)
             }
 
             // Suggested Questions
             VStack(alignment: .leading, spacing: ChatSpacing.compact) {
                 Text("TRY ASKING")
-                    .font(.system(size: 11, weight: .regular))
+                    .font(AppTheme.Typography.label(11))
                     .foregroundColor(.blue)
-                    .tracking(1)
 
                 ForEach(suggestedQuestions, id: \.self) { question in
                     SuggestedQuestionChip(question: question, onTap: {
@@ -269,17 +270,17 @@ struct SuggestedQuestionChip: View {
         } label: {
             HStack(spacing: ChatSpacing.small) {
                 Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .light))
+                    .font(.system(size: 12))
                     .foregroundColor(.blue)
 
                 Text(question)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(AppTheme.Typography.caption(13))
                     .foregroundColor(.primary)
 
                 Spacer()
 
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 10, weight: .light))
+                    .font(.system(size: 10))
                     .foregroundColor(Color(UIColor.tertiaryLabel))
             }
             .padding(.horizontal, ChatSpacing.compact)
@@ -311,30 +312,26 @@ struct ChatBubble: View {
                 ZStack {
                     Circle()
                         .fill(
-                            LinearGradient(
-                                colors: [Color(red: 0.4, green: 0.3, blue: 0.9), Color(red: 0.2, green: 0.5, blue: 1.0)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            AppTheme.avyaBubbleGradient
                         )
                         .frame(width: 28, height: 28)
 
                     Image(systemName: "sparkles")
-                        .font(.system(size: 12, weight: .light))
+                        .font(.system(size: 12))
                         .foregroundColor(.white)
                 }
             }
 
             VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
                 Text(message.content)
-                    .font(.system(size: 15, weight: .regular))
+                    .font(AppTheme.Typography.body(15))
                     .foregroundColor(message.isUser ? .white : .primary)
                     .padding(.horizontal, ChatSpacing.medium)
                     .padding(.vertical, ChatSpacing.compact)
                     .background(bubbleBackground)
 
                 Text(formatTime(message.timestamp))
-                    .font(.system(size: 10, weight: .light))
+                    .font(AppTheme.Typography.label(10))
                     .foregroundColor(Color(UIColor.tertiaryLabel))
             }
 
@@ -349,11 +346,7 @@ struct ChatBubble: View {
         if message.isUser {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .fill(
-                    LinearGradient(
-                        colors: [Color(red: 0.4, green: 0.3, blue: 0.9), Color(red: 0.2, green: 0.5, blue: 1.0)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    AppTheme.avyaBubbleGradient
                 )
         } else {
             if colorScheme == .dark {
@@ -386,16 +379,12 @@ struct TypingIndicator: View {
             ZStack {
                 Circle()
                     .fill(
-                        LinearGradient(
-                            colors: [Color(red: 0.4, green: 0.3, blue: 0.9), Color(red: 0.2, green: 0.5, blue: 1.0)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        AppTheme.avyaBubbleGradient
                     )
                     .frame(width: 28, height: 28)
 
                 Image(systemName: "sparkles")
-                    .font(.system(size: 12, weight: .light))
+                    .font(.system(size: 12))
                     .foregroundColor(.white)
             }
 
@@ -455,7 +444,7 @@ struct ChatInputBar: View {
                 // Text Input
                 HStack(spacing: ChatSpacing.small) {
                     TextField("Ask Avya...", text: $messageText, axis: .vertical)
-                        .font(.system(size: 15, weight: .regular))
+                        .font(AppTheme.Typography.body(15))
                         .lineLimit(1...4)
                         .focused($isInputFocused)
                         .disabled(isProcessing)
@@ -483,11 +472,7 @@ struct ChatInputBar: View {
                         } else {
                             Circle()
                                 .fill(
-                                    LinearGradient(
-                                        colors: [Color(red: 0.4, green: 0.3, blue: 0.9), Color(red: 0.2, green: 0.5, blue: 1.0)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
+                                    AppTheme.avyaBubbleGradient
                                 )
                                 .frame(width: 40, height: 40)
                         }
@@ -498,7 +483,7 @@ struct ChatInputBar: View {
                                 .scaleEffect(0.8)
                         } else {
                             Image(systemName: "arrow.up")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 16))
                                 .foregroundColor(messageText.isEmpty ? .gray : .white)
                         }
                     }
@@ -509,7 +494,7 @@ struct ChatInputBar: View {
             .padding(.vertical, ChatSpacing.compact)
             .background(
                 colorScheme == .dark
-                    ? Color(UIColor.systemBackground)
+                    ? AppTheme.background
                     : Color.white
             )
         }

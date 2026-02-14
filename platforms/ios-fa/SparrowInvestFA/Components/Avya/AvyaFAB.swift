@@ -15,14 +15,13 @@ struct AvyaFAB: View {
     var body: some View {
         Button(action: action) {
             ZStack {
+                // Breathing glow
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [
-                                Color.blue.opacity(0.3),
-                                Color.blue.opacity(0.1),
-                                Color.clear
-                            ],
+                            colors: colorScheme == .dark
+                                ? [Color(hex: "2D2660").opacity(0.4), Color(hex: "1E3A5F").opacity(0.15), Color.clear]
+                                : [Color(hex: "6366F1").opacity(0.3), Color(hex: "3B82F6").opacity(0.1), Color.clear],
                             center: .center,
                             startRadius: 20,
                             endRadius: 40
@@ -31,33 +30,29 @@ struct AvyaFAB: View {
                     .frame(width: 72, height: 72)
                     .scaleEffect(isAnimating ? 1.1 : 1.0)
 
+                // Gradient circle matching the Avya AI card
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [
-                                Color(red: 0.4, green: 0.3, blue: 0.9),
-                                Color(red: 0.2, green: 0.5, blue: 1.0),
-                                Color(red: 0.0, green: 0.7, blue: 0.9)
-                            ],
+                            colors: colorScheme == .dark
+                                ? [Color(hex: "2D2660"), Color(hex: "1E3A5F"), Color(hex: "0E4D5C")]
+                                : [Color(hex: "6366F1"), Color(hex: "3B82F6"), Color(hex: "06B6D4")],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
                     .frame(width: 56, height: 56)
-                    .shadow(color: Color.blue.opacity(0.4), radius: 12, x: 0, y: 6)
-
-                Image(systemName: "sparkles")
-                    .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
-                    .rotationEffect(.degrees(isAnimating ? 5 : -5))
+                    .shadow(color: Color(hex: "6366F1").opacity(colorScheme == .dark ? 0.2 : 0.4), radius: 12, x: 0, y: 6)
+                    .overlay(
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                    )
             }
         }
         .buttonStyle(.plain)
         .onAppear {
-            withAnimation(
-                .easeInOut(duration: 2.0)
-                .repeatForever(autoreverses: true)
-            ) {
+            withAnimation(AppTheme.Animation.fabBreathing) {
                 isAnimating = true
             }
         }
@@ -84,7 +79,7 @@ struct AvyaFABContainer: View {
 
 #Preview {
     ZStack {
-        Color(UIColor.systemGroupedBackground)
+        AppTheme.groupedBackground
             .ignoresSafeArea()
 
         AvyaFABContainer(showAvyaChat: .constant(false))

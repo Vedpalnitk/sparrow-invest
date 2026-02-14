@@ -1,35 +1,28 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showAvyaChat = false
+    @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var deepLinkRouter: DeepLinkRouter
+    @AppStorage("themeMode") private var themeMode = "System"
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Image(systemName: "person.badge.shield.checkmark.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.blue)
-
-                Text("Sparrow Invest FA")
-                    .font(.title)
-                    .fontWeight(.bold)
-
-                Text("Financial Advisor Portal")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(UIColor.systemGroupedBackground))
-            .overlay {
-                AvyaFABContainer(showAvyaChat: $showAvyaChat)
-            }
-            .sheet(isPresented: $showAvyaChat) {
-                AIChatView()
+        Group {
+            if authManager.isAuthenticated {
+                MainTabView()
+                    .environmentObject(authManager)
+                    .environmentObject(deepLinkRouter)
+            } else {
+                LoginView()
+                    .environmentObject(authManager)
             }
         }
+        .animation(.easeInOut(duration: 0.3), value: authManager.isAuthenticated)
+        .preferredColorScheme(themeMode == "Light" ? .light : themeMode == "Dark" ? .dark : nil)
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(AuthManager())
+        .environmentObject(DeepLinkRouter())
 }
