@@ -18,7 +18,12 @@ import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.PersonSearch
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -46,11 +51,16 @@ import com.sparrowinvest.fa.ui.theme.Spacing
 fun MoreScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     onNavigateToSips: () -> Unit,
+    onNavigateToCommunications: () -> Unit = {},
     onNavigateToSettings: () -> Unit,
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToSecurity: () -> Unit = {},
     onNavigateToHelp: () -> Unit = {},
     onNavigateToActionCenter: () -> Unit = {},
+    onNavigateToReports: () -> Unit = {},
+    onNavigateToCalculators: () -> Unit = {},
+    onNavigateToProspects: () -> Unit = {},
+    onNavigateToFundUniverse: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
@@ -123,6 +133,12 @@ fun MoreScreen(
                     onClick = onNavigateToSips
                 )
                 MenuItem(
+                    icon = Icons.Default.Email,
+                    title = "Communications",
+                    subtitle = "Send & track messages",
+                    onClick = onNavigateToCommunications
+                )
+                MenuItem(
                     icon = Icons.Default.Notifications,
                     title = "Notifications",
                     subtitle = "Manage alerts",
@@ -140,6 +156,52 @@ fun MoreScreen(
                             }
                         )
                     }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.medium))
+
+        // Business Section
+        GlassCard(
+            cornerRadius = CornerRadius.large,
+            contentPadding = Spacing.small
+        ) {
+            Column {
+                MenuItem(
+                    icon = Icons.Default.PersonSearch,
+                    title = "Prospects",
+                    subtitle = "Sales pipeline & leads",
+                    onClick = onNavigateToProspects
+                )
+                MenuItem(
+                    icon = Icons.Default.Public,
+                    title = "Fund Universe",
+                    subtitle = "Browse funds by category",
+                    onClick = onNavigateToFundUniverse
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(Spacing.medium))
+
+        // Tools Section
+        GlassCard(
+            cornerRadius = CornerRadius.large,
+            contentPadding = Spacing.small
+        ) {
+            Column {
+                MenuItem(
+                    icon = Icons.Default.Assessment,
+                    title = "Reports",
+                    subtitle = "Generate & view reports",
+                    onClick = onNavigateToReports
+                )
+                MenuItem(
+                    icon = Icons.Default.Calculate,
+                    title = "Calculators",
+                    subtitle = "SIP, lumpsum, goal planning",
+                    onClick = onNavigateToCalculators
                 )
             }
         }

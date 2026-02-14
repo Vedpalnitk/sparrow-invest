@@ -45,18 +45,29 @@ sealed class Screen(val route: String) {
 
     // Fund screens
     data object FundSearch : Screen("funds/search")
+    data object FundUniverse : Screen("funds/universe")
     data object FundDetail : Screen("fund/{schemeCode}") {
         fun createRoute(schemeCode: Int) = "fund/$schemeCode"
     }
 
+    // Prospects
+    data object Prospects : Screen("prospects")
+
     // Action Center
     data object ActionCenter : Screen("action-center")
+
+    // Tools
+    data object Reports : Screen("reports")
+    data object Calculators : Screen("calculators")
 
     // Settings
     data object Settings : Screen("settings")
     data object Notifications : Screen("notifications")
     data object Security : Screen("security")
     data object HelpSupport : Screen("help")
+
+    // Communications
+    data object Communications : Screen("communications")
 
     // AI Chat
     data object AvyaChat : Screen("avya_chat?query={query}") {

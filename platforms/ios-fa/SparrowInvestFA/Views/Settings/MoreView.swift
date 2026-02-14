@@ -13,6 +13,7 @@ struct MoreView: View {
     @State private var showSipManagement = false
     @State private var showReports = false
     @State private var showCalculators = false
+    @State private var showCommunications = false
     @State private var showProspects = false
     @State private var showFundUniverse = false
 
@@ -29,6 +30,8 @@ struct MoreView: View {
                                  subtitle: "Failed SIPs, pending actions") { showActionCenter = true }
                         menuItem(icon: "arrow.triangle.2.circlepath", title: "SIP Management",
                                  subtitle: "View all SIPs") { showSipManagement = true }
+                        menuItem(icon: "envelope", title: "Communications",
+                                 subtitle: "Send & track messages") { showCommunications = true }
                         menuItem(icon: "chart.bar.doc.horizontal", title: "Reports",
                                  subtitle: "Generate & share reports") { showReports = true }
                         menuItem(icon: "function", title: "Calculators",
@@ -106,6 +109,9 @@ struct MoreView: View {
         }
         .fullScreenCover(isPresented: $showSipManagement) {
             SipListView()
+        }
+        .fullScreenCover(isPresented: $showCommunications) {
+            CommunicationsView()
         }
         .fullScreenCover(isPresented: $showReports) {
             ReportsView()

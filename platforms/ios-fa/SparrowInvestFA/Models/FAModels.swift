@@ -796,6 +796,102 @@ struct CreateTransactionRequest: Encodable {
     let remarks: String?
 }
 
+// MARK: - Communication Models
+
+struct CommunicationTemplate: Codable, Identifiable {
+    var id: String { type }
+    let type: String
+    let label: String
+    let description: String
+}
+
+struct CommunicationPreview: Codable {
+    let emailSubject: String
+    let emailBody: String
+    let whatsappBody: String
+}
+
+struct CommunicationSendResult: Codable {
+    let success: Bool
+    let logId: String
+    let waLink: String?
+    let error: String?
+}
+
+struct CommunicationLogClient: Codable {
+    let id: String
+    let name: String
+    let email: String?
+    let phone: String?
+}
+
+struct CommunicationLog: Codable, Identifiable {
+    let id: String
+    let advisorId: String
+    let clientId: String
+    let channel: String
+    let type: String
+    let subject: String?
+    let body: String
+    let status: String
+    let error: String?
+    let sentAt: String?
+    let createdAt: String
+    let client: CommunicationLogClient?
+}
+
+struct CommunicationStats: Codable {
+    let totalSent: Int
+    let emailCount: Int
+    let whatsappCount: Int
+    let thisMonthCount: Int
+}
+
+struct PreviewCommunicationRequest: Encodable {
+    let clientId: String
+    let type: String
+}
+
+struct SendCommunicationRequest: Encodable {
+    let clientId: String
+    let channel: String
+    let type: String
+    let subject: String
+    let body: String
+}
+
+struct BulkSendRequest: Encodable {
+    let clientIds: [String]
+    let channel: String
+    let type: String
+    let subject: String?
+    let customBody: String?
+}
+
+struct BulkSendResultItem: Codable {
+    let clientId: String
+    let clientName: String
+    let success: Bool
+    let error: String?
+    let logId: String?
+    let waLink: String?
+}
+
+struct BulkSendResult: Codable {
+    let total: Int
+    let sent: Int
+    let failed: Int
+    let results: [BulkSendResultItem]
+}
+
+struct PaginatedCommunicationResponse: Codable {
+    let data: [CommunicationLog]
+    let total: Int
+    let page: Int
+    let limit: Int
+    let totalPages: Int
+}
+
 // MARK: - Prospect Models
 
 enum ProspectStage: String, CaseIterable {

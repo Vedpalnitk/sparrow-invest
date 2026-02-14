@@ -88,6 +88,9 @@ interface ApiService {
     @GET("funds/live/{schemeCode}")
     suspend fun getFundDetails(@Path("schemeCode") schemeCode: Int): Response<FundDetail>
 
+    @GET("funds/live/{schemeCode}/nav-history")
+    suspend fun getFundNavHistory(@Path("schemeCode") schemeCode: Int): Response<List<NavHistoryPoint>>
+
     @GET("funds/live/category/{category}")
     suspend fun getFundsByCategory(@Path("category") category: String): Response<List<Fund>>
 
@@ -130,4 +133,29 @@ interface ApiService {
         @Query("limit") limit: Int = 50,
         @Query("offset") offset: Int = 0
     ): Response<NotificationLogsResponse>
+
+    // Communication endpoints
+    @GET("communications/templates")
+    suspend fun getCommunicationTemplates(): Response<List<CommunicationTemplate>>
+
+    @POST("communications/preview")
+    suspend fun previewCommunication(@Body request: PreviewCommunicationRequest): Response<CommunicationPreview>
+
+    @POST("communications/send")
+    suspend fun sendCommunication(@Body request: SendCommunicationRequest): Response<CommunicationSendResult>
+
+    @GET("communications/history")
+    suspend fun getCommunicationHistory(
+        @Query("clientId") clientId: String? = null,
+        @Query("channel") channel: String? = null,
+        @Query("type") type: String? = null,
+        @Query("page") page: Int? = null,
+        @Query("limit") limit: Int? = null
+    ): Response<PaginatedCommunicationResponse>
+
+    @GET("communications/history/stats")
+    suspend fun getCommunicationStats(): Response<CommunicationStats>
+
+    @POST("communications/send-bulk")
+    suspend fun sendBulkCommunication(@Body request: BulkSendRequest): Response<BulkSendResult>
 }

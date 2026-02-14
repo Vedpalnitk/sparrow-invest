@@ -47,10 +47,14 @@ import com.sparrowinvest.fa.ui.transactions.PlatformWebViewScreen
 import com.sparrowinvest.fa.ui.transactions.TransactionPlatform
 import com.sparrowinvest.fa.ui.funds.FundSearchScreen
 import com.sparrowinvest.fa.ui.funds.FundDetailScreen
+import com.sparrowinvest.fa.ui.funds.FundUniverseScreen
+import com.sparrowinvest.fa.ui.prospects.ProspectsScreen
 import com.sparrowinvest.fa.ui.clients.EditClientScreen
 import com.sparrowinvest.fa.ui.transactions.ExecuteTradeScreen
 import com.sparrowinvest.fa.ui.sips.CreateSipScreen
 import com.sparrowinvest.fa.ui.actioncenter.ActionCenterScreen
+import com.sparrowinvest.fa.ui.calculators.CalculatorsScreen
+import com.sparrowinvest.fa.ui.reports.ReportsScreen
 import com.sparrowinvest.fa.ui.settings.MoreScreen
 import com.sparrowinvest.fa.ui.settings.HelpSupportScreen
 import com.sparrowinvest.fa.ui.settings.NotificationsScreen
@@ -58,13 +62,21 @@ import com.sparrowinvest.fa.ui.settings.SecurityScreen
 import com.sparrowinvest.fa.ui.settings.SettingsScreen
 import com.sparrowinvest.fa.ui.transactions.TransactionDetailScreen
 import com.sparrowinvest.fa.ui.chat.AvyaChatScreen
+import com.sparrowinvest.fa.ui.communications.CommunicationsScreen
 
 // Avya gradient colors (matching Dashboard)
-private val AvyaGradient = Brush.linearGradient(
+private val AvyaGradientLight = Brush.linearGradient(
     colors = listOf(
         Color(0xFF6366F1), // Purple
         Color(0xFF3B82F6), // Blue
         Color(0xFF06B6D4)  // Cyan
+    )
+)
+private val AvyaGradientDark = Brush.linearGradient(
+    colors = listOf(
+        Color(0xFF2A2860), // Dark Purple
+        Color(0xFF162D54), // Dark Blue
+        Color(0xFF0C3545)  // Dark Cyan
     )
 )
 
@@ -111,6 +123,7 @@ fun NavGraph(
             // Show Avya FAB on main screens except Insights (which has integrated Avya)
             val showFab = showBottomNav && currentRoute != Screen.Insights.route
             if (showFab) {
+                val isDark = com.sparrowinvest.fa.ui.theme.LocalIsDarkTheme.current
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.AvyaChat.createRoute()) },
                     modifier = Modifier.size(56.dp),
@@ -124,7 +137,7 @@ fun NavGraph(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(AvyaGradient, CircleShape),
+                            .background(if (isDark) AvyaGradientDark else AvyaGradientLight, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -209,6 +222,15 @@ fun NavGraph(
                         onNavigateToActionCenter = {
                             navController.navigate(Screen.ActionCenter.route)
                         },
+                        onNavigateToReports = {
+                            navController.navigate(Screen.Reports.route)
+                        },
+                        onNavigateToCalculators = {
+                            navController.navigate(Screen.Calculators.route)
+                        },
+                        onNavigateToAddClient = {
+                            navController.navigate(Screen.AddClient.route)
+                        },
                         onBadgeCountChanged = { count ->
                             actionBadgeCount = count
                         }
@@ -275,6 +297,9 @@ fun NavGraph(
                         onNavigateToSips = {
                             navController.navigate(Screen.SipList.route)
                         },
+                        onNavigateToCommunications = {
+                            navController.navigate(Screen.Communications.route)
+                        },
                         onNavigateToSettings = {
                             navController.navigate(Screen.Settings.route)
                         },
@@ -286,6 +311,18 @@ fun NavGraph(
                         },
                         onNavigateToHelp = {
                             navController.navigate(Screen.HelpSupport.route)
+                        },
+                        onNavigateToReports = {
+                            navController.navigate(Screen.Reports.route)
+                        },
+                        onNavigateToCalculators = {
+                            navController.navigate(Screen.Calculators.route)
+                        },
+                        onNavigateToProspects = {
+                            navController.navigate(Screen.Prospects.route)
+                        },
+                        onNavigateToFundUniverse = {
+                            navController.navigate(Screen.FundUniverse.route)
                         },
                         onLogout = {
                             authViewModel.logout()
@@ -397,6 +434,20 @@ fun NavGraph(
                     )
                 }
 
+                // Reports
+                composable(Screen.Reports.route) {
+                    ReportsScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+
+                // Calculators
+                composable(Screen.Calculators.route) {
+                    CalculatorsScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+
                 // SIP List
                 composable(Screen.SipList.route) {
                     SipListScreen(
@@ -414,6 +465,33 @@ fun NavGraph(
                         onSelectFund = { schemeCode ->
                             navController.navigate(Screen.FundDetail.createRoute(schemeCode))
                         }
+                    )
+                }
+
+                // Fund Universe
+                composable(Screen.FundUniverse.route) {
+                    FundUniverseScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onNavigateToFund = { schemeCode ->
+                            navController.navigate(Screen.FundDetail.createRoute(schemeCode))
+                        },
+                        onNavigateToSearch = {
+                            navController.navigate(Screen.FundSearch.route)
+                        }
+                    )
+                }
+
+                // Prospects
+                composable(Screen.Prospects.route) {
+                    ProspectsScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+
+                // Communications
+                composable(Screen.Communications.route) {
+                    CommunicationsScreen(
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
 
