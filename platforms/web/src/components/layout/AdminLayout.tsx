@@ -288,18 +288,17 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           style={{ borderBottom: `1px solid ${colors.separator}` }}
         >
           <Link href="/admin/dashboard" className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            <img
+              src="/icon-192.png"
+              alt="Sparrow"
+              className="w-10 h-10 rounded-xl flex-shrink-0"
               style={{
-                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryLight} 100%)`,
                 boxShadow: `0 4px 12px ${colors.primary}30`,
+                filter: isDark
+                  ? 'hue-rotate(-30deg) brightness(1.3) saturate(1.1)'
+                  : 'hue-rotate(-30deg)',
               }}
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="#FFFFFF" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c-4 0-7 3-7 7 0 5 7 11 7 11s7-6 7-11c0-4-3-7-7-7z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v6" />
-              </svg>
-            </div>
+            />
             {!collapsed && (
               <div className="overflow-hidden">
                 <p className="text-[15px] font-semibold" style={{ color: colors.textPrimary }}>

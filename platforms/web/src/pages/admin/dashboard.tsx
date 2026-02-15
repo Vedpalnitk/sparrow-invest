@@ -36,13 +36,13 @@ interface PersonaDisplay {
   description: string;
 }
 
-// Icon paths
-const ICONS = {
-  chart: 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z',
-  cpu: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z',
-  users: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
-  user: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-  arrowRight: 'M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3',
+// Icon paths - 'fill' type icons use fill="currentColor", 'stroke' type use stroke
+const ICONS: Record<string, { d: string; type: 'fill' | 'stroke' }> = {
+  chart: { d: 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z', type: 'fill' },
+  cpu: { d: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z', type: 'stroke' },
+  users: { d: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', type: 'stroke' },
+  user: { d: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', type: 'stroke' },
+  arrowRight: { d: 'M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3', type: 'stroke' },
 };
 
 const AdminDashboard = () => {
@@ -173,28 +173,32 @@ const AdminDashboard = () => {
               value: loadingUsers ? '—' : activeAdvisors.length.toString(),
               total: loadingUsers ? '' : `${advisors.length} total`,
               variant: 'primary' as const,
-              icon: ICONS.users,
+              icon: ICONS.users.d,
+              iconType: ICONS.users.type,
             },
             {
               label: 'Total Clients',
               value: loadingUsers ? '—' : clients.length.toString(),
               total: loadingUsers ? '' : `${activeClients.length} active`,
               variant: 'secondary' as const,
-              icon: ICONS.user,
+              icon: ICONS.user.d,
+              iconType: ICONS.user.type,
             },
             {
               label: 'ML Models',
               value: loadingModels ? '—' : models.length.toString(),
               total: loadingModels ? '' : `${models.filter(m => m.productionVersion?.status === 'active').length} active`,
               variant: 'accent' as const,
-              icon: ICONS.cpu,
+              icon: ICONS.cpu.d,
+              iconType: ICONS.cpu.type,
             },
             {
               label: 'Personas',
               value: loadingPersonas ? '—' : personas.length.toString(),
               total: loadingPersonas ? '' : `${personas.filter(p => p.isActive).length} active`,
               variant: 'success' as const,
-              icon: ICONS.chart,
+              icon: ICONS.chart.d,
+              iconType: ICONS.chart.type,
             },
           ].map((stat) => {
             const getGradient = () => {
@@ -223,9 +227,12 @@ const AdminDashboard = () => {
                 <div className="absolute -bottom-6 -left-6 w-20 h-20 rounded-full" style={{ background: 'rgba(255,255,255,0.05)' }} />
                 <div className="relative z-10">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.2)' }}>
-                      <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={stat.icon} />
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.25)' }}>
+                      <svg className="w-5 h-5 text-white" viewBox="0 0 24 24"
+                        fill={stat.iconType === 'fill' ? 'currentColor' : 'none'}
+                        stroke={stat.iconType === 'stroke' ? 'currentColor' : 'none'}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={stat.iconType === 'stroke' ? 2 : 0} d={stat.icon} />
                       </svg>
                     </div>
                     <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
@@ -252,7 +259,7 @@ const AdminDashboard = () => {
                 subtitle="Financial advisors on the platform"
                 icon={
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.users} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.users.d} />
                   </svg>
                 }
                 action={
@@ -286,7 +293,7 @@ const AdminDashboard = () => {
                     >
                       View All
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ICONS.arrowRight} />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ICONS.arrowRight.d} />
                       </svg>
                     </Link>
                   </div>
@@ -397,7 +404,7 @@ const AdminDashboard = () => {
                 subtitle="Clients not managed by an advisor"
                 icon={
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.user} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.user.d} />
                   </svg>
                 }
                 action={
@@ -408,7 +415,7 @@ const AdminDashboard = () => {
                   >
                     View All
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ICONS.arrowRight} />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={ICONS.arrowRight.d} />
                     </svg>
                   </Link>
                 }
@@ -514,7 +521,7 @@ const AdminDashboard = () => {
                 title="Model Performance"
                 icon={
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.cpu} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.cpu.d} />
                   </svg>
                 }
                 action={
@@ -589,7 +596,7 @@ const AdminDashboard = () => {
                 subtitle="Active personas & biases"
                 icon={
                   <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.user} />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={ICONS.user.d} />
                   </svg>
                 }
               />

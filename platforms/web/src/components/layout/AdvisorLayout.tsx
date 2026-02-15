@@ -375,17 +375,17 @@ export default function AdvisorLayout({ children, title }: AdvisorLayoutProps) {
           style={{ borderBottom: `0.5px solid ${colors.separator}` }}
         >
           <Link href="/advisor/dashboard" className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+            <img
+              src="/icon-192.png"
+              alt="Sparrow"
+              className="w-10 h-10 rounded-xl flex-shrink-0"
               style={{
-                background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
                 boxShadow: `0 4px 14px ${colors.glassShadow}`,
+                filter: isDark
+                  ? 'brightness(1.25) saturate(1.1)'
+                  : undefined,
               }}
-            >
-              <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" d="M17 5H9a4 4 0 000 8h6a4 4 0 010 8H7"/>
-              </svg>
-            </div>
+            />
             {!collapsed && (
               <div className="overflow-hidden">
                 <p className="text-sm font-semibold" style={{ color: colors.textPrimary }}>
