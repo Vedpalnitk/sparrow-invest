@@ -158,4 +158,25 @@ interface ApiService {
 
     @POST("communications/send-bulk")
     suspend fun sendBulkCommunication(@Body request: BulkSendRequest): Response<BulkSendResult>
+
+    // Insurance endpoints
+    @GET("clients/{clientId}/insurance")
+    suspend fun getInsurancePolicies(@Path("clientId") clientId: String): Response<List<InsurancePolicy>>
+
+    @POST("clients/{clientId}/insurance")
+    suspend fun createInsurancePolicy(@Path("clientId") clientId: String, @Body request: CreateInsurancePolicyRequest): Response<InsurancePolicy>
+
+    @PUT("clients/{clientId}/insurance/{id}")
+    suspend fun updateInsurancePolicy(@Path("clientId") clientId: String, @Path("id") id: String, @Body request: CreateInsurancePolicyRequest): Response<InsurancePolicy>
+
+    @DELETE("clients/{clientId}/insurance/{id}")
+    suspend fun deleteInsurancePolicy(@Path("clientId") clientId: String, @Path("id") id: String): Response<Unit>
+
+    @GET("clients/{clientId}/insurance/gap-analysis")
+    suspend fun getGapAnalysis(
+        @Path("clientId") clientId: String,
+        @Query("annualIncome") annualIncome: Double? = null,
+        @Query("age") age: Int? = null,
+        @Query("familySize") familySize: Int? = null
+    ): Response<GapAnalysisResponse>
 }

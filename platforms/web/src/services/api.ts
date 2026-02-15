@@ -1332,6 +1332,31 @@ export const goalsApi = {
     request<ContributionResponse[]>(`/api/v1/clients/${clientId}/goals/${goalId}/contributions`),
 };
 
+// ============= Insurance API =============
+
+export const insuranceApi = {
+  list: (clientId: string) =>
+    request(`/api/v1/clients/${clientId}/insurance`),
+
+  create: (clientId: string, data: any) =>
+    request(`/api/v1/clients/${clientId}/insurance`, { method: 'POST', body: data }),
+
+  update: (clientId: string, policyId: string, data: any) =>
+    request(`/api/v1/clients/${clientId}/insurance/${policyId}`, { method: 'PUT', body: data }),
+
+  delete: (clientId: string, policyId: string) =>
+    request<{ message: string }>(`/api/v1/clients/${clientId}/insurance/${policyId}`, { method: 'DELETE' }),
+
+  gapAnalysis: (clientId: string, params?: { annualIncome?: number; age?: number; familySize?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.annualIncome) query.append('annualIncome', params.annualIncome.toString());
+    if (params?.age) query.append('age', params.age.toString());
+    if (params?.familySize) query.append('familySize', params.familySize.toString());
+    const queryString = query.toString();
+    return request(`/api/v1/clients/${clientId}/insurance/gap-analysis${queryString ? `?${queryString}` : ''}`);
+  },
+};
+
 // ============= User Actions API =============
 
 export type ActionType = 'SIP_DUE' | 'SIP_FAILED' | 'REBALANCE_RECOMMENDED' | 'GOAL_REVIEW' | 'TAX_HARVESTING' | 'KYC_EXPIRY' | 'DIVIDEND_RECEIVED' | 'NAV_ALERT' | 'CUSTOM';

@@ -76,6 +76,11 @@ import com.sparrowinvest.fa.data.model.Holding
 import android.widget.Toast
 import com.sparrowinvest.fa.core.util.PdfReportGenerator
 import com.sparrowinvest.fa.ui.clients.reports.reportsTabContent
+import com.sparrowinvest.fa.ui.clients.insurance.insuranceTabContent
+import com.sparrowinvest.fa.ui.clients.insurance.AddInsurancePolicyDialog
+import com.sparrowinvest.fa.data.model.InsurancePolicy
+import com.sparrowinvest.fa.data.model.GapAnalysisResponse
+import com.sparrowinvest.fa.data.model.CreateInsurancePolicyRequest
 import com.sparrowinvest.fa.ui.components.ErrorState
 import com.sparrowinvest.fa.ui.components.GlassCard
 import com.sparrowinvest.fa.ui.components.IconContainer
@@ -163,7 +168,8 @@ enum class ClientTab(val title: String, val icon: ImageVector) {
     TRANSACTIONS("Transactions", Icons.Default.History),
     SIPS("SIPs", Icons.Default.Repeat),
     GOALS("Goals", Icons.Default.Flag),
-    REPORTS("Reports", Icons.Default.Description)
+    REPORTS("Reports", Icons.Default.Description),
+    INSURANCE("Insurance", Icons.Default.Shield)
 }
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -259,6 +265,11 @@ private fun ClientDetailContent(
 ) {
     val context = LocalContext.current
     var showShareSheet by remember { mutableStateOf(false) }
+
+    // Insurance state
+    var insurancePolicies by remember { mutableStateOf<List<InsurancePolicy>>(emptyList()) }
+    var gapAnalysis by remember { mutableStateOf<GapAnalysisResponse?>(null) }
+    var showAddInsurance by remember { mutableStateOf(false) }
 
     // Generate pending actions based on client data
     val pendingActions = remember(client) {
@@ -567,6 +578,16 @@ private fun ClientDetailContent(
                 ClientTab.REPORTS -> {
                     reportsTabContent(client = client)
                 }
+                ClientTab.INSURANCE -> {
+                    insuranceTabContent(
+                        policies = insurancePolicies,
+                        gapAnalysis = gapAnalysis,
+                        onAddClick = { showAddInsurance = true },
+                        onDeleteClick = { policyId ->
+                            insurancePolicies = insurancePolicies.filter { it.id != policyId }
+                        }
+                    )
+                }
             }
 
             item {
@@ -581,6 +602,33 @@ private fun ClientDetailContent(
             clientId = client.id,
             clientName = client.name,
             onDismiss = { showShareSheet = false }
+        )
+    }
+
+    // Add Insurance Policy dialog
+    if (showAddInsurance) {
+        AddInsurancePolicyDialog(
+            onDismiss = { showAddInsurance = false },
+            onSave = { request ->
+                // Optimistically add to local list
+                val newPolicy = InsurancePolicy(
+                    id = java.util.UUID.randomUUID().toString(),
+                    clientId = client.id,
+                    policyNumber = request.policyNumber,
+                    provider = request.provider,
+                    type = request.type,
+                    status = "ACTIVE",
+                    sumAssured = request.sumAssured,
+                    premiumAmount = request.premiumAmount,
+                    premiumFrequency = request.premiumFrequency ?: "ANNUAL",
+                    startDate = request.startDate,
+                    maturityDate = request.maturityDate,
+                    nominees = request.nominees,
+                    notes = request.notes
+                )
+                insurancePolicies = listOf(newPolicy) + insurancePolicies
+                showAddInsurance = false
+            }
         )
     }
 }

@@ -28,6 +28,7 @@ import { AdvisorDashboardModule } from './advisor-dashboard/advisor-dashboard.mo
 import { SavedAnalysisModule } from './saved-analysis/saved-analysis.module';
 import { CommunicationsModule } from './communications/communications.module';
 import { StaffModule } from './staff/staff.module';
+import { InsuranceModule } from './insurance/insurance.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -72,6 +73,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     CommunicationsModule,
     // FA Staff Role Management
     StaffModule,
+    // FA Insurance Policy Tracking
+    InsuranceModule,
   ],
   controllers: [],
   providers: [

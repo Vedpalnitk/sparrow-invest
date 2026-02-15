@@ -3,51 +3,104 @@ import SwiftUI
 struct ClientsView: View {
     @StateObject private var store = ClientStore()
     @State private var showAddClient = false
+    @EnvironmentObject var coordinator: NavigationCoordinator
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Search Bar
-                HStack(spacing: AppTheme.Spacing.small) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
-
-                    TextField("Search clients...", text: $store.searchQuery)
-                        .font(AppTheme.Typography.body(15))
+        if sizeClass == .regular {
+            // iPad: just the list content (parent NavigationSplitView provides the 3-column split)
+            clientListContent
+                .navigationTitle("Clients")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        addClientButton
+                    }
                 }
-                .padding(.horizontal, AppTheme.Spacing.medium)
-                .frame(height: 44)
-                .background(
-                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-                        .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.white.opacity(0.7))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
-                        .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.06), lineWidth: 0.5)
-                )
-                .padding(.horizontal, AppTheme.Spacing.medium)
-                .padding(.vertical, AppTheme.Spacing.small)
+                .sheet(isPresented: $showAddClient) {
+                    AddClientView(store: store)
+                }
+                .task { await store.loadClients() }
+        } else {
+            iPhoneClientsLayout
+        }
+    }
 
-                // Filter Chips
-                GlassSegmentedControl(items: store.filters, selection: $store.selectedFilter)
-                    .padding(.horizontal, AppTheme.Spacing.medium)
-                    .padding(.bottom, AppTheme.Spacing.small)
+    // MARK: - iPhone Stack
 
-                // Client List
-                if store.isLoading && store.clients.isEmpty {
-                    Spacer()
-                    ProgressView("Loading clients...")
-                    Spacer()
-                } else if store.filteredClients.isEmpty {
-                    Spacer()
-                    emptyState
-                    Spacer()
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: AppTheme.Spacing.small) {
-                            ForEach(store.filteredClients) { client in
+    private var iPhoneClientsLayout: some View {
+        NavigationStack {
+            clientListContent
+                .navigationTitle("Clients")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        addClientButton
+                    }
+                }
+                .sheet(isPresented: $showAddClient) {
+                    AddClientView(store: store)
+                }
+                .task { await store.loadClients() }
+        }
+    }
+
+    // MARK: - Shared List Content
+
+    private var clientListContent: some View {
+        VStack(spacing: 0) {
+            // Search Bar
+            HStack(spacing: AppTheme.Spacing.small) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+
+                TextField("Search clients...", text: $store.searchQuery)
+                    .font(AppTheme.Typography.body(iPad ? 16 : 15))
+            }
+            .padding(.horizontal, AppTheme.Spacing.medium)
+            .frame(height: 44)
+            .background(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                    .fill(colorScheme == .dark ? Color.white.opacity(0.06) : Color.white.opacity(0.7))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                    .stroke(colorScheme == .dark ? Color.white.opacity(0.1) : Color.black.opacity(0.06), lineWidth: 0.5)
+            )
+            .padding(.horizontal, AppTheme.Spacing.medium)
+            .padding(.vertical, AppTheme.Spacing.small)
+
+            // Filter Chips
+            GlassSegmentedControl(items: store.filters, selection: $store.selectedFilter)
+                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.bottom, AppTheme.Spacing.small)
+
+            // Client List
+            if store.isLoading && store.clients.isEmpty {
+                Spacer()
+                ProgressView("Loading clients...")
+                Spacer()
+            } else if store.filteredClients.isEmpty {
+                Spacer()
+                emptyState
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: AppTheme.Spacing.small) {
+                        ForEach(store.filteredClients) { client in
+                            if sizeClass == .regular {
+                                Button {
+                                    coordinator.selectedClientId = client.id
+                                } label: {
+                                    clientRow(client)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                                                .stroke(coordinator.selectedClientId == client.id ? AppTheme.primary : Color.clear, lineWidth: 2)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            } else {
                                 NavigationLink {
                                     ClientDetailView(clientId: client.id)
                                 } label: {
@@ -56,39 +109,33 @@ struct ClientsView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding(.horizontal, AppTheme.Spacing.medium)
-                        .padding(.bottom, AppTheme.Spacing.xxxLarge)
                     }
-                    .refreshable { await store.loadClients() }
+                    .padding(.horizontal, AppTheme.Spacing.medium)
+                    .padding(.bottom, AppTheme.Spacing.xxxLarge)
                 }
+                .refreshable { await store.loadClients() }
             }
-            .background(AppTheme.pageBackground(colorScheme: colorScheme))
-            .navigationTitle("Clients")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showAddClient = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "plus")
-                                .font(.system(size: 14))
-                            Text("Client")
-                                .font(AppTheme.Typography.accent(14))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 7)
-                        .background(AppTheme.primaryGradient)
-                        .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .sheet(isPresented: $showAddClient) {
-                AddClientView(store: store)
-            }
-            .task { await store.loadClients() }
         }
+        .background(AppTheme.pageBackground(colorScheme: colorScheme))
+    }
+
+    private var addClientButton: some View {
+        Button {
+            showAddClient = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "plus")
+                    .font(.system(size: 14))
+                Text("Client")
+                    .font(AppTheme.Typography.accent(14))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(AppTheme.primaryGradient)
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Client Row
@@ -99,10 +146,10 @@ struct ClientsView: View {
             ZStack {
                 Circle()
                     .fill(AppTheme.primary.opacity(0.1))
-                    .frame(width: 48, height: 48)
+                    .frame(width: iPad ? 52 : 48, height: iPad ? 52 : 48)
 
                 Text(client.initials)
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 15))
                     .foregroundColor(AppTheme.primary)
             }
 
@@ -110,7 +157,7 @@ struct ClientsView: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(client.name)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 15))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
@@ -120,13 +167,13 @@ struct ClientsView: View {
                 }
 
                 Text(client.email)
-                    .font(AppTheme.Typography.caption(12))
+                    .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
 
                 if let risk = client.riskProfile {
                     Text(risk)
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
             }
@@ -136,19 +183,21 @@ struct ClientsView: View {
             // Right: Metrics
             VStack(alignment: .trailing, spacing: 3) {
                 Text(client.formattedAum)
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 15))
                     .foregroundColor(.primary)
 
                 returnBadge(client.returns)
 
                 Text("\(client.sipCount) SIPs")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(.secondary)
             }
 
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
+            if sizeClass != .regular {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+            }
         }
         .listItemCard(cornerRadius: AppTheme.CornerRadius.medium)
     }
@@ -156,9 +205,9 @@ struct ClientsView: View {
     private func returnBadge(_ returns: Double) -> some View {
         HStack(spacing: 2) {
             Image(systemName: returns >= 0 ? "arrow.up.right" : "arrow.down.right")
-                .font(.system(size: 10))
+                .font(.system(size: iPad ? 12 : 10))
             Text(returns.formattedPercent)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
         }
         .foregroundColor(AppTheme.returnColor(returns))
         .padding(.horizontal, 8)
@@ -170,7 +219,7 @@ struct ClientsView: View {
     private func statusBadge(_ status: String) -> some View {
         let color = kycColor(status)
         return Text(status)
-            .font(AppTheme.Typography.label(10))
+            .font(AppTheme.Typography.label(iPad ? 12 : 10))
             .foregroundColor(color)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -257,6 +306,8 @@ struct ClientDetailView: View {
                         case 4: familyTab(client)
                         case 5: GoalsTabView(goals: store.goals)
                         case 6: ReportsTabView(client: client)
+                        case 7: NotesTabView(clientId: clientId)
+                        case 8: InsuranceTabView(clientId: clientId)
                         default: EmptyView()
                         }
 
@@ -702,7 +753,7 @@ struct ClientDetailView: View {
 
     private var tabSelector: some View {
         GlassTabSelector(
-            tabs: ["Overview", "Holdings", "SIPs", "Transactions", "Family", "Goals", "Reports"],
+            tabs: ["Overview", "Holdings", "SIPs", "Transactions", "Family", "Goals", "Reports", "Notes", "Insurance"],
             selectedIndex: $selectedTab
         )
         .padding(.horizontal, AppTheme.Spacing.medium)
@@ -710,10 +761,13 @@ struct ClientDetailView: View {
 
     // MARK: - Overview Tab
 
+    @Environment(\.horizontalSizeClass) private var detailSizeClass
+
     private func overviewTab(_ client: FAClientDetail) -> some View {
         VStack(spacing: AppTheme.Spacing.small) {
             // A. Portfolio Quick Stats
-            let columns = [GridItem(.flexible()), GridItem(.flexible())]
+            let columnCount = AppTheme.adaptiveColumns(detailSizeClass)
+            let columns = Array(repeating: GridItem(.flexible()), count: columnCount)
             let totalInvested = client.holdings.reduce(0) { $0 + $1.investedValue }
             let currentValue = client.holdings.reduce(0) { $0 + $1.currentValue }
             let monthlySip = client.sips.filter { $0.isActive }.reduce(0) { $0 + $1.amount }
@@ -947,7 +1001,8 @@ struct ClientDetailView: View {
             let totalGain = totalCurrentValue - totalInvestedValue
             let returnsPercent = totalInvestedValue > 0 ? ((totalCurrentValue - totalInvestedValue) / totalInvestedValue) * 100 : 0
 
-            let columns = [GridItem(.flexible()), GridItem(.flexible())]
+            let holdingsColumnCount = AppTheme.adaptiveColumns(detailSizeClass)
+            let columns = Array(repeating: GridItem(.flexible()), count: holdingsColumnCount)
             VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
                 sectionTitle("Holdings Summary", icon: "chart.bar.fill")
                 LazyVGrid(columns: columns, spacing: AppTheme.Spacing.small) {
@@ -1056,7 +1111,8 @@ struct ClientDetailView: View {
             let monthlyAmount = activeSips.reduce(0) { $0 + $1.amount }
             let totalSipInvested = client.sips.reduce(0) { $0 + $1.totalInvested }
 
-            let columns = [GridItem(.flexible()), GridItem(.flexible())]
+            let sipColumnCount = AppTheme.adaptiveColumns(detailSizeClass)
+            let columns = Array(repeating: GridItem(.flexible()), count: sipColumnCount)
             VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
                 sectionTitle("SIP Summary", icon: "arrow.triangle.2.circlepath")
                 LazyVGrid(columns: columns, spacing: AppTheme.Spacing.small) {
@@ -1295,7 +1351,8 @@ struct ClientDetailView: View {
 
         return VStack(spacing: AppTheme.Spacing.small) {
             // Summary Card
-            let columns = [GridItem(.flexible()), GridItem(.flexible())]
+            let familyColumnCount = AppTheme.adaptiveColumns(detailSizeClass)
+            let columns = Array(repeating: GridItem(.flexible()), count: familyColumnCount)
             VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
                 sectionTitle("Family Summary", icon: "person.2.fill")
                 LazyVGrid(columns: columns, spacing: AppTheme.Spacing.small) {

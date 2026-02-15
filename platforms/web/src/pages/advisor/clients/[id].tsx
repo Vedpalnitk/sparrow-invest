@@ -27,6 +27,7 @@ import {
 import TransactionFormModal from '@/components/advisor/TransactionFormModal'
 import AssetAllocationChart from '@/components/advisor/AssetAllocationChart'
 import PortfolioValueChart from '@/components/advisor/PortfolioValueChart'
+import InsuranceTab from '@/components/clients/insurance/InsuranceTab'
 
 // Family member from backend
 interface FamilyMember {
@@ -49,7 +50,7 @@ type TxnTypeFilter = 'All' | 'Buy' | 'Sell' | 'SIP' | 'Switch' | 'SWP' | 'STP'
 type TxnStatusFilter = 'All' | 'Pending' | 'Completed' | 'Failed'
 type TxnSort = 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'
 
-type TabId = 'overview' | 'family' | 'holdings' | 'transactions' | 'sips' | 'goals' | 'reports'
+type TabId = 'overview' | 'family' | 'holdings' | 'transactions' | 'sips' | 'goals' | 'reports' | 'insurance'
 
 const ClientDetailPage = () => {
   const router = useRouter()
@@ -686,6 +687,7 @@ const ClientDetailPage = () => {
     { id: 'sips', label: 'SIPs', count: sips.length },
     { id: 'goals', label: 'Goals', count: goals.length },
     { id: 'reports', label: 'Reports' },
+    { id: 'insurance', label: 'Insurance' },
   ]
 
   const getSipStatusColor = (status: string) => {
@@ -2154,6 +2156,10 @@ const ClientDetailPage = () => {
               </div>
             </div>
           </FACard>
+        )}
+
+        {activeTab === 'insurance' && id && (
+          <InsuranceTab clientId={id as string} />
         )}
       </div>
 

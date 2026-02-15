@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Generic API Response
 
@@ -308,6 +309,64 @@ struct FAGoal: Codable, Identifiable {
         default: return "flag"
         }
     }
+}
+
+// MARK: - Meeting Note Models
+
+enum MeetingType: String, Codable, CaseIterable {
+    case call = "CALL"
+    case inPerson = "IN_PERSON"
+    case video = "VIDEO"
+    case email = "EMAIL"
+    case other = "OTHER"
+
+    var label: String {
+        switch self {
+        case .call: return "Call"
+        case .inPerson: return "In Person"
+        case .video: return "Video"
+        case .email: return "Email"
+        case .other: return "Other"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .call: return "phone.fill"
+        case .inPerson: return "person.2.fill"
+        case .video: return "video.fill"
+        case .email: return "envelope.fill"
+        case .other: return "ellipsis.circle.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .call: return Color(hex: "3B82F6")
+        case .inPerson: return Color(hex: "10B981")
+        case .video: return Color(hex: "8B5CF6")
+        case .email: return Color(hex: "F59E0B")
+        case .other: return Color(hex: "64748B")
+        }
+    }
+}
+
+struct MeetingNote: Codable, Identifiable {
+    let id: String
+    let clientId: String?
+    let prospectId: String?
+    let title: String
+    let content: String
+    let meetingType: MeetingType
+    let meetingDate: String
+    let createdAt: String?
+}
+
+struct CreateNoteRequest: Encodable {
+    let title: String
+    let content: String
+    let meetingType: String
+    let meetingDate: String
 }
 
 // MARK: - Market Index Models
@@ -929,6 +988,18 @@ struct FAProspect: Identifiable {
     let nextActionDate: String
     let notes: String
     let probability: Int
+    let meetingNotes: [MeetingNote]
+
+    init(id: String, name: String, email: String, phone: String,
+         potentialAum: Double, stage: ProspectStage, source: LeadSource,
+         nextAction: String, nextActionDate: String, notes: String,
+         probability: Int, meetingNotes: [MeetingNote] = []) {
+        self.id = id; self.name = name; self.email = email; self.phone = phone
+        self.potentialAum = potentialAum; self.stage = stage; self.source = source
+        self.nextAction = nextAction; self.nextActionDate = nextActionDate
+        self.notes = notes; self.probability = probability
+        self.meetingNotes = meetingNotes
+    }
 }
 
 enum MockProspects {
@@ -998,4 +1069,164 @@ enum MockProspects {
             probability: 25
         )
     ]
+}
+
+// MARK: - Whitelist Models
+
+struct WhitelistedFund: Codable, Identifiable {
+    let id: String
+    let schemeCode: Int
+    let schemeName: String
+    let schemeCategory: String?
+    let nav: Double?
+    let returns1y: Double?
+    let returns3y: Double?
+    let returns5y: Double?
+    let riskRating: Int?
+    let fundRating: Int?
+    let aum: Double?
+    let year: Int
+    let notes: String?
+    let addedAt: String
+
+    var riskLevel: String? {
+        switch riskRating {
+        case 1: return "Low"
+        case 2: return "Low to Moderate"
+        case 3: return "Moderate"
+        case 4: return "Moderately High"
+        case 5: return "High"
+        default: return nil
+        }
+    }
+}
+
+struct AddToWhitelistRequest: Encodable {
+    let schemeCode: Int
+    let year: Int
+    let notes: String?
+}
+
+// MARK: - Insurance Models
+
+struct InsurancePolicy: Codable, Identifiable {
+    let id: String
+    let clientId: String
+    let policyNumber: String
+    let provider: String
+    let type: String
+    let status: String
+    let sumAssured: Double
+    let premiumAmount: Double
+    let premiumFrequency: String
+    let startDate: String
+    let maturityDate: String?
+    let nominees: String?
+    let notes: String?
+    let createdAt: String?
+    let updatedAt: String?
+
+    var formattedSumAssured: String {
+        if sumAssured >= 10000000 {
+            return String(format: "₹%.1f Cr", sumAssured / 10000000)
+        } else if sumAssured >= 100000 {
+            return String(format: "₹%.1f L", sumAssured / 100000)
+        }
+        return String(format: "₹%.0f", sumAssured)
+    }
+
+    var formattedPremium: String {
+        if premiumAmount >= 100000 {
+            return String(format: "₹%.1f L", premiumAmount / 100000)
+        }
+        return String(format: "₹%,.0f", premiumAmount)
+    }
+
+    var typeLabel: String {
+        switch type {
+        case "TERM_LIFE": return "Term Life"
+        case "WHOLE_LIFE": return "Whole Life"
+        case "ENDOWMENT": return "Endowment"
+        case "ULIP": return "ULIP"
+        case "HEALTH": return "Health"
+        case "CRITICAL_ILLNESS": return "Critical Illness"
+        case "PERSONAL_ACCIDENT": return "Personal Accident"
+        default: return "Other"
+        }
+    }
+
+    var typeIcon: String {
+        switch type {
+        case "TERM_LIFE", "WHOLE_LIFE": return "shield.checkered"
+        case "ENDOWMENT", "ULIP": return "chart.line.uptrend.xyaxis"
+        case "HEALTH": return "heart.text.square"
+        case "CRITICAL_ILLNESS": return "cross.case"
+        case "PERSONAL_ACCIDENT": return "figure.fall"
+        default: return "doc.text"
+        }
+    }
+
+    var statusColor: Color {
+        switch status {
+        case "ACTIVE": return Color(hex: "10B981")
+        case "LAPSED": return Color(hex: "EF4444")
+        case "SURRENDERED": return Color(hex: "F59E0B")
+        case "MATURED": return Color(hex: "3B82F6")
+        case "CLAIMED": return Color(hex: "8B5CF6")
+        default: return Color(hex: "94A3B8")
+        }
+    }
+
+    var statusLabel: String {
+        status.capitalized
+    }
+
+    var isLifeCover: Bool {
+        ["TERM_LIFE", "WHOLE_LIFE", "ENDOWMENT", "ULIP"].contains(type)
+    }
+
+    var isHealthCover: Bool {
+        ["HEALTH", "CRITICAL_ILLNESS"].contains(type)
+    }
+}
+
+struct GapAnalysis: Codable {
+    let life: CoverageGap
+    let health: CoverageGap
+    let policies: [InsurancePolicy]
+}
+
+struct CoverageGap: Codable {
+    let recommended: Double
+    let current: Double
+    let gap: Double
+    let adequate: Bool
+}
+
+struct CreateInsurancePolicyRequest: Encodable {
+    let policyNumber: String
+    let provider: String
+    let type: String
+    let status: String?
+    let sumAssured: Double
+    let premiumAmount: Double
+    let premiumFrequency: String?
+    let startDate: String
+    let maturityDate: String?
+    let nominees: String?
+    let notes: String?
+}
+
+struct UpdateInsurancePolicyRequest: Encodable {
+    let policyNumber: String?
+    let provider: String?
+    let type: String?
+    let status: String?
+    let sumAssured: Double?
+    let premiumAmount: Double?
+    let premiumFrequency: String?
+    let startDate: String?
+    let maturityDate: String?
+    let nominees: String?
+    let notes: String?
 }
