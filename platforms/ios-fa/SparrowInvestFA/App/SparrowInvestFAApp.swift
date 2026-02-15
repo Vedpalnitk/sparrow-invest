@@ -4,15 +4,47 @@ import SwiftUI
 struct SparrowInvestFAApp: App {
     @StateObject private var authManager = AuthManager()
     @StateObject private var deepLinkRouter = DeepLinkRouter()
+    @StateObject private var coordinator = NavigationCoordinator()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(authManager)
                 .environmentObject(deepLinkRouter)
+                .environmentObject(coordinator)
                 .onOpenURL { url in
                     deepLinkRouter.handle(url: url)
                 }
+        }
+        .commands {
+            CommandMenu("Navigate") {
+                Button("Dashboard") { coordinator.navigate(to: .dashboard) }
+                    .keyboardShortcut("1", modifiers: .command)
+                Button("Clients") { coordinator.navigate(to: .clients) }
+                    .keyboardShortcut("2", modifiers: .command)
+                Button("Transactions") { coordinator.navigate(to: .transactions) }
+                    .keyboardShortcut("3", modifiers: .command)
+                Button("Insights") { coordinator.navigate(to: .insights) }
+                    .keyboardShortcut("4", modifiers: .command)
+                Divider()
+                Button("Fund Universe") { coordinator.navigate(to: .fundUniverse) }
+                    .keyboardShortcut("5", modifiers: .command)
+                Button("Reports") { coordinator.navigate(to: .reports) }
+                    .keyboardShortcut("6", modifiers: .command)
+            }
+            CommandMenu("Actions") {
+                Button("Toggle Avya AI") { coordinator.showAvyaChat.toggle() }
+                    .keyboardShortcut("k", modifiers: .command)
+            }
+        }
+
+        WindowGroup("Client Detail", for: String.self) { $clientId in
+            if let clientId {
+                NavigationStack {
+                    ClientDetailView(clientId: clientId)
+                        .environmentObject(authManager)
+                }
+            }
         }
     }
 }

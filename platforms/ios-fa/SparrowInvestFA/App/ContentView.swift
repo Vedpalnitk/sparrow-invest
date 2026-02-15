@@ -5,12 +5,15 @@ struct ContentView: View {
     @EnvironmentObject var deepLinkRouter: DeepLinkRouter
     @AppStorage("themeMode") private var themeMode = "System"
 
+    @EnvironmentObject var coordinator: NavigationCoordinator
+
     var body: some View {
         Group {
             if authManager.isAuthenticated {
-                MainTabView()
+                AdaptiveRootView()
                     .environmentObject(authManager)
                     .environmentObject(deepLinkRouter)
+                    .environmentObject(coordinator)
             } else {
                 LoginView()
                     .environmentObject(authManager)
@@ -25,4 +28,5 @@ struct ContentView: View {
     ContentView()
         .environmentObject(AuthManager())
         .environmentObject(DeepLinkRouter())
+        .environmentObject(NavigationCoordinator())
 }
