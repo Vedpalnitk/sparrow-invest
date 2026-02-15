@@ -3,6 +3,8 @@ import SwiftUI
 struct GoalsTabView: View {
     let goals: [FAGoal]
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         if goals.isEmpty {
@@ -26,11 +28,11 @@ struct GoalsTabView: View {
                 .foregroundColor(.secondary)
 
             Text("No goals set")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text("Create investment goals to track progress")
-                .font(AppTheme.Typography.body(14))
+                .font(AppTheme.Typography.body(iPad ? 16 : 14))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -57,12 +59,12 @@ struct GoalsTabView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(goal.name)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
                     Text("Target: \(goal.targetDate)")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
 
@@ -70,7 +72,7 @@ struct GoalsTabView: View {
 
                 // Status Badge
                 Text(goal.statusLabel)
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(statusColor)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -104,19 +106,19 @@ struct GoalsTabView: View {
                 // Amount row
                 HStack {
                     Text(AppTheme.formatCurrencyWithSymbol(goal.currentAmount))
-                        .font(AppTheme.Typography.numeric(13))
+                        .font(AppTheme.Typography.numeric(iPad ? 15 : 13))
                         .foregroundColor(.primary)
 
                     Spacer()
 
                     Text(String(format: "%.0f%%", goal.progress * 100))
-                        .font(AppTheme.Typography.accent(11))
+                        .font(AppTheme.Typography.accent(iPad ? 13 : 11))
                         .foregroundColor(statusColor)
 
                     Spacer()
 
                     Text(AppTheme.formatCurrencyWithSymbol(goal.targetAmount))
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
             }
@@ -129,7 +131,7 @@ struct GoalsTabView: View {
                         .foregroundColor(.secondary)
 
                     Text("\(AppTheme.formatCurrencyWithSymbol(monthly))/mo needed")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
             }

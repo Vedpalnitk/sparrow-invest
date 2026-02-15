@@ -11,8 +11,12 @@ struct MainTabView: View {
     init() {
         let appearance = UITabBarAppearance()
         appearance.configureWithDefaultBackground()
-        appearance.backgroundColor = .clear
-        appearance.backgroundEffect = UIBlurEffect(style: .systemThinMaterial)
+        appearance.backgroundColor = UIColor { traits in
+            traits.userInterfaceStyle == .dark
+                ? UIColor(white: 0.12, alpha: 1.0)
+                : UIColor(red: 0.94, green: 0.96, blue: 0.98, alpha: 1.0)
+        }
+        appearance.backgroundEffect = nil
         appearance.shadowColor = .clear
 
         // Softer unselected items in dark mode

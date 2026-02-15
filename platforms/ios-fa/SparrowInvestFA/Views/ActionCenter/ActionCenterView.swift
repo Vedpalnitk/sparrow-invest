@@ -5,6 +5,8 @@ struct ActionCenterView: View {
     @StateObject private var store = ActionCenterStore()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var shareText: String?
     @State private var showShareSheet = false
     @State private var mailData: MailData?
@@ -123,11 +125,11 @@ struct ActionCenterView: View {
     private func summaryChip(count: Int, label: String, color: Color) -> some View {
         VStack(spacing: 4) {
             Text("\(count)")
-                .font(AppTheme.Typography.numeric(22))
+                .font(AppTheme.Typography.numeric(iPad ? 26 : 22))
                 .foregroundColor(color)
 
             Text(label)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 14 : 11))
                 .foregroundColor(color.opacity(0.8))
         }
         .frame(maxWidth: .infinity)
@@ -159,11 +161,11 @@ struct ActionCenterView: View {
                 }
 
                 Text(title)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(color)
 
                 Text("\(count)")
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(color)
                     .frame(width: 20, height: 20)
                     .background(
@@ -186,27 +188,27 @@ struct ActionCenterView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                     .fill(AppTheme.error.opacity(0.1))
-                    .frame(width: 40, height: 40)
+                    .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                 Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 16))
+                    .font(.system(size: iPad ? 18 : 16))
                     .foregroundColor(AppTheme.error)
             }
 
             // Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(sip.clientName ?? "Client")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text(sip.fundName)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 15 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
 
                 Text("SIP of \(sip.formattedAmount) failed")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 11))
                     .foregroundColor(AppTheme.error)
             }
 
@@ -229,27 +231,27 @@ struct ActionCenterView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                     .fill(AppTheme.warning.opacity(0.1))
-                    .frame(width: 40, height: 40)
+                    .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                 Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 16))
+                    .font(.system(size: iPad ? 18 : 16))
                     .foregroundColor(AppTheme.warning)
             }
 
             // Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(tx.clientName)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text("\(tx.type) - \(tx.fundName)")
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 15 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
 
                 Text(tx.formattedAmount)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 11))
                     .foregroundColor(AppTheme.warning)
             }
 
@@ -272,22 +274,22 @@ struct ActionCenterView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                     .fill(AppTheme.primary.opacity(0.1))
-                    .frame(width: 40, height: 40)
+                    .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                 Image(systemName: "person.badge.shield.checkmark")
-                    .font(.system(size: 16))
+                    .font(.system(size: iPad ? 18 : 16))
                     .foregroundColor(AppTheme.primary)
             }
 
             // Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(client.name)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text("KYC: \(client.kycStatus ?? "PENDING")")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 11))
                     .foregroundColor(AppTheme.primary)
             }
 
@@ -335,7 +337,7 @@ struct ActionCenterView: View {
                 .foregroundColor(AppTheme.success)
 
             Text("All caught up!")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text("No pending actions at the moment")

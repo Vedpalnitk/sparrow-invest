@@ -7,6 +7,8 @@ struct ShareWithClientSheet: View {
     let onDismiss: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var selectedChannel: ShareChannel = .whatsApp
     @State private var selectedTemplate: ShareTemplate = .portfolioSummary
     @State private var messageBody = ""
@@ -87,7 +89,7 @@ struct ShareWithClientSheet: View {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(AppTheme.success)
                         Text("Copied to clipboard")
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -108,7 +110,7 @@ struct ShareWithClientSheet: View {
     private var channelToggle: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Channel")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -121,7 +123,7 @@ struct ShareWithClientSheet: View {
                             Image(systemName: channel.icon)
                                 .font(.system(size: 13))
                             Text(channel.rawValue)
-                                .font(AppTheme.Typography.accent(13))
+                                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         }
                         .foregroundColor(selectedChannel == channel ? .white : channel.color)
                         .frame(maxWidth: .infinity)
@@ -144,7 +146,7 @@ struct ShareWithClientSheet: View {
     private var templateSelector: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Template")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -158,7 +160,7 @@ struct ShareWithClientSheet: View {
                                 Image(systemName: template.icon)
                                     .font(.system(size: 11))
                                 Text(template.rawValue)
-                                    .font(AppTheme.Typography.label(12))
+                                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                             }
                             .fixedSize()
                             .foregroundColor(selectedTemplate == template ? .white : AppTheme.primary)
@@ -184,7 +186,7 @@ struct ShareWithClientSheet: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             HStack {
                 Text("Message Preview")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(.secondary)
                     .textCase(.uppercase)
 
@@ -201,7 +203,7 @@ struct ShareWithClientSheet: View {
                         Image(systemName: "doc.on.doc")
                             .font(.system(size: 10))
                         Text("Copy")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     }
                     .foregroundColor(AppTheme.primary)
                 }
@@ -209,7 +211,7 @@ struct ShareWithClientSheet: View {
             }
 
             Text(messageBody)
-                .font(AppTheme.Typography.body(13))
+                .font(AppTheme.Typography.body(iPad ? 15 : 13))
                 .foregroundColor(.primary)
                 .padding(AppTheme.Spacing.compact)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -234,7 +236,7 @@ struct ShareWithClientSheet: View {
                 Image(systemName: selectedChannel == .whatsApp ? "paperplane.fill" : "envelope.fill")
                     .font(.system(size: 14))
                 Text(selectedChannel == .whatsApp ? "Send via WhatsApp" : "Send via Email")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)

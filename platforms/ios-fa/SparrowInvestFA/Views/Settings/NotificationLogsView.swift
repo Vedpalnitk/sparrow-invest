@@ -3,6 +3,8 @@ import SwiftUI
 struct NotificationLogsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var logs: [NotificationLogItem] = []
     @State private var isLoading = true
 
@@ -18,7 +20,7 @@ struct NotificationLogsView: View {
                             .font(.system(size: 48))
                             .foregroundColor(.secondary)
                         Text("No notifications yet")
-                            .font(AppTheme.Typography.headline(17))
+                            .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                             .foregroundColor(.secondary)
                     }
                     .padding(.top, AppTheme.Spacing.xxxLarge)
@@ -89,16 +91,16 @@ struct NotificationLogsView: View {
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                 Text(item.title)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 Text(item.body)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(2)
 
                 Text(item.timestamp)
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(.secondary)
             }
 

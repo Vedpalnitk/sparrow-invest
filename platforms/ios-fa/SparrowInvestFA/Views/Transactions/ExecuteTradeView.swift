@@ -5,6 +5,8 @@ struct ExecuteTradeView: View {
     @StateObject private var store = ExecuteTradeStore()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         NavigationStack {
@@ -64,11 +66,11 @@ struct ExecuteTradeView: View {
         tradeFormSection(title: "Client", subtitle: client.name, icon: "person.fill") {
             HStack {
                 Text(client.email)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     .foregroundColor(.secondary)
                 Spacer()
                 Text("AUM: \(client.formattedAum)")
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     .foregroundColor(AppTheme.primary)
             }
         }
@@ -85,7 +87,7 @@ struct ExecuteTradeView: View {
                         store.tradeType = type
                     } label: {
                         Text(type)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(isSelected ? .white : .secondary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
@@ -115,13 +117,13 @@ struct ExecuteTradeView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(fund.schemeName)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
                             .lineLimit(2)
 
                         if let nav = fund.nav {
                             Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                                .font(AppTheme.Typography.label(12))
+                                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -147,7 +149,7 @@ struct ExecuteTradeView: View {
                         .foregroundColor(.secondary)
 
                     TextField("Search fund name...", text: $store.fundSearchQuery)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .onChange(of: store.fundSearchQuery) { _, newValue in
                             Task { await store.searchFunds(query: newValue) }
                         }
@@ -179,7 +181,7 @@ struct ExecuteTradeView: View {
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(fund.schemeName)
-                                        .font(AppTheme.Typography.accent(13))
+                                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                         .foregroundColor(.primary)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.leading)
@@ -187,14 +189,14 @@ struct ExecuteTradeView: View {
                                     HStack {
                                         if let nav = fund.nav {
                                             Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                                                .font(AppTheme.Typography.label(11))
+                                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                                 .foregroundColor(.secondary)
                                         }
                                         Spacer()
                                         if let ret = fund.returns1y {
                                             let retColor = ret >= 0 ? AppTheme.success : AppTheme.error
                                             Text(String(format: "%+.1f%% 1Y", ret))
-                                                .font(AppTheme.Typography.label(10))
+                                                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                                 .foregroundColor(retColor)
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 2)
@@ -222,16 +224,16 @@ struct ExecuteTradeView: View {
                 // Amount Field
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                     Text("AMOUNT (\u{20B9})")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     HStack(spacing: AppTheme.Spacing.small) {
                         Text("\u{20B9}")
-                            .font(AppTheme.Typography.numeric(18))
+                            .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                             .foregroundColor(.secondary)
 
                         TextField("Enter amount", text: $store.amount)
-                            .font(AppTheme.Typography.numeric(18))
+                            .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                             .keyboardType(.decimalPad)
                     }
                     .padding(.horizontal, AppTheme.Spacing.medium)
@@ -252,7 +254,7 @@ struct ExecuteTradeView: View {
 
                     if let amountError = store.amountError {
                         Text(amountError)
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(AppTheme.error)
                     }
                 }
@@ -260,11 +262,11 @@ struct ExecuteTradeView: View {
                 // Notes Field
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                     Text("NOTES (OPTIONAL)")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     TextField("Add any notes...", text: $store.notes, axis: .vertical)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .lineLimit(3...6)
                         .padding(AppTheme.Spacing.compact)
                         .background(
@@ -295,7 +297,7 @@ struct ExecuteTradeView: View {
                         Image(systemName: "bolt.fill")
                             .font(.system(size: 14))
                         Text("Execute \(store.tradeType)")
-                            .font(AppTheme.Typography.headline(16))
+                            .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     }
                 }
             }
@@ -330,10 +332,10 @@ struct ExecuteTradeView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(AppTheme.Typography.headline(16))
+                        .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                         .foregroundColor(.primary)
                     Text(subtitle)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(.secondary)
                 }
             }

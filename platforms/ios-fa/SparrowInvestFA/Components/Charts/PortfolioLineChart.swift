@@ -10,6 +10,8 @@ struct PortfolioLineChart: View {
     var title: String? = nil
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var drawProgress: CGFloat = 0
     @State private var touchIndex: Int? = nil
 
@@ -23,7 +25,7 @@ struct PortfolioLineChart: View {
                             .font(.system(size: 12))
                             .foregroundColor(AppTheme.primary)
                         Text(title)
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                             .foregroundColor(.primary)
                     }
                 }
@@ -93,14 +95,14 @@ struct PortfolioLineChart: View {
             if let idx = touchIndex, idx < data.count {
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(formatDateLabel(data[idx].date))
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(.secondary)
                     Text(AppTheme.formatCurrencyWithSymbol(data[idx].value))
-                        .font(AppTheme.Typography.accent(12))
+                        .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                         .foregroundColor(AppTheme.primary)
                     if let dayChange = data[idx].dayChange, dayChange != 0 {
                         Text(String(format: "%@%.1f%%", dayChange >= 0 ? "+" : "", (data[idx].dayChangePct ?? 0)))
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(dayChange >= 0 ? AppTheme.success : AppTheme.error)
                     }
                 }
@@ -120,7 +122,7 @@ struct PortfolioLineChart: View {
                     Spacer()
                     Text(AppTheme.formatCurrencyWithSymbol(minVal))
                 }
-                .font(AppTheme.Typography.label(9))
+                .font(AppTheme.Typography.label(iPad ? 11 : 9))
                 .foregroundColor(.secondary)
                 .frame(width: 48, alignment: .trailing)
 
@@ -235,7 +237,7 @@ struct PortfolioLineChart: View {
         return HStack {
             ForEach(labels, id: \.self) { label in
                 Text(label)
-                    .font(AppTheme.Typography.label(9))
+                    .font(AppTheme.Typography.label(iPad ? 11 : 9))
                     .foregroundColor(.secondary)
                 if label != labels.last {
                     Spacer()
@@ -286,7 +288,7 @@ struct PortfolioLineChart: View {
                 .foregroundColor(.secondary.opacity(0.5))
 
             Text("No data available")
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 .foregroundColor(.secondary)
         }
         .frame(height: 150)

@@ -3,6 +3,8 @@ import SwiftUI
 struct ReportsTabView: View {
     let client: FAClientDetail
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var isGenerating = false
     @State private var generatingReport = ""
@@ -30,7 +32,7 @@ struct ReportsTabView: View {
             // Section Header
             HStack {
                 Text("Generate Reports")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -81,13 +83,13 @@ struct ReportsTabView: View {
 
             // Title
             Text(type)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
             // Description
             Text(description)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -109,7 +111,7 @@ struct ReportsTabView: View {
                     }
 
                     Text(isCurrentlyGenerating ? "Generating..." : "Generate")
-                        .font(AppTheme.Typography.accent(12))
+                        .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)

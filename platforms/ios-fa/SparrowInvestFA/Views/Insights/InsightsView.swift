@@ -3,6 +3,8 @@ import SwiftUI
 struct InsightsView: View {
     @StateObject private var store = InsightsStore()
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var avyaQuery = ""
     @State private var showAvyaChat = false
     @State private var avyaInitialQuery: String?
@@ -106,11 +108,11 @@ struct InsightsView: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Avya AI")
-                            .font(AppTheme.Typography.headline(16))
+                            .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                             .foregroundColor(.white)
 
                         Text("Your portfolio assistant")
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 12))
                             .foregroundColor(.white.opacity(0.8))
                     }
                 }
@@ -122,7 +124,7 @@ struct InsightsView: View {
                     showAvyaChat = true
                 } label: {
                     Text("Chat")
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(.white)
                         .padding(.horizontal, AppTheme.Spacing.medium)
                         .padding(.vertical, AppTheme.Spacing.small)
@@ -232,7 +234,7 @@ struct InsightsView: View {
                     .foregroundColor(AppTheme.primary)
 
                 Text(label)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.primary)
             }
             .padding(.horizontal, AppTheme.Spacing.compact)
@@ -255,33 +257,49 @@ struct InsightsView: View {
     // MARK: - Tab Content Views
 
     private var healthTabContent: some View {
-        VStack(spacing: AppTheme.Spacing.small) {
+        let useGrid = sizeClass == .regular
+        return Group {
             if store.insights.portfolioHealth.isEmpty {
                 tabEmptyState("No health issues", icon: "heart.text.square")
-            } else {
-                ForEach(store.insights.portfolioHealth) { item in
-                    HStack(spacing: AppTheme.Spacing.compact) {
-                        HealthScoreRing(score: item.score, size: 52)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.clientName)
-                                .font(AppTheme.Typography.accent(14))
-                                .foregroundColor(.primary)
-
-                            if let issue = item.issues.first {
-                                Text(issue)
-                                    .font(AppTheme.Typography.label(12))
-                                    .foregroundColor(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-
-                        Spacer()
+            } else if useGrid {
+                LazyVGrid(
+                    columns: [GridItem(.flexible(), spacing: AppTheme.Spacing.small), GridItem(.flexible(), spacing: AppTheme.Spacing.small)],
+                    spacing: AppTheme.Spacing.small
+                ) {
+                    ForEach(store.insights.portfolioHealth) { item in
+                        healthItemCard(item)
                     }
-                    .listItemCard()
+                }
+            } else {
+                VStack(spacing: AppTheme.Spacing.small) {
+                    ForEach(store.insights.portfolioHealth) { item in
+                        healthItemCard(item)
+                    }
                 }
             }
         }
+    }
+
+    private func healthItemCard(_ item: PortfolioHealthItem) -> some View {
+        HStack(spacing: AppTheme.Spacing.compact) {
+            HealthScoreRing(score: item.score, size: 52)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.clientName)
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
+                    .foregroundColor(.primary)
+
+                if let issue = item.issues.first {
+                    Text(issue)
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+        }
+        .listItemCard()
     }
 
     private var rebalancingTabContent: some View {
@@ -292,7 +310,7 @@ struct InsightsView: View {
                 ForEach(store.insights.rebalancingAlerts) { alert in
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                         Text(alert.clientName)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
 
                         DriftBar(
@@ -321,11 +339,11 @@ struct InsightsView: View {
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("\(alert.clientName) - \(alert.goalName)")
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                 .foregroundColor(.primary)
 
                             Text(alert.message)
-                                .font(AppTheme.Typography.label(12))
+                                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                 .foregroundColor(.secondary)
                                 .lineLimit(2)
                         }
@@ -334,7 +352,7 @@ struct InsightsView: View {
                         Spacer()
 
                         Text(alert.status.replacingOccurrences(of: "_", with: " "))
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(AppTheme.statusColor(alert.status))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
@@ -357,11 +375,11 @@ struct InsightsView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(opp.clientName)
-                                    .font(AppTheme.Typography.accent(14))
+                                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                     .foregroundColor(.primary)
 
                                 Text(opp.fundName)
-                                    .font(AppTheme.Typography.label(12))
+                                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                     .foregroundColor(.secondary)
                                     .lineLimit(1)
                             }
@@ -369,7 +387,7 @@ struct InsightsView: View {
                             Spacer()
 
                             Text(opp.potentialSavings.formattedCurrency)
-                                .font(AppTheme.Typography.numeric(14))
+                                .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                                 .foregroundColor(AppTheme.success)
                         }
 
@@ -389,11 +407,11 @@ struct InsightsView: View {
 
                         HStack {
                             Label("Loss: \(opp.unrealizedLoss.formattedCurrency)", systemImage: "arrow.down")
-                                .font(AppTheme.Typography.label(10))
+                                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                 .foregroundColor(AppTheme.error)
                             Spacer()
                             Label("Savings: \(opp.potentialSavings.formattedCurrency)", systemImage: "arrow.up")
-                                .font(AppTheme.Typography.label(10))
+                                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                 .foregroundColor(AppTheme.success)
                         }
                     }
@@ -406,10 +424,10 @@ struct InsightsView: View {
     private func tabEmptyState(_ message: String, icon: String) -> some View {
         VStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: icon)
-                .font(.system(size: 36))
+                .font(.system(size: iPad ? 42 : 36))
                 .foregroundColor(.secondary)
             Text(message)
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -427,15 +445,15 @@ struct InsightsView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                         .fill(color.opacity(0.1))
-                        .frame(width: 32, height: 32)
+                        .frame(width: iPad ? 38 : 32, height: iPad ? 38 : 32)
 
                     Image(systemName: icon)
-                        .font(.system(size: 15))
+                        .font(.system(size: iPad ? 17 : 15))
                         .foregroundColor(color)
                 }
 
                 Text(title)
-                    .font(AppTheme.Typography.headline(16))
+                    .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     .foregroundColor(.primary)
             }
 
@@ -450,12 +468,12 @@ struct InsightsView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.clientName)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 if let issue = item.issues.first {
                     Text(issue)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
@@ -473,7 +491,7 @@ struct InsightsView: View {
                            score >= 60 ? AppTheme.warning : AppTheme.error
 
         return Text("\(score)")
-            .font(AppTheme.Typography.numeric(14))
+            .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
             .foregroundColor(color)
             .frame(width: 40, height: 40)
             .background(
@@ -485,18 +503,18 @@ struct InsightsView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(alert.clientName)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 Text("\(alert.assetClass): \(String(format: "%.0f%%", alert.currentAllocation)) → \(String(format: "%.0f%%", alert.targetAllocation))")
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
             }
 
             Spacer()
 
             Text(alert.action)
-                .font(AppTheme.Typography.label(10))
+                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                 .foregroundColor(alert.action == "INCREASE" ? AppTheme.success : AppTheme.error)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -510,11 +528,11 @@ struct InsightsView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(opp.clientName)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 Text(opp.fundName)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
@@ -523,11 +541,11 @@ struct InsightsView: View {
 
             VStack(alignment: .trailing, spacing: 2) {
                 Text(opp.potentialSavings.formattedCurrency)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     .foregroundColor(AppTheme.success)
 
                 Text("savings")
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(.secondary)
             }
         }
@@ -538,11 +556,11 @@ struct InsightsView: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(alert.clientName) - \(alert.goalName)")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 Text(alert.message)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(2)
             }
@@ -550,7 +568,7 @@ struct InsightsView: View {
             Spacer()
 
             Text(alert.status.replacingOccurrences(of: "_", with: " "))
-                .font(AppTheme.Typography.label(10))
+                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                 .foregroundColor(AppTheme.statusColor(alert.status))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -564,7 +582,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
             HStack {
                 Text(insight.title)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -573,7 +591,7 @@ struct InsightsView: View {
             }
 
             Text(insight.summary)
-                .font(AppTheme.Typography.label(12))
+                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                 .foregroundColor(.secondary)
                 .lineLimit(3)
         }
@@ -588,7 +606,7 @@ struct InsightsView: View {
             Image(systemName: impact == "POSITIVE" ? "arrow.up" : impact == "NEGATIVE" ? "arrow.down" : "minus")
                 .font(.system(size: 8))
             Text(impact)
-                .font(AppTheme.Typography.label(9))
+                .font(AppTheme.Typography.label(iPad ? 11 : 9))
         }
         .foregroundColor(color)
         .padding(.horizontal, 6)
@@ -600,10 +618,10 @@ struct InsightsView: View {
     private var emptyState: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
             Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 48))
+                .font(.system(size: iPad ? 54 : 48))
                 .foregroundColor(.secondary)
             Text("No insights available")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
             Text("Insights will appear as your clients' portfolios grow")
                 .font(AppTheme.Typography.caption())
                 .foregroundColor(.secondary)

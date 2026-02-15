@@ -29,21 +29,70 @@ private enum FundSortOption: String, CaseIterable {
 
 struct FundUniverseView: View {
     @StateObject private var store = FundsStore()
+    @EnvironmentObject var coordinator: NavigationCoordinator
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var selectedCategory: FundCategory?
     @State private var showSearch = false
     @State private var localSearch = ""
     @State private var sortOption: FundSortOption = .returns1y
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
+        if sizeClass == .regular {
+            iPadFundLayout
+        } else {
+            iPhoneFundLayout
+        }
+    }
+
+    // MARK: - iPad List Content (for 3-column split)
+
+    private var iPadFundLayout: some View {
+        VStack(spacing: 0) {
+            if let category = selectedCategory {
+                fundListContent(category: category)
+            } else {
+                categoryGridContent
+            }
+        }
+        .background(AppTheme.pageBackground(colorScheme: colorScheme))
+        .navigationTitle(selectedCategory.map { "Fund Universe — \($0.name)" } ?? "Fund Universe")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if selectedCategory != nil {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        selectedCategory = nil
+                        store.funds = []
+                        localSearch = ""
+                        coordinator.selectedFundCode = nil
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 14))
+                            Text("Categories")
+                                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
+                        }
+                        .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showSearch) {
+            FundSearchView()
+        }
+    }
+
+    // MARK: - iPhone Stack
+
+    private var iPhoneFundLayout: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 if let category = selectedCategory {
-                    // Fund list for selected category
                     fundListContent(category: category)
                 } else {
-                    // Category grid
                     categoryGridContent
                 }
             }
@@ -66,7 +115,7 @@ struct FundUniverseView: View {
                                 .font(.system(size: selectedCategory != nil ? 14 : 16))
                             if selectedCategory != nil {
                                 Text("Categories")
-                                    .font(AppTheme.Typography.accent(15))
+                                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                             }
                         }
                         .foregroundColor(.secondary)
@@ -93,7 +142,7 @@ struct FundUniverseView: View {
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
                         Text("Search funds...")
-                            .font(AppTheme.Typography.body(15))
+                            .font(AppTheme.Typography.body(iPad ? 17 : 15))
                             .foregroundColor(.secondary)
                         Spacer()
                     }
@@ -135,7 +184,7 @@ struct FundUniverseView: View {
                 }
 
                 Text(category.name)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
             }
             .frame(maxWidth: .infinity)
@@ -188,7 +237,7 @@ struct FundUniverseView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                             TextField("Filter funds...", text: $localSearch)
-                                .font(AppTheme.Typography.body(14))
+                                .font(AppTheme.Typography.body(iPad ? 16 : 14))
                                 .autocorrectionDisabled()
                                 .textInputAutocapitalization(.never)
                         }
@@ -236,12 +285,25 @@ struct FundUniverseView: View {
                         ScrollView {
                             LazyVStack(spacing: AppTheme.Spacing.small) {
                                 ForEach(funds) { fund in
-                                    NavigationLink {
-                                        FundDetailView(schemeCode: fund.schemeCode)
-                                    } label: {
-                                        fundRow(fund)
+                                    if sizeClass == .regular {
+                                        Button {
+                                            coordinator.selectedFundCode = fund.schemeCode
+                                        } label: {
+                                            fundRow(fund)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
+                                                        .stroke(coordinator.selectedFundCode == fund.schemeCode ? AppTheme.primary : Color.clear, lineWidth: 2)
+                                                )
+                                        }
+                                        .buttonStyle(.plain)
+                                    } else {
+                                        NavigationLink {
+                                            FundDetailView(schemeCode: fund.schemeCode)
+                                        } label: {
+                                            fundRow(fund)
+                                        }
+                                        .buttonStyle(.plain)
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal, AppTheme.Spacing.medium)
@@ -273,7 +335,7 @@ struct FundUniverseView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .top, spacing: 4) {
                     Text(fund.schemeName)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 14))
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -289,7 +351,7 @@ struct FundUniverseView: View {
                     if let category = fund.schemeCategory {
                         let short = shortenCategory(category)
                         Text(short)
-                            .font(AppTheme.Typography.label(9))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 9))
                             .foregroundColor(categoryColor(category))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -299,13 +361,13 @@ struct FundUniverseView: View {
 
                     if let nav = fund.nav {
                         Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 11))
                             .foregroundColor(.secondary)
                     }
 
                     if let aum = fund.aum {
                         Text("AUM: \(formatAum(aum))")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 11))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -341,7 +403,7 @@ struct FundUniverseView: View {
         HStack(spacing: 1) {
             ForEach(1...5, id: \.self) { i in
                 Image(systemName: i <= rating ? "star.fill" : "star")
-                    .font(.system(size: 9))
+                    .font(.system(size: iPad ? 12 : 9))
                     .foregroundColor(i <= rating ? AppTheme.warning : Color.secondary.opacity(0.3))
             }
         }
@@ -350,9 +412,9 @@ struct FundUniverseView: View {
     private func returnBadge(_ period: String, value: Double) -> some View {
         HStack(spacing: 2) {
             Image(systemName: value >= 0 ? "arrow.up.right" : "arrow.down.right")
-                .font(.system(size: 8))
+                .font(.system(size: iPad ? 10 : 8))
             Text("\(period) \(value.formattedPercent)")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 14 : 11))
         }
         .foregroundColor(AppTheme.returnColor(value))
     }
@@ -360,7 +422,7 @@ struct FundUniverseView: View {
     private func riskBadge(_ risk: String) -> some View {
         let color = riskColor(risk)
         return Text(risk)
-            .font(AppTheme.Typography.label(9))
+            .font(AppTheme.Typography.label(iPad ? 11 : 9))
             .foregroundColor(color)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -437,7 +499,7 @@ struct FundUniverseView: View {
                 .foregroundColor(AppTheme.error.opacity(0.7))
 
             Text("Something went wrong")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text(message)
@@ -449,7 +511,7 @@ struct FundUniverseView: View {
                 Task { await store.loadFundsByCategory(category.apiKey) }
             } label: {
                 Text("Try Again")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(AppTheme.primary)
                     .padding(.horizontal, AppTheme.Spacing.medium)
                     .padding(.vertical, AppTheme.Spacing.small)
@@ -468,7 +530,7 @@ struct FundUniverseView: View {
                 .foregroundColor(.secondary)
 
             Text("No funds found")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text("No \(category.name) funds available")

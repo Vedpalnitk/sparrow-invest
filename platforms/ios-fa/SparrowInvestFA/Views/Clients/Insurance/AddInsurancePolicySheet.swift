@@ -3,6 +3,8 @@ import SwiftUI
 struct AddInsurancePolicySheet: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     let clientId: String
     @ObservedObject var store: InsuranceStore
@@ -59,7 +61,7 @@ struct AddInsurancePolicySheet: View {
                             // Type Picker
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Policy Type")
-                                    .font(AppTheme.Typography.label(10))
+                                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                     .foregroundColor(.secondary)
 
                                 ScrollView(.horizontal, showsIndicators: false) {
@@ -69,7 +71,7 @@ struct AddInsurancePolicySheet: View {
                                                 selectedType = value
                                             } label: {
                                                 Text(label)
-                                                    .font(AppTheme.Typography.accent(12))
+                                                    .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                                                     .foregroundColor(selectedType == value ? .white : AppTheme.primary)
                                                     .padding(.horizontal, 12)
                                                     .padding(.vertical, 6)
@@ -99,7 +101,7 @@ struct AddInsurancePolicySheet: View {
                             // Frequency
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Premium Frequency")
-                                    .font(AppTheme.Typography.label(10))
+                                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                     .foregroundColor(.secondary)
 
                                 Picker("Frequency", selection: $premiumFrequency) {
@@ -116,14 +118,14 @@ struct AddInsurancePolicySheet: View {
                     sectionCard(title: "Dates", icon: "calendar") {
                         VStack(spacing: AppTheme.Spacing.compact) {
                             DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
-                                .font(AppTheme.Typography.body(14))
+                                .font(AppTheme.Typography.body(iPad ? 16 : 14))
 
                             Toggle("Has Maturity Date", isOn: $hasMaturityDate)
-                                .font(AppTheme.Typography.body(14))
+                                .font(AppTheme.Typography.body(iPad ? 16 : 14))
 
                             if hasMaturityDate {
                                 DatePicker("Maturity Date", selection: $maturityDate, displayedComponents: .date)
-                                    .font(AppTheme.Typography.body(14))
+                                    .font(AppTheme.Typography.body(iPad ? 16 : 14))
                             }
                         }
                     }
@@ -135,11 +137,11 @@ struct AddInsurancePolicySheet: View {
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Notes")
-                                    .font(AppTheme.Typography.label(10))
+                                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                     .foregroundColor(.secondary)
 
                                 TextEditor(text: $notes)
-                                    .font(AppTheme.Typography.body(14))
+                                    .font(AppTheme.Typography.body(iPad ? 16 : 14))
                                     .frame(minHeight: 60)
                                     .scrollContentBackground(.hidden)
                                     .padding(AppTheme.Spacing.compact)
@@ -162,7 +164,7 @@ struct AddInsurancePolicySheet: View {
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 14, weight: .semibold))
                                 Text("Save Policy")
-                                    .font(AppTheme.Typography.accent(15))
+                                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                             }
                         }
                         .foregroundColor(.white)
@@ -205,7 +207,7 @@ struct AddInsurancePolicySheet: View {
                 }
 
                 Text(title)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
             }
 
@@ -219,11 +221,11 @@ struct AddInsurancePolicySheet: View {
     private func fieldRow(label: String, placeholder: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label)
-                .font(AppTheme.Typography.label(10))
+                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                 .foregroundColor(.secondary)
 
             TextField(placeholder, text: text)
-                .font(AppTheme.Typography.body(15))
+                .font(AppTheme.Typography.body(iPad ? 17 : 15))
                 .textFieldStyle(.plain)
                 .padding(AppTheme.Spacing.compact)
                 .background(

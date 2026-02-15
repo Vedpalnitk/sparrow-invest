@@ -29,6 +29,8 @@ struct AIChatView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @StateObject private var chatStore = AvyaChatStore()
 
     @State private var messageText = ""
@@ -157,6 +159,8 @@ struct AIChatView: View {
 
 struct WelcomeCard: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     let onQuestionTap: (String) -> Void
 
     let suggestedQuestions = [
@@ -183,7 +187,7 @@ struct WelcomeCard: View {
 
             VStack(spacing: ChatSpacing.small) {
                 Text("Avya")
-                    .font(AppTheme.Typography.numeric(20))
+                    .font(AppTheme.Typography.numeric(iPad ? 24 : 20))
                     .foregroundColor(.primary)
 
                 Text("Your intelligent advisor assistant")
@@ -194,7 +198,7 @@ struct WelcomeCard: View {
             // Suggested Questions
             VStack(alignment: .leading, spacing: ChatSpacing.compact) {
                 Text("TRY ASKING")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(.blue)
 
                 ForEach(suggestedQuestions, id: \.self) { question in
@@ -264,6 +268,8 @@ struct SuggestedQuestionChip: View {
     let question: String
     let onTap: () -> Void
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         Button {
@@ -275,7 +281,7 @@ struct SuggestedQuestionChip: View {
                     .foregroundColor(.blue)
 
                 Text(question)
-                    .font(AppTheme.Typography.caption(13))
+                    .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -303,6 +309,8 @@ struct SuggestedQuestionChip: View {
 struct ChatBubble: View {
     let message: AvyaChatMessage
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         HStack(alignment: .bottom, spacing: ChatSpacing.small) {
@@ -325,14 +333,14 @@ struct ChatBubble: View {
 
             VStack(alignment: message.isUser ? .trailing : .leading, spacing: 4) {
                 Text(message.content)
-                    .font(AppTheme.Typography.body(15))
+                    .font(AppTheme.Typography.body(iPad ? 17 : 15))
                     .foregroundColor(message.isUser ? .white : .primary)
                     .padding(.horizontal, ChatSpacing.medium)
                     .padding(.vertical, ChatSpacing.compact)
                     .background(bubbleBackground)
 
                 Text(formatTime(message.timestamp))
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(Color(UIColor.tertiaryLabel))
             }
 
@@ -434,6 +442,8 @@ struct ChatInputBar: View {
     let onSend: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -442,7 +452,7 @@ struct ChatInputBar: View {
             HStack(spacing: ChatSpacing.compact) {
                 // Text Input
                 TextField("Ask Avya...", text: $messageText, axis: .vertical)
-                    .font(AppTheme.Typography.body(15))
+                    .font(AppTheme.Typography.body(iPad ? 17 : 15))
                     .lineLimit(1...4)
                     .textFieldStyle(.plain)
                     .disabled(isProcessing)

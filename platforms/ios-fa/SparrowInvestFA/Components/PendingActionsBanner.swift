@@ -6,6 +6,8 @@ struct PendingActionsBanner: View {
     let actions: [PendingAction]
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var isExpanded = false
 
     var body: some View {
@@ -22,12 +24,12 @@ struct PendingActionsBanner: View {
             } label: {
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text("Pending Actions")
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     // Count badge
                     Text("\(actions.count)")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.white)
                         .frame(width: 22, height: 22)
                         .background(Circle().fill(AppTheme.error))
@@ -69,13 +71,13 @@ struct PendingActionsBanner: View {
                         .frame(width: 6, height: 6)
 
                     Text(action.title)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(.primary)
                         .lineLimit(1)
                 }
 
                 Text(action.message)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(.secondary)
                     .lineLimit(2)
             }

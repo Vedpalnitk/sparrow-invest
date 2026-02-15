@@ -5,6 +5,8 @@ struct PendingActionsTile: View {
     let onViewAll: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     private var pending: [FATransaction] { Array(transactions.prefix(5)) }
 
@@ -26,7 +28,7 @@ struct PendingActionsTile: View {
             // Header
             HStack {
                 Text("Pending Actions")
-                    .font(AppTheme.Typography.headline(17))
+                    .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -34,7 +36,7 @@ struct PendingActionsTile: View {
                 if transactions.count > 5 {
                     Button { onViewAll() } label: {
                         Text("View All")
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                             .foregroundColor(AppTheme.primary)
                     }
                 }
@@ -96,7 +98,7 @@ struct PendingActionsTile: View {
                 if transactions.count > 5 {
                     Button { onViewAll() } label: {
                         Text("View All \(transactions.count) Actions")
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                             .foregroundColor(AppTheme.primary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, AppTheme.Spacing.small)
@@ -112,13 +114,13 @@ struct PendingActionsTile: View {
     private func pendingStat(value: String, label: String, color: Color) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(AppTheme.Typography.numeric(18))
+                .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                 .foregroundColor(color)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 14 : 11))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -132,22 +134,22 @@ struct PendingActionsTile: View {
             ZStack {
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                     .fill(colorForType(tx.type).opacity(0.1))
-                    .frame(width: 40, height: 40)
+                    .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                 Image(systemName: iconForType(tx.type))
-                    .font(.system(size: 16))
+                    .font(.system(size: iPad ? 18 : 16))
                     .foregroundColor(colorForType(tx.type))
             }
 
             // Details
             VStack(alignment: .leading, spacing: 2) {
                 Text(tx.clientName)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text("\(tx.type) \u{2022} \(tx.fundName)")
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 15 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
@@ -156,7 +158,7 @@ struct PendingActionsTile: View {
 
             // Amount
             Text(tx.formattedAmount)
-                .font(AppTheme.Typography.numeric(14))
+                .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                 .foregroundColor(.primary)
         }
         .padding(AppTheme.Spacing.compact)
@@ -179,7 +181,7 @@ struct PendingActionsTile: View {
                 .foregroundColor(AppTheme.success.opacity(0.5))
 
             Text("All caught up!")
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

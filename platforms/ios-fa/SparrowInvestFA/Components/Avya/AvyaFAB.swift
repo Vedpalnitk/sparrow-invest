@@ -61,6 +61,7 @@ struct AvyaFAB: View {
 
 struct AvyaFABContainer: View {
     @Binding var showAvyaChat: Bool
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     var body: some View {
         VStack {
@@ -70,8 +71,8 @@ struct AvyaFABContainer: View {
                 AvyaFAB {
                     showAvyaChat = true
                 }
-                .padding(.trailing, 16)
-                .padding(.bottom, 90)
+                .padding(.trailing, sizeClass == .regular ? 24 : 16)
+                .padding(.bottom, sizeClass == .regular ? 24 : 90)
             }
         }
     }

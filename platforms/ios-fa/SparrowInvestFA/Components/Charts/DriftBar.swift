@@ -9,6 +9,8 @@ struct DriftBar: View {
     let deviation: Double
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     private var barColor: Color {
         let absDev = abs(deviation)
@@ -25,7 +27,7 @@ struct DriftBar: View {
         VStack(spacing: AppTheme.Spacing.micro) {
             HStack {
                 Text(assetClass)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
@@ -33,15 +35,15 @@ struct DriftBar: View {
 
                 HStack(spacing: AppTheme.Spacing.micro) {
                     Text(String(format: "%.0f%%", current))
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.primary)
 
                     Text("/")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
 
                     Text(String(format: "%.0f%%", target))
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
 
                     deviationBadge
@@ -83,7 +85,7 @@ struct DriftBar: View {
         let badgeColor: Color = absDev > 5 ? AppTheme.error : .secondary
 
         return Text(deviationText)
-            .font(AppTheme.Typography.label(10))
+            .font(AppTheme.Typography.label(iPad ? 12 : 10))
             .foregroundColor(badgeColor)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

@@ -6,6 +6,8 @@ struct LoginView: View {
     @State private var password = ""
     @State private var showPassword = false
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         ScrollView {
@@ -25,11 +27,11 @@ struct LoginView: View {
                         }
 
                         Text("Sparrow Invest")
-                            .font(AppTheme.Typography.display(28))
+                            .font(AppTheme.Typography.display(iPad ? 34 : 28))
                             .foregroundColor(.primary)
 
                         Text("Financial Advisor Portal")
-                            .font(AppTheme.Typography.body(15))
+                            .font(AppTheme.Typography.body(iPad ? 17 : 15))
                             .foregroundColor(.secondary)
                     }
 
@@ -38,7 +40,7 @@ struct LoginView: View {
                         // Email Field
                         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                             Text("EMAIL")
-                                .font(AppTheme.Typography.label(11))
+                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                 .foregroundColor(AppTheme.primary)
 
                             HStack(spacing: AppTheme.Spacing.small) {
@@ -47,7 +49,7 @@ struct LoginView: View {
                                     .foregroundColor(.secondary)
 
                                 TextField("", text: $email, prompt: Text("email@sparrowinvest.com").foregroundColor(.gray))
-                                    .font(AppTheme.Typography.body(15))
+                                    .font(AppTheme.Typography.body(iPad ? 17 : 15))
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
                             }
@@ -61,7 +63,7 @@ struct LoginView: View {
                         // Password Field
                         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                             Text("PASSWORD")
-                                .font(AppTheme.Typography.label(11))
+                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                 .foregroundColor(AppTheme.primary)
 
                             HStack(spacing: AppTheme.Spacing.small) {
@@ -71,10 +73,10 @@ struct LoginView: View {
 
                                 if showPassword {
                                     TextField("", text: $password, prompt: Text("Password").foregroundColor(.gray))
-                                        .font(AppTheme.Typography.body(15))
+                                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                                 } else {
                                     SecureField("", text: $password, prompt: Text("Password").foregroundColor(.gray))
-                                        .font(AppTheme.Typography.body(15))
+                                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                                 }
 
                                 Button {
@@ -98,7 +100,7 @@ struct LoginView: View {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .font(.system(size: 14))
                                 Text(error)
-                                    .font(AppTheme.Typography.caption(13))
+                                    .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                             }
                             .foregroundColor(AppTheme.error)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,7 +117,7 @@ struct LoginView: View {
                                         .scaleEffect(0.8)
                                 } else {
                                     Text("Sign In")
-                                        .font(AppTheme.Typography.headline(16))
+                                        .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -134,7 +136,7 @@ struct LoginView: View {
                     // Demo credentials hint
                     VStack(spacing: AppTheme.Spacing.small) {
                         Text("Demo Credentials")
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 12))
                             .foregroundColor(.secondary)
 
                         Button {
@@ -142,7 +144,7 @@ struct LoginView: View {
                             password = "Advisor@123"
                         } label: {
                             Text("advisor@sparrowinvest.com / Advisor@123")
-                                .font(AppTheme.Typography.label(12))
+                                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                 .foregroundColor(AppTheme.primary)
                         }
                     }

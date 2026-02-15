@@ -3,6 +3,8 @@ import SwiftUI
 struct ProspectsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var searchQuery = ""
     @State private var selectedStage: ProspectStage?
     @State private var showAddToast = false
@@ -89,7 +91,7 @@ struct ProspectsView: View {
             .overlay(alignment: .bottom) {
                 if showAddToast {
                     Text("Add Prospect coming soon")
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(.white)
                         .padding(.horizontal, AppTheme.Spacing.medium)
                         .padding(.vertical, AppTheme.Spacing.compact)
@@ -130,25 +132,25 @@ struct ProspectsView: View {
 
         return VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Pipeline Overview")
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(.primary)
 
             Text(AppTheme.formatCurrencyWithSymbol(totalPipelineValue))
-                .font(AppTheme.Typography.numeric(28))
+                .font(AppTheme.Typography.numeric(iPad ? 32 : 28))
                 .foregroundColor(AppTheme.primary)
 
             Text("\(activeProspects.count) active prospects")
-                .font(AppTheme.Typography.caption(13))
+                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
 
             HStack {
                 ForEach(stageCounts, id: \.0) { stage, count in
                     VStack(spacing: 2) {
                         Text("\(count)")
-                            .font(AppTheme.Typography.headline(17))
+                            .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                             .foregroundColor(.primary)
                         Text(stage)
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 10))
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
@@ -167,7 +169,7 @@ struct ProspectsView: View {
                 .foregroundColor(.secondary)
 
             TextField("Search prospects...", text: $searchQuery)
-                .font(AppTheme.Typography.body(15))
+                .font(AppTheme.Typography.body(iPad ? 17 : 15))
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
 
@@ -202,7 +204,7 @@ struct ProspectsView: View {
                     selectedStage = nil
                 } label: {
                     Text("All")
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(selectedStage == nil ? .white : .secondary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
@@ -220,7 +222,7 @@ struct ProspectsView: View {
                         selectedStage = stage
                     } label: {
                         Text(stage.label)
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                             .foregroundColor(selectedStage == stage ? .white : .secondary)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
@@ -248,7 +250,7 @@ struct ProspectsView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             HStack {
                 Text(prospect.name)
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
@@ -258,16 +260,16 @@ struct ProspectsView: View {
             }
 
             Text(prospect.email)
-                .font(AppTheme.Typography.caption(13))
+                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
 
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Potential AUM")
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 10))
                         .foregroundColor(.secondary)
                     Text(AppTheme.formatCurrencyWithSymbol(prospect.potentialAum))
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(AppTheme.primary)
                 }
 
@@ -275,10 +277,10 @@ struct ProspectsView: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Next action")
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 10))
                         .foregroundColor(.secondary)
                     Text(prospect.nextActionDate)
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                         .foregroundColor(.primary)
                 }
             }
@@ -291,7 +293,7 @@ struct ProspectsView: View {
     private func stageBadge(_ stage: ProspectStage) -> some View {
         let color = stageColor(stage)
         return Text(stage.label.uppercased())
-            .font(AppTheme.Typography.label(9))
+            .font(AppTheme.Typography.label(iPad ? 11 : 9))
             .foregroundColor(color)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -321,7 +323,7 @@ struct ProspectsView: View {
                 .foregroundColor(.secondary)
 
             Text("No prospects found")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text("Try adjusting your search or filters")
@@ -336,17 +338,23 @@ struct ProspectsView: View {
 
 struct ProspectDetailSheet: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @Environment(\.dismiss) private var dismiss
 
     let prospect: FAProspect
     let onSave: (FAProspect) -> Void
 
     @State private var newStage: ProspectStage
+    @StateObject private var notesStore = NotesStore()
+    @State private var showAddNote = false
+    @State private var localMeetingNotes: [MeetingNote] = []
 
     init(prospect: FAProspect, onSave: @escaping (FAProspect) -> Void) {
         self.prospect = prospect
         self.onSave = onSave
         self._newStage = State(initialValue: prospect.stage)
+        self._localMeetingNotes = State(initialValue: prospect.meetingNotes)
     }
 
     private var stageChanged: Bool {
@@ -360,7 +368,7 @@ struct ProspectDetailSheet: View {
                     // Header: name + current stage
                     HStack {
                         Text(prospect.name)
-                            .font(AppTheme.Typography.headline(22))
+                            .font(AppTheme.Typography.headline(iPad ? 26 : 22))
                             .foregroundColor(.primary)
 
                         Spacer()
@@ -402,11 +410,12 @@ struct ProspectDetailSheet: View {
                             nextAction: prospect.nextAction,
                             nextActionDate: prospect.nextActionDate,
                             notes: prospect.notes,
-                            probability: prospect.probability
+                            probability: prospect.probability,
+                            meetingNotes: notesStore.notes
                         )
                         onSave(updated)
                     }
-                    .disabled(!stageChanged)
+                    .disabled(!stageChanged && notesStore.notes.count == prospect.meetingNotes.count)
                     .fontWeight(.semibold)
                 }
             }
@@ -420,7 +429,7 @@ struct ProspectDetailSheet: View {
     private var currentStageBadge: some View {
         let color = stageColor(prospect.stage)
         return Text(prospect.stage.label.uppercased())
-            .font(AppTheme.Typography.label(9))
+            .font(AppTheme.Typography.label(iPad ? 11 : 9))
             .foregroundColor(color)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -446,7 +455,7 @@ struct ProspectDetailSheet: View {
     private var stageSelector: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Change Stage")
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(.primary)
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -457,7 +466,7 @@ struct ProspectDetailSheet: View {
                         } label: {
                             let color = stageColor(stage)
                             Text(stage.label)
-                                .font(AppTheme.Typography.accent(13))
+                                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                 .foregroundColor(newStage == stage ? .white : color)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 7)
@@ -483,15 +492,96 @@ struct ProspectDetailSheet: View {
             detailRow(label: "Due Date", value: prospect.nextActionDate)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Notes")
-                    .font(AppTheme.Typography.label(10))
+                Text("Summary")
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(.secondary)
                 Text(prospect.notes)
-                    .font(AppTheme.Typography.caption(13))
+                    .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                     .foregroundColor(.primary)
+            }
+
+            Divider().padding(.vertical, 4)
+
+            // Meeting Notes
+            HStack {
+                Text("Meeting Notes (\(notesStore.notes.count))")
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                Button {
+                    showAddNote = true
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("Add")
+                            .font(AppTheme.Typography.accent(iPad ? 13 : 11))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(AppTheme.primaryGradient)
+                    .clipShape(Capsule())
+                }
+            }
+
+            if notesStore.notes.isEmpty {
+                Text("No meeting notes yet")
+                    .font(AppTheme.Typography.caption(iPad ? 14 : 12))
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, AppTheme.Spacing.small)
+            } else {
+                ForEach(notesStore.notes) { note in
+                    HStack(alignment: .top, spacing: AppTheme.Spacing.small) {
+                        Image(systemName: note.meetingType.icon)
+                            .font(.system(size: 11))
+                            .foregroundColor(note.meetingType.color)
+                            .frame(width: 20)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(note.title)
+                                .font(AppTheme.Typography.accent(iPad ? 14 : 12))
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
+                            Text(note.content)
+                                .font(AppTheme.Typography.caption(iPad ? 13 : 11))
+                                .foregroundColor(.secondary)
+                                .lineLimit(2)
+                        }
+
+                        Spacer()
+
+                        Text(formatNoteDate(note.meetingDate))
+                            .font(AppTheme.Typography.label(iPad ? 11 : 9))
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
             }
         }
         .glassCard(cornerRadius: AppTheme.CornerRadius.large)
+        .task {
+            notesStore.loadProspectNotes(prospectId: prospect.id, existing: localMeetingNotes)
+        }
+        .sheet(isPresented: $showAddNote) {
+            AddNoteSheet(prospectId: prospect.id, store: notesStore) { newNote in
+                localMeetingNotes.insert(newNote, at: 0)
+            }
+        }
+    }
+
+    private func formatNoteDate(_ isoDate: String) -> String {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = isoFormatter.date(from: isoDate) {
+            let out = DateFormatter()
+            out.dateFormat = "dd MMM"
+            return out.string(from: date)
+        }
+        return String(isoDate.prefix(10))
     }
 
     // MARK: - Detail Row
@@ -499,11 +589,11 @@ struct ProspectDetailSheet: View {
     private func detailRow(label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .font(AppTheme.Typography.label(10))
+                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                 .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(AppTheme.Typography.caption(13))
+                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 .foregroundColor(.primary)
         }
     }

@@ -7,6 +7,8 @@ struct SipOverviewCard: View {
     let failedSips: [FASip]
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var selectedSegment = "Upcoming"
     @State private var showSipList = false
 
@@ -19,7 +21,7 @@ struct SipOverviewCard: View {
             // Header with segmented control
             HStack {
                 Text("SIP Overview")
-                    .font(AppTheme.Typography.headline(17))
+                    .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -84,7 +86,7 @@ struct SipOverviewCard: View {
             if activeSips.count > 5 {
                 Button { showSipList = true } label: {
                     Text("View All \(activeSips.count) SIPs")
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(AppTheme.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AppTheme.Spacing.small)
@@ -104,7 +106,7 @@ struct SipOverviewCard: View {
             withAnimation(.easeInOut(duration: 0.2)) { selectedSegment = title }
         } label: {
             Text(title)
-                .font(AppTheme.Typography.accent(12))
+                .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                 .foregroundColor(isSelected ? .white : .secondary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
@@ -123,13 +125,13 @@ struct SipOverviewCard: View {
     private func sipStat(value: String, label: String, color: Color) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(AppTheme.Typography.numeric(18))
+                .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                 .foregroundColor(color)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             Text(label)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 14 : 11))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -164,22 +166,22 @@ struct SipOverviewCard: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                         .fill(AppTheme.primary.opacity(0.12))
-                        .frame(width: 36, height: 36)
+                        .frame(width: iPad ? 42 : 36, height: iPad ? 42 : 36)
 
                     Text("\(sip.sipDate)")
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 16 : 14))
                         .foregroundColor(AppTheme.primary)
                 }
 
                 // SIP details
                 VStack(alignment: .leading, spacing: 2) {
                     Text(sip.clientName ?? "Client")
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 16 : 13))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
                     Text(sip.fundName)
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 11))
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
@@ -188,7 +190,7 @@ struct SipOverviewCard: View {
 
                 // Amount
                 Text(sip.formattedAmount)
-                    .font(AppTheme.Typography.numeric(14))
+                    .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                     .foregroundColor(.primary)
             }
             .padding(AppTheme.Spacing.compact)
@@ -234,22 +236,22 @@ struct SipOverviewCard: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                         .fill(AppTheme.error.opacity(0.1))
-                        .frame(width: 36, height: 36)
+                        .frame(width: iPad ? 42 : 36, height: iPad ? 42 : 36)
 
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 14))
+                        .font(.system(size: iPad ? 16 : 14))
                         .foregroundColor(AppTheme.error)
                 }
 
                 // SIP details
                 VStack(alignment: .leading, spacing: 2) {
                     Text(sip.clientName ?? "Client")
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 16 : 13))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
                     Text(sip.fundName)
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 11))
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
@@ -259,11 +261,11 @@ struct SipOverviewCard: View {
                 // Amount + status
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(sip.formattedAmount)
-                        .font(AppTheme.Typography.numeric(13))
+                        .font(AppTheme.Typography.numeric(iPad ? 16 : 13))
                         .foregroundColor(AppTheme.error)
 
                     Text("Failed")
-                        .font(AppTheme.Typography.label(9))
+                        .font(AppTheme.Typography.label(iPad ? 11 : 9))
                         .foregroundColor(AppTheme.error)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
@@ -292,7 +294,7 @@ struct SipOverviewCard: View {
                 .foregroundColor(color.opacity(0.5))
 
             Text(message)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

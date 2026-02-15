@@ -6,6 +6,8 @@ struct HealthScoreRing: View {
     let score: Int
     var size: CGFloat = 80
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var animatedProgress: CGFloat = 0
 
     private var progress: Double {
@@ -48,11 +50,11 @@ struct HealthScoreRing: View {
             // Center text
             VStack(spacing: 0) {
                 Text("\(score)")
-                    .font(AppTheme.Typography.numeric(22))
+                    .font(AppTheme.Typography.numeric(iPad ? 26 : 22))
                     .foregroundColor(.primary)
 
                 Text("/ 100")
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(.secondary)
             }
         }

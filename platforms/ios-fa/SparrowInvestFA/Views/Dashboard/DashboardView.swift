@@ -20,7 +20,7 @@ struct DashboardView: View {
                     // Header
                     HStack {
                         Text("Dashboard")
-                            .font(AppTheme.Typography.title(24))
+                            .font(AppTheme.Typography.title(iPad ? 28 : 24))
                             .foregroundColor(.primary)
                         Spacer()
                     }
@@ -52,8 +52,11 @@ struct DashboardView: View {
                     // 6. Recent Clients
                     if !store.recentClients.isEmpty {
                         sectionHeader("Recent Clients")
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: AppTheme.Spacing.compact) {
+                        if sizeClass == .regular {
+                            LazyVGrid(
+                                columns: Array(repeating: GridItem(.flexible(), spacing: AppTheme.Spacing.compact), count: 3),
+                                spacing: AppTheme.Spacing.compact
+                            ) {
                                 ForEach(store.recentClients) { client in
                                     NavigationLink {
                                         ClientDetailView(clientId: client.id)
@@ -64,14 +67,31 @@ struct DashboardView: View {
                                 }
                             }
                             .padding(.horizontal, AppTheme.Spacing.medium)
+                        } else {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: AppTheme.Spacing.compact) {
+                                    ForEach(store.recentClients) { client in
+                                        NavigationLink {
+                                            ClientDetailView(clientId: client.id)
+                                        } label: {
+                                            recentClientCard(client)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.horizontal, AppTheme.Spacing.medium)
+                            }
                         }
                     }
 
                     // 7. Top Performers
                     if !store.topPerformers.isEmpty {
                         sectionHeader("Top Performers")
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: AppTheme.Spacing.compact) {
+                        if sizeClass == .regular {
+                            LazyVGrid(
+                                columns: Array(repeating: GridItem(.flexible(), spacing: AppTheme.Spacing.compact), count: 3),
+                                spacing: AppTheme.Spacing.compact
+                            ) {
                                 ForEach(store.topPerformers) { client in
                                     NavigationLink {
                                         ClientDetailView(clientId: client.id)
@@ -82,6 +102,20 @@ struct DashboardView: View {
                                 }
                             }
                             .padding(.horizontal, AppTheme.Spacing.medium)
+                        } else {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: AppTheme.Spacing.compact) {
+                                    ForEach(store.topPerformers) { client in
+                                        NavigationLink {
+                                            ClientDetailView(clientId: client.id)
+                                        } label: {
+                                            topPerformerCard(client)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.horizontal, AppTheme.Spacing.medium)
+                            }
                         }
                     }
 
@@ -99,7 +133,7 @@ struct DashboardView: View {
                             .foregroundColor(AppTheme.primary)
 
                         Text("Sparrow")
-                            .font(AppTheme.Typography.accent(17))
+                            .font(AppTheme.Typography.accent(iPad ? 20 : 17))
                             .foregroundColor(.primary)
                     }
                 }
@@ -166,13 +200,14 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - KPI Cards Grid (2x2)
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
+
+    // MARK: - KPI Cards Grid (2x2 iPhone, 4x1 iPad)
 
     private var kpiCardsGrid: some View {
-        let columns = [
-            GridItem(.flexible(), spacing: AppTheme.Spacing.compact),
-            GridItem(.flexible(), spacing: AppTheme.Spacing.compact)
-        ]
+        let columnCount = AppTheme.adaptiveColumns(sizeClass)
+        let columns = Array(repeating: GridItem(.flexible(), spacing: AppTheme.Spacing.compact), count: columnCount)
 
         let isDark = colorScheme == .dark
 
@@ -301,7 +336,7 @@ struct DashboardView: View {
                 // Top: label + icon
                 HStack {
                     Text(label)
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(.white.opacity(0.8))
                         .tracking(0.5)
 
@@ -314,7 +349,7 @@ struct DashboardView: View {
 
                 // Value
                 Text(value)
-                    .font(AppTheme.Typography.numeric(22))
+                    .font(AppTheme.Typography.numeric(iPad ? 26 : 22))
                     .foregroundColor(.white)
                     .minimumScaleFactor(0.7)
                     .lineLimit(1)
@@ -323,9 +358,9 @@ struct DashboardView: View {
                 if let growth {
                     HStack(spacing: 3) {
                         Image(systemName: growth.isMomPositive ? "arrow.up.right" : "arrow.down.right")
-                            .font(.system(size: 9))
+                            .font(.system(size: iPad ? 11 : 9))
                         Text(growth.formattedMomChange)
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     }
                     .foregroundColor(.white)
                     .padding(.horizontal, 6)
@@ -379,11 +414,11 @@ struct DashboardView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Avya AI Assistant")
-                        .font(AppTheme.Typography.headline(16))
+                        .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                         .foregroundColor(.white)
 
                     Text("Ask about your clients & portfolios")
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.white.opacity(0.8))
                 }
 
@@ -474,10 +509,10 @@ struct DashboardView: View {
                     .foregroundColor(color)
 
                 Text(label)
-                    .font(AppTheme.Typography.accent(12))
+                    .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                     .foregroundColor(.primary)
             }
-            .padding(.horizontal, AppTheme.Spacing.compact)
+            .padding(.horizontal, iPad ? AppTheme.Spacing.medium : AppTheme.Spacing.compact)
             .padding(.vertical, AppTheme.Spacing.small)
             .background(
                 Capsule()
@@ -496,13 +531,13 @@ struct DashboardView: View {
     private func sectionHeader(_ title: String, viewAllAction: (() -> Void)? = nil) -> some View {
         HStack {
             Text(title)
-                .font(AppTheme.Typography.DashboardText.sectionTitle)
+                .font(AppTheme.Typography.headline(iPad ? 22 : 18))
                 .foregroundColor(.primary)
             Spacer()
             if let viewAllAction {
                 Button { viewAllAction() } label: {
                     Text("View All")
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(AppTheme.primary)
                 }
             }
@@ -523,25 +558,25 @@ struct DashboardView: View {
                 ZStack {
                     Circle()
                         .fill(returnColor.opacity(0.1))
-                        .frame(width: 40, height: 40)
+                        .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                     Text(client.initials)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 16 : 13))
                         .foregroundColor(returnColor)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(client.name)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 16 : 13))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
                     // Returns badge
                     HStack(spacing: 3) {
                         Image(systemName: client.returns >= 0 ? "arrow.up.right" : "arrow.down.right")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.system(size: iPad ? 11 : 9, weight: .bold))
                         Text(client.returns.formattedPercent)
-                            .font(AppTheme.Typography.accent(11))
+                            .font(AppTheme.Typography.accent(iPad ? 14 : 11))
                     }
                     .foregroundColor(returnColor)
                     .padding(.horizontal, 6)
@@ -555,14 +590,15 @@ struct DashboardView: View {
 
             // AUM + SIP count
             Text(client.formattedAum)
-                .font(AppTheme.Typography.numeric(16))
+                .font(AppTheme.Typography.numeric(iPad ? 18 : 16))
                 .foregroundColor(.primary)
 
             Text("\(client.sipCount) Active SIPs")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 14 : 11))
                 .foregroundColor(.secondary)
         }
-        .frame(width: 170)
+        .frame(width: sizeClass == .regular ? nil : 170)
+        .frame(maxWidth: sizeClass == .regular ? .infinity : nil, alignment: .leading)
         .padding(AppTheme.Spacing.compact)
         .background(
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
@@ -583,16 +619,16 @@ struct DashboardView: View {
                 ZStack {
                     Circle()
                         .fill(AppTheme.primary.opacity(0.1))
-                        .frame(width: 40, height: 40)
+                        .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                     Text(client.initials)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 16 : 13))
                         .foregroundColor(AppTheme.primary)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(client.name)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 16 : 13))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
@@ -604,7 +640,7 @@ struct DashboardView: View {
                             .fill(pillColor)
                             .frame(width: 5, height: 5)
                         Text(joinLabel.text)
-                            .font(AppTheme.Typography.accent(11))
+                            .font(AppTheme.Typography.accent(iPad ? 14 : 11))
                     }
                     .foregroundColor(pillColor)
                     .padding(.horizontal, 6)
@@ -618,14 +654,15 @@ struct DashboardView: View {
 
             // AUM + SIP count
             Text(client.formattedAum)
-                .font(AppTheme.Typography.numeric(16))
+                .font(AppTheme.Typography.numeric(iPad ? 18 : 16))
                 .foregroundColor(.primary)
 
             Text("\(client.sipCount) Active SIPs")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 14 : 11))
                 .foregroundColor(.secondary)
         }
-        .frame(width: 170)
+        .frame(width: sizeClass == .regular ? nil : 170)
+        .frame(maxWidth: sizeClass == .regular ? .infinity : nil, alignment: .leading)
         .padding(AppTheme.Spacing.compact)
         .background(
             RoundedRectangle(cornerRadius: AppTheme.CornerRadius.large, style: .continuous)
@@ -693,6 +730,8 @@ struct KpiDetailItem: Identifiable {
 
 private struct NotificationsPlaceholderSheet: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         NavigationStack {
@@ -704,11 +743,11 @@ private struct NotificationsPlaceholderSheet: View {
                     .foregroundColor(.secondary.opacity(0.5))
 
                 Text("No Notifications")
-                    .font(AppTheme.Typography.headline(18))
+                    .font(AppTheme.Typography.headline(iPad ? 21 : 18))
                     .foregroundColor(.primary)
 
                 Text("You're all caught up! Notifications will appear here.")
-                    .font(AppTheme.Typography.label(14))
+                    .font(AppTheme.Typography.label(iPad ? 16 : 14))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, AppTheme.Spacing.xLarge)

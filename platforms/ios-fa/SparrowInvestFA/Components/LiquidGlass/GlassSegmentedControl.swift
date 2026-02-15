@@ -7,7 +7,9 @@ struct GlassSegmentedControl: View {
     let items: [String]
     @Binding var selection: String
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @Namespace private var glassNamespace
+    private var iPad: Bool { sizeClass == .regular }
 
     private var trackFill: some ShapeStyle {
         colorScheme == .dark
@@ -29,61 +31,67 @@ struct GlassSegmentedControl: View {
 
     @available(iOS 26.0, *)
     private var glassVersion: some View {
-        HStack(spacing: 0) {
-            ForEach(items, id: \.self) { item in
-                Button {
-                    withAnimation(.bouncy) { selection = item }
-                } label: {
-                    Text(item)
-                        .font(AppTheme.Typography.accent(13))
-                        .foregroundColor(selection == item ? .white : .secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            selection == item
-                                ? AnyShapeStyle(AppTheme.primaryGradient)
-                                : AnyShapeStyle(Color.clear)
-                        )
-                        .clipShape(Capsule())
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
+                ForEach(items, id: \.self) { item in
+                    Button {
+                        withAnimation(.bouncy) { selection = item }
+                    } label: {
+                        Text(item)
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
+                            .foregroundColor(selection == item ? .white : .secondary)
+                            .fixedSize()
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                selection == item
+                                    ? AnyShapeStyle(AppTheme.primaryGradient)
+                                    : AnyShapeStyle(Color.clear)
+                            )
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
+            .padding(3)
+            .background(
+                Capsule()
+                    .fill(trackFill)
+                    .overlay(Capsule().stroke(trackStroke, lineWidth: 0.5))
+            )
         }
-        .padding(3)
-        .background(
-            Capsule()
-                .fill(trackFill)
-                .overlay(Capsule().stroke(trackStroke, lineWidth: 0.5))
-        )
     }
 
     private var fallbackVersion: some View {
-        HStack(spacing: 0) {
-            ForEach(items, id: \.self) { item in
-                Button {
-                    withAnimation(AppTheme.Animation.contentTransition) { selection = item }
-                } label: {
-                    Text(item)
-                        .font(AppTheme.Typography.accent(13))
-                        .foregroundColor(selection == item ? .white : .secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(
-                            selection == item
-                                ? AnyShapeStyle(AppTheme.primaryGradient)
-                                : AnyShapeStyle(Color.clear)
-                        )
-                        .clipShape(Capsule())
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 0) {
+                ForEach(items, id: \.self) { item in
+                    Button {
+                        withAnimation(AppTheme.Animation.contentTransition) { selection = item }
+                    } label: {
+                        Text(item)
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
+                            .foregroundColor(selection == item ? .white : .secondary)
+                            .fixedSize()
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(
+                                selection == item
+                                    ? AnyShapeStyle(AppTheme.primaryGradient)
+                                    : AnyShapeStyle(Color.clear)
+                            )
+                            .clipShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
+            .padding(3)
+            .background(
+                Capsule()
+                    .fill(trackFill)
+                    .overlay(Capsule().stroke(trackStroke, lineWidth: 0.5))
+            )
         }
-        .padding(3)
-        .background(
-            Capsule()
-                .fill(trackFill)
-                .overlay(Capsule().stroke(trackStroke, lineWidth: 0.5))
-        )
     }
 }
 
@@ -92,7 +100,9 @@ struct GlassTabSelector: View {
     let tabs: [String]
     @Binding var selectedIndex: Int
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @Namespace private var tabNamespace
+    private var iPad: Bool { sizeClass == .regular }
 
     private var trackFill: some ShapeStyle {
         colorScheme == .dark
@@ -123,7 +133,7 @@ struct GlassTabSelector: View {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { selectedIndex = index }
                 } label: {
                     Text(title)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(selectedIndex == index ? .white : .secondary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)

@@ -3,6 +3,8 @@ import SwiftUI
 struct CalculatorsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var selectedCalculator = 0
 
@@ -61,10 +63,10 @@ struct CalculatorsView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: calculatorIcons[index])
-                                .font(.system(size: 13))
+                                .font(.system(size: iPad ? 15 : 13))
 
                             Text(calculatorTypes[index])
-                                .font(AppTheme.Typography.accent(13))
+                                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         }
                         .padding(.horizontal, AppTheme.Spacing.compact)
                         .padding(.vertical, AppTheme.Spacing.small)
@@ -97,6 +99,9 @@ private struct CalcSliderInput: View {
     let format: SliderFormat
     let color: Color
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
+
     enum SliderFormat {
         case currency, percent, years, age
     }
@@ -105,13 +110,13 @@ private struct CalcSliderInput: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             HStack {
                 Text(label)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
 
                 Spacer()
 
                 Text(formattedValue)
-                    .font(AppTheme.Typography.numeric(16))
+                    .font(AppTheme.Typography.numeric(iPad ? 19 : 16))
                     .foregroundColor(.primary)
             }
 
@@ -142,16 +147,19 @@ private struct CalcResultRow: View {
     let value: String
     let color: Color
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
+
     var body: some View {
         HStack {
             Text(label)
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 .foregroundColor(.secondary)
 
             Spacer()
 
             Text(value)
-                .font(AppTheme.Typography.numeric(18))
+                .font(AppTheme.Typography.numeric(iPad ? 21 : 18))
                 .foregroundColor(color)
         }
     }
@@ -165,11 +173,14 @@ private struct CalcResultsCard<Content: View>: View {
     let total: Double
     @ViewBuilder let content: Content
 
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
+
     var body: some View {
         VStack(spacing: AppTheme.Spacing.medium) {
             HStack {
                 Text(title)
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
                 Spacer()
             }
@@ -202,14 +213,14 @@ private struct CalcResultsCard<Content: View>: View {
                         HStack(spacing: 4) {
                             Circle().fill(AppTheme.primary).frame(width: 6, height: 6)
                             Text("Invested")
-                                .font(AppTheme.Typography.label(10))
+                                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                 .foregroundColor(.secondary)
                         }
                         Spacer()
                         HStack(spacing: 4) {
                             Circle().fill(AppTheme.success.opacity(0.3)).frame(width: 6, height: 6)
                             Text("Returns")
-                                .font(AppTheme.Typography.label(10))
+                                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                 .foregroundColor(.secondary)
                         }
                     }

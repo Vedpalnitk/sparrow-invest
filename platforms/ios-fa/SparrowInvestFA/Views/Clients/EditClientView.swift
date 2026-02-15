@@ -5,6 +5,8 @@ struct EditClientView: View {
     var onClientUpdated: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var name = ""
     @State private var email = ""
@@ -60,7 +62,7 @@ struct EditClientView: View {
                             ) {
                                 VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                                     Text("RISK PROFILE")
-                                        .font(AppTheme.Typography.label(11))
+                                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                         .foregroundColor(AppTheme.primary)
 
                                     Picker("Risk Profile", selection: $riskProfile) {
@@ -78,11 +80,11 @@ struct EditClientView: View {
                             ) {
                                 VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                                     Text("ADDRESS")
-                                        .font(AppTheme.Typography.label(11))
+                                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                         .foregroundColor(AppTheme.primary)
 
                                     TextEditor(text: $address)
-                                        .font(AppTheme.Typography.body(15))
+                                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                                         .frame(minHeight: 80)
                                         .scrollContentBackground(.hidden)
                                         .padding(AppTheme.Spacing.small)
@@ -110,7 +112,7 @@ struct EditClientView: View {
                                         Image(systemName: "checkmark.circle")
                                             .font(.system(size: 16))
                                         Text("Save Changes")
-                                            .font(AppTheme.Typography.accent(15))
+                                            .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                                     }
                                 }
                                 .foregroundColor(.white)
@@ -165,11 +167,11 @@ struct EditClientView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     Text(subtitle)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
             }
@@ -184,7 +186,7 @@ struct EditClientView: View {
     private func formField(_ label: String, text: Binding<String>, icon: String, keyboard: UIKeyboardType = .default) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
             Text(label)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
 
             HStack(spacing: AppTheme.Spacing.small) {
@@ -193,7 +195,7 @@ struct EditClientView: View {
                     .foregroundColor(.secondary)
 
                 TextField(label.capitalized, text: text)
-                    .font(AppTheme.Typography.body(15))
+                    .font(AppTheme.Typography.body(iPad ? 17 : 15))
                     .keyboardType(keyboard)
             }
             .padding(.horizontal, AppTheme.Spacing.medium)

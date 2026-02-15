@@ -7,6 +7,8 @@ struct TrendBarChart: View {
     let color: Color
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var animationProgress: CGFloat = 0
 
     private let chartHeight: CGFloat = 120
@@ -36,7 +38,7 @@ struct TrendBarChart: View {
 
                         // Label
                         Text(item.0)
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }

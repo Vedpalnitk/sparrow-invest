@@ -3,6 +3,8 @@ import SwiftUI
 struct ActiveSessionsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var sessions: [DeviceSession] = DeviceSession.mockData
     @State private var showRevokeAlert = false
     @State private var sessionToRevoke: DeviceSession?
@@ -67,12 +69,12 @@ struct ActiveSessionsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(session.deviceName)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     if session.isCurrent {
                         Text("Current")
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(AppTheme.success)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
@@ -82,12 +84,12 @@ struct ActiveSessionsView: View {
                 }
 
                 Text(session.lastActive)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
 
                 if let location = session.location {
                     Text(location)
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
             }
@@ -100,7 +102,7 @@ struct ActiveSessionsView: View {
                     showRevokeAlert = true
                 } label: {
                     Text("Revoke")
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(AppTheme.error)
                 }
             }

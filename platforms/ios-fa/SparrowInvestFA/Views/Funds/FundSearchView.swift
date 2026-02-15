@@ -3,6 +3,8 @@ import SwiftUI
 struct FundSearchView: View {
     @StateObject private var store = FundsStore()
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         NavigationStack {
@@ -14,7 +16,7 @@ struct FundSearchView: View {
                         .foregroundColor(.secondary)
 
                     TextField("Search by fund name...", text: $store.searchQuery)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .onSubmit {
@@ -59,7 +61,7 @@ struct FundSearchView: View {
                             store.selectedCategory = "All"
                         } label: {
                             Text("All")
-                                .font(AppTheme.Typography.accent(13))
+                                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                 .foregroundColor(store.selectedCategory == "All" ? .white : .secondary)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
@@ -77,7 +79,7 @@ struct FundSearchView: View {
                                 store.selectedCategory = category
                             } label: {
                                 Text(category)
-                                    .font(AppTheme.Typography.accent(13))
+                                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                     .foregroundColor(store.selectedCategory == category ? .white : .secondary)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 8)
@@ -155,7 +157,7 @@ struct FundSearchView: View {
             // Fund Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(fund.schemeName)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
@@ -167,7 +169,7 @@ struct FundSearchView: View {
 
                     if let nav = fund.nav {
                         Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -183,7 +185,7 @@ struct FundSearchView: View {
 
                 if let returns3y = fund.returns3y {
                     Text("3Y: \(returns3y.formattedPercent)")
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(AppTheme.returnColor(returns3y))
                 }
 
@@ -204,7 +206,7 @@ struct FundSearchView: View {
     private func categoryBadge(_ category: String) -> some View {
         let short = shortenCategory(category)
         return Text(short)
-            .font(AppTheme.Typography.label(9))
+            .font(AppTheme.Typography.label(iPad ? 11 : 9))
             .foregroundColor(categoryColor(category))
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -217,7 +219,7 @@ struct FundSearchView: View {
             Image(systemName: value >= 0 ? "arrow.up.right" : "arrow.down.right")
                 .font(.system(size: 8))
             Text("\(period) \(value.formattedPercent)")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
         }
         .foregroundColor(AppTheme.returnColor(value))
     }
@@ -225,7 +227,7 @@ struct FundSearchView: View {
     private func riskBadge(_ risk: String) -> some View {
         let color = riskColor(risk)
         return Text(risk)
-            .font(AppTheme.Typography.label(9))
+            .font(AppTheme.Typography.label(iPad ? 11 : 9))
             .foregroundColor(color)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -286,7 +288,7 @@ struct FundSearchView: View {
                 .foregroundColor(.secondary)
 
             Text("Search for funds")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text("Enter a fund name or select a category to get started")
@@ -304,7 +306,7 @@ struct FundSearchView: View {
                 .foregroundColor(.secondary)
 
             Text("No funds found")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text("Try a different search term or category")

@@ -6,39 +6,90 @@ struct TransactionsView: View {
     @State private var showNewTransaction = false
     @State private var showPlatformWebView = false
     @State private var selectedPlatform = TransactionPlatform.bseStarMF
+    @EnvironmentObject var coordinator: NavigationCoordinator
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     let filters = ["All", "Pending", "Completed", "Processing", "Failed"]
 
     var body: some View {
+        if sizeClass == .regular {
+            // iPad: just the list content (parent NavigationSplitView provides the 3-column split)
+            transactionListContent
+                .navigationTitle("Transactions")
+                .toolbar { transactionToolbar }
+                .sheet(isPresented: $showNewTransaction) {
+                    NewTransactionWizardView()
+                }
+                .fullScreenCover(isPresented: $showPlatformWebView) {
+                    PlatformWebView(platform: selectedPlatform)
+                }
+                .task { await store.loadTransactions() }
+        } else {
+            iPhoneTransactionsLayout
+        }
+    }
+
+    // MARK: - iPhone Stack
+
+    private var iPhoneTransactionsLayout: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Filter Chips
-                GlassSegmentedControl(items: filters, selection: $selectedFilter)
-                    .padding(.horizontal, AppTheme.Spacing.medium)
-                    .padding(.vertical, AppTheme.Spacing.small)
+            transactionListContent
+                .navigationTitle("Transactions")
+                .toolbar { transactionToolbar }
+                .sheet(isPresented: $showNewTransaction) {
+                    NewTransactionWizardView()
+                }
+                .fullScreenCover(isPresented: $showPlatformWebView) {
+                    PlatformWebView(platform: selectedPlatform)
+                }
+                .task { await store.loadTransactions() }
+        }
+    }
 
-                if store.isLoading && store.transactions.isEmpty {
-                    Spacer()
-                    ProgressView("Loading transactions...")
-                    Spacer()
-                } else if filteredTransactions.isEmpty {
-                    Spacer()
-                    VStack(spacing: AppTheme.Spacing.medium) {
-                        Image(systemName: "doc.text.magnifyingglass")
-                            .font(.system(size: 48))
-                            .foregroundColor(.secondary)
-                        Text("No transactions found")
-                            .font(AppTheme.Typography.headline(17))
-                    }
-                    Spacer()
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: AppTheme.Spacing.small) {
-                            // Summary Card
-                            transactionSummaryCard
+    // MARK: - Shared List Content
 
-                            ForEach(filteredTransactions) { tx in
+    private var transactionListContent: some View {
+        VStack(spacing: 0) {
+            // Filter Chips
+            GlassSegmentedControl(items: filters, selection: $selectedFilter)
+                .padding(.horizontal, AppTheme.Spacing.medium)
+                .padding(.vertical, AppTheme.Spacing.small)
+
+            if store.isLoading && store.transactions.isEmpty {
+                Spacer()
+                ProgressView("Loading transactions...")
+                Spacer()
+            } else if filteredTransactions.isEmpty {
+                Spacer()
+                VStack(spacing: AppTheme.Spacing.medium) {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
+                    Text("No transactions found")
+                        .font(AppTheme.Typography.headline(iPad ? 20 : 17))
+                }
+                Spacer()
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: AppTheme.Spacing.small) {
+                        // Summary Card
+                        transactionSummaryCard
+
+                        ForEach(filteredTransactions) { tx in
+                            if sizeClass == .regular {
+                                Button {
+                                    coordinator.selectedTransactionId = tx.id
+                                } label: {
+                                    transactionRow(tx)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.medium, style: .continuous)
+                                                .stroke(coordinator.selectedTransactionId == tx.id ? AppTheme.primary : Color.clear, lineWidth: 2)
+                                        )
+                                }
+                                .buttonStyle(.plain)
+                            } else {
                                 NavigationLink {
                                     TransactionDetailView(transactionId: tx.id)
                                 } label: {
@@ -47,60 +98,54 @@ struct TransactionsView: View {
                                 .buttonStyle(.plain)
                             }
                         }
-                        .padding(.horizontal, AppTheme.Spacing.medium)
-                        .padding(.bottom, AppTheme.Spacing.xxxLarge)
                     }
-                    .refreshable { await store.loadTransactions() }
+                    .padding(.horizontal, AppTheme.Spacing.medium)
+                    .padding(.bottom, AppTheme.Spacing.xxxLarge)
                 }
+                .refreshable { await store.loadTransactions() }
             }
-            .background(AppTheme.pageBackground(colorScheme: colorScheme))
-            .navigationTitle("Transactions")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 8) {
-                        Menu {
-                            ForEach(TransactionPlatform.allCases, id: \.rawValue) { platform in
-                                Button {
-                                    selectedPlatform = platform
-                                    showPlatformWebView = true
-                                } label: {
-                                    Label(platform.title, systemImage: "globe")
-                                }
-                            }
-                        } label: {
-                            Image(systemName: "globe")
-                                .font(.system(size: 14))
-                                .foregroundColor(AppTheme.primary)
-                                .padding(7)
-                                .background(AppTheme.primary.opacity(0.1))
-                                .clipShape(Circle())
-                        }
+        }
+        .background(AppTheme.pageBackground(colorScheme: colorScheme))
+    }
 
+    @ToolbarContentBuilder
+    private var transactionToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            HStack(spacing: 8) {
+                Menu {
+                    ForEach(TransactionPlatform.allCases, id: \.rawValue) { platform in
                         Button {
-                            showNewTransaction = true
+                            selectedPlatform = platform
+                            showPlatformWebView = true
                         } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "plus")
-                                    .font(.system(size: 14))
-                                Text("New")
-                                    .font(AppTheme.Typography.accent(14))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .background(AppTheme.primaryGradient)
-                            .clipShape(Capsule())
+                            Label(platform.title, systemImage: "globe")
                         }
                     }
+                } label: {
+                    Image(systemName: "globe")
+                        .font(.system(size: 14))
+                        .foregroundColor(AppTheme.primary)
+                        .padding(7)
+                        .background(AppTheme.primary.opacity(0.1))
+                        .clipShape(Circle())
+                }
+
+                Button {
+                    showNewTransaction = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 14))
+                        Text("New")
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(AppTheme.primaryGradient)
+                    .clipShape(Capsule())
                 }
             }
-            .sheet(isPresented: $showNewTransaction) {
-                NewTransactionWizardView()
-            }
-            .fullScreenCover(isPresented: $showPlatformWebView) {
-                PlatformWebView(platform: selectedPlatform)
-            }
-            .task { await store.loadTransactions() }
         }
     }
 
@@ -113,7 +158,7 @@ struct TransactionsView: View {
         let rejected = allTx.filter { $0.status == "Rejected" || $0.status == "Failed" }
         let pendingValue = pending.reduce(0) { $0 + $1.amount }
 
-        let columns = [GridItem(.flexible()), GridItem(.flexible())]
+        let columns = Array(repeating: GridItem(.flexible()), count: 2)
         return LazyVGrid(columns: columns, spacing: AppTheme.Spacing.small) {
             summaryTile(
                 icon: "clock.fill",
@@ -154,13 +199,13 @@ struct TransactionsView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(AppTheme.Typography.numeric(15))
+                    .font(AppTheme.Typography.numeric(iPad ? 19 : 15))
                     .foregroundColor(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
 
                 Text(label)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 11))
                     .foregroundColor(.secondary)
             }
         }
@@ -188,26 +233,26 @@ struct TransactionsView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                         .fill(typeColor(tx.type).opacity(0.1))
-                        .frame(width: 40, height: 40)
+                        .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                     Image(systemName: typeIcon(tx.type))
-                        .font(.system(size: 16))
+                        .font(.system(size: iPad ? 18 : 16))
                         .foregroundColor(typeColor(tx.type))
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tx.clientName)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 14))
                         .foregroundColor(.primary)
 
                     Text(tx.fundName)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 15 : 12))
                         .foregroundColor(.secondary)
                         .lineLimit(1)
 
                     HStack(spacing: AppTheme.Spacing.small) {
                         Text(tx.type)
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 10))
                             .foregroundColor(typeColor(tx.type))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -215,7 +260,7 @@ struct TransactionsView: View {
                             .clipShape(Capsule())
 
                         Text(tx.date)
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 10))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -224,11 +269,11 @@ struct TransactionsView: View {
 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text(tx.formattedAmount)
-                        .font(AppTheme.Typography.numeric(14))
+                        .font(AppTheme.Typography.numeric(iPad ? 18 : 14))
                         .foregroundColor(.primary)
 
                     Text(tx.status)
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 10))
                         .foregroundColor(AppTheme.statusColor(tx.status))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
@@ -250,9 +295,9 @@ struct TransactionsView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "xmark")
-                                .font(.system(size: 11))
+                                .font(.system(size: iPad ? 13 : 11))
                             Text("Reject")
-                                .font(AppTheme.Typography.accent(12))
+                                .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                         }
                         .foregroundColor(AppTheme.error)
                         .frame(maxWidth: .infinity)
@@ -269,9 +314,9 @@ struct TransactionsView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark")
-                                .font(.system(size: 11))
+                                .font(.system(size: iPad ? 13 : 11))
                             Text("Approve")
-                                .font(AppTheme.Typography.accent(12))
+                                .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                         }
                         .foregroundColor(AppTheme.success)
                         .frame(maxWidth: .infinity)

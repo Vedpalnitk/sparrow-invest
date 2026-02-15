@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @AppStorage("themeMode") private var themeMode = "System"
 
     @State private var showClearCacheAlert = false
@@ -77,7 +79,7 @@ struct SettingsView: View {
 
                     // Footer
                     Text("Sparrow Invest FA \(appVersion)")
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
 
@@ -118,7 +120,7 @@ struct SettingsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(AppTheme.Typography.label(11))
+            .font(AppTheme.Typography.label(iPad ? 13 : 11))
             .foregroundColor(AppTheme.primary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, AppTheme.Spacing.compact)
@@ -140,12 +142,12 @@ struct SettingsView: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 12))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -171,13 +173,13 @@ struct SettingsView: View {
                 .frame(width: 24)
 
             Text(title)
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(.primary)
 
             Spacer()
 
             Text(value)
-                .font(AppTheme.Typography.caption(13))
+                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
         }
         .padding(.vertical, AppTheme.Spacing.compact)
@@ -195,11 +197,11 @@ struct SettingsView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Theme")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
 
                 Text("Choose appearance")
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
             }
 
@@ -217,7 +219,7 @@ struct SettingsView: View {
                             Image(systemName: themeModeIcon(mode))
                                 .font(.system(size: 10))
                             Text(mode)
-                                .font(AppTheme.Typography.accent(11))
+                                .font(AppTheme.Typography.accent(iPad ? 13 : 11))
                         }
                         .foregroundColor(isSelected ? .white : .secondary)
                         .padding(.horizontal, 8)
@@ -264,7 +266,7 @@ struct SettingsView: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(AppTheme.success)
             Text("Cache cleared successfully")
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 .foregroundColor(.primary)
         }
         .padding(.horizontal, AppTheme.Spacing.medium)

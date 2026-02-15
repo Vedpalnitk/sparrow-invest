@@ -5,6 +5,8 @@ struct TransactionDetailView: View {
     @StateObject private var store = TransactionDetailStore()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var showNotesSheet = false
     @State private var pendingAction: TransactionAction?
     @State private var actionNotes = ""
@@ -83,13 +85,13 @@ struct TransactionDetailView: View {
                         .font(.system(size: 48))
                         .foregroundColor(AppTheme.warning)
                     Text(error)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                     Button("Retry") {
                         Task { await store.loadTransaction(transactionId) }
                     }
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(AppTheme.primary)
                 }
                 .padding(.top, 100)
@@ -118,7 +120,7 @@ struct TransactionDetailView: View {
     private func amountHeader(_ tx: FATransaction) -> some View {
         VStack(spacing: AppTheme.Spacing.compact) {
             Text(tx.formattedAmount)
-                .font(AppTheme.Typography.display(32))
+                .font(AppTheme.Typography.display(iPad ? 38 : 32))
                 .foregroundColor(.primary)
 
             HStack(spacing: AppTheme.Spacing.compact) {
@@ -147,7 +149,7 @@ struct TransactionDetailView: View {
                 }
 
                 Text(title)
-                    .font(AppTheme.Typography.headline(16))
+                    .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     .foregroundColor(.primary)
             }
 
@@ -163,11 +165,11 @@ struct TransactionDetailView: View {
     private func detailRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.trailing)
         }
@@ -178,7 +180,7 @@ struct TransactionDetailView: View {
 
     private func statusBadge(_ status: String) -> some View {
         Text(status)
-            .font(AppTheme.Typography.label(12))
+            .font(AppTheme.Typography.label(iPad ? 14 : 12))
             .foregroundColor(AppTheme.statusColor(status))
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
@@ -189,7 +191,7 @@ struct TransactionDetailView: View {
     private func typeBadge(_ type: String) -> some View {
         let color = typeColor(type)
         return Text(type)
-            .font(AppTheme.Typography.label(12))
+            .font(AppTheme.Typography.label(iPad ? 14 : 12))
             .foregroundColor(color)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
@@ -215,7 +217,7 @@ struct TransactionDetailView: View {
                 }
 
                 Text("Timeline")
-                    .font(AppTheme.Typography.headline(16))
+                    .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     .foregroundColor(.primary)
             }
 
@@ -244,12 +246,12 @@ struct TransactionDetailView: View {
                         // Step content
                         VStack(alignment: .leading, spacing: 2) {
                             Text(step.title)
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                 .foregroundColor(step.isCompleted ? .primary : .secondary)
 
                             if let subtitle = step.subtitle {
                                 Text(subtitle)
-                                    .font(AppTheme.Typography.label(11))
+                                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -316,7 +318,7 @@ struct TransactionDetailView: View {
     private func actionsSection(_ tx: FATransaction) -> some View {
         VStack(spacing: AppTheme.Spacing.small) {
             Text("ACTIONS")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -335,7 +337,7 @@ struct TransactionDetailView: View {
                         Image(systemName: "play.fill")
                             .font(.system(size: 14))
                         Text("Execute Trade")
-                            .font(AppTheme.Typography.accent(15))
+                            .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -355,7 +357,7 @@ struct TransactionDetailView: View {
                             Image(systemName: "xmark")
                                 .font(.system(size: 12))
                             Text("Reject")
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         }
                         .foregroundColor(AppTheme.error)
                         .frame(maxWidth: .infinity)
@@ -373,7 +375,7 @@ struct TransactionDetailView: View {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 12))
                             Text("Approve")
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         }
                         .foregroundColor(AppTheme.success)
                         .frame(maxWidth: .infinity)
@@ -393,7 +395,7 @@ struct TransactionDetailView: View {
                         Image(systemName: "nosign")
                             .font(.system(size: 12))
                         Text("Cancel Transaction")
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     }
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
@@ -427,11 +429,11 @@ struct TransactionDetailView: View {
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(action.title)
-                                .font(AppTheme.Typography.headline(16))
+                                .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                                 .foregroundColor(.primary)
 
                             Text(action.subtitle)
-                                .font(AppTheme.Typography.accent(13))
+                                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                 .foregroundColor(.secondary)
                         }
 
@@ -444,11 +446,11 @@ struct TransactionDetailView: View {
                 // Notes field
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                     Text("NOTES (OPTIONAL)")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     TextField("Add notes for this action...", text: $actionNotes, axis: .vertical)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .lineLimit(3...6)
                         .padding(AppTheme.Spacing.compact)
                         .background(
@@ -475,7 +477,7 @@ struct TransactionDetailView: View {
                         }
                     } label: {
                         Text("Confirm \(action.title)")
-                            .font(AppTheme.Typography.accent(15))
+                            .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)

@@ -4,6 +4,8 @@ struct CreateSipView: View {
     @ObservedObject var store: SipStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var selectedClientId = ""
     @State private var selectedFund: FAFund?
@@ -84,7 +86,7 @@ struct CreateSipView: View {
                                     .scaleEffect(0.8)
                             }
                             Text(isSaving ? "Creating..." : "Create SIP")
-                                .font(AppTheme.Typography.headline(16))
+                                .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -142,11 +144,11 @@ struct CreateSipView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     Text(subtitle)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
             }
@@ -165,7 +167,7 @@ struct CreateSipView: View {
                     ProgressView()
                         .scaleEffect(0.8)
                     Text("Loading clients...")
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                         .foregroundColor(.secondary)
                 }
             } else {
@@ -192,17 +194,17 @@ struct CreateSipView: View {
                                         .frame(width: 32, height: 32)
 
                                     Text(selected.initials)
-                                        .font(AppTheme.Typography.label(12))
+                                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                         .foregroundColor(AppTheme.primary)
                                 }
 
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text(selected.name)
-                                        .font(AppTheme.Typography.accent(14))
+                                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                         .foregroundColor(.primary)
 
                                     Text(selected.email)
-                                        .font(AppTheme.Typography.label(11))
+                                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                         .foregroundColor(.secondary)
                                 }
                             }
@@ -242,13 +244,13 @@ struct CreateSipView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(fund.schemeName)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
                             .lineLimit(2)
 
                         if let nav = fund.nav {
                             Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                                .font(AppTheme.Typography.label(12))
+                                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -274,7 +276,7 @@ struct CreateSipView: View {
                         .foregroundColor(.secondary)
 
                     TextField("Search fund name...", text: $fundSearchQuery)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .onChange(of: fundSearchQuery) { _, newValue in
                             Task {
                                 try? await Task.sleep(nanoseconds: 300_000_000)
@@ -300,7 +302,7 @@ struct CreateSipView: View {
                         ProgressView()
                             .scaleEffect(0.8)
                         Text("Searching...")
-                            .font(AppTheme.Typography.caption(13))
+                            .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                             .foregroundColor(.secondary)
                     }
                     .padding(.top, AppTheme.Spacing.micro)
@@ -314,7 +316,7 @@ struct CreateSipView: View {
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(fund.schemeName)
-                                        .font(AppTheme.Typography.accent(13))
+                                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                         .foregroundColor(.primary)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.leading)
@@ -322,7 +324,7 @@ struct CreateSipView: View {
                                     HStack {
                                         if let nav = fund.nav {
                                             Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                                                .font(AppTheme.Typography.label(11))
+                                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                                 .foregroundColor(.secondary)
                                         }
 
@@ -330,7 +332,7 @@ struct CreateSipView: View {
 
                                         if let returns1y = fund.returns1y {
                                             Text(returns1y.formattedPercent)
-                                                .font(AppTheme.Typography.label(11))
+                                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                                 .foregroundColor(AppTheme.returnColor(returns1y))
                                                 .padding(.horizontal, 6)
                                                 .padding(.vertical, 2)
@@ -355,16 +357,16 @@ struct CreateSipView: View {
     private var amountInput: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
             Text("AMOUNT (\u{20B9})")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
 
             HStack(spacing: AppTheme.Spacing.small) {
                 Text("\u{20B9}")
-                    .font(AppTheme.Typography.numeric(18))
+                    .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                     .foregroundColor(.secondary)
 
                 TextField("Enter SIP amount", text: $amount)
-                    .font(AppTheme.Typography.numeric(18))
+                    .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                     .keyboardType(.numberPad)
             }
             .padding(.horizontal, AppTheme.Spacing.medium)
@@ -385,7 +387,7 @@ struct CreateSipView: View {
                         amount = "\(value)"
                     } label: {
                         Text("\u{20B9}\(AppTheme.formatCurrency(Double(value)))")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(amount == "\(value)" ? .white : AppTheme.primary)
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
@@ -412,7 +414,7 @@ struct CreateSipView: View {
                     frequency = value
                 } label: {
                     Text(label)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(isSelected ? .white : .primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
@@ -441,7 +443,7 @@ struct CreateSipView: View {
                     sipDate = day
                 } label: {
                     Text("\(day)")
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(isSelected ? .white : .primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)

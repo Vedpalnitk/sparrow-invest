@@ -127,7 +127,7 @@ struct ClientsView: View {
                 Image(systemName: "plus")
                     .font(.system(size: 14))
                 Text("Client")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
             }
             .foregroundColor(.white)
             .padding(.horizontal, 14)
@@ -146,18 +146,18 @@ struct ClientsView: View {
             ZStack {
                 Circle()
                     .fill(AppTheme.primary.opacity(0.1))
-                    .frame(width: iPad ? 52 : 48, height: iPad ? 52 : 48)
+                    .frame(width: iPad ? 54 : 48, height: iPad ? 54 : 48)
 
                 Text(client.initials)
-                    .font(AppTheme.Typography.accent(iPad ? 17 : 15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(AppTheme.primary)
             }
 
             // Left: Identity
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: iPad ? 4 : 3) {
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(client.name)
-                        .font(AppTheme.Typography.accent(iPad ? 17 : 15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
@@ -167,13 +167,13 @@ struct ClientsView: View {
                 }
 
                 Text(client.email)
-                    .font(AppTheme.Typography.caption(iPad ? 14 : 12))
+                    .font(AppTheme.Typography.caption(iPad ? 15 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
 
                 if let risk = client.riskProfile {
                     Text(risk)
-                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 11))
                         .foregroundColor(.secondary)
                 }
             }
@@ -181,15 +181,15 @@ struct ClientsView: View {
             Spacer()
 
             // Right: Metrics
-            VStack(alignment: .trailing, spacing: 3) {
+            VStack(alignment: .trailing, spacing: iPad ? 4 : 3) {
                 Text(client.formattedAum)
-                    .font(AppTheme.Typography.accent(iPad ? 17 : 15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
 
                 returnBadge(client.returns)
 
                 Text("\(client.sipCount) SIPs")
-                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 11))
                     .foregroundColor(.secondary)
             }
 
@@ -207,7 +207,7 @@ struct ClientsView: View {
             Image(systemName: returns >= 0 ? "arrow.up.right" : "arrow.down.right")
                 .font(.system(size: iPad ? 12 : 10))
             Text(returns.formattedPercent)
-                .font(AppTheme.Typography.label(iPad ? 13 : 11))
+                .font(AppTheme.Typography.label(iPad ? 14 : 11))
         }
         .foregroundColor(AppTheme.returnColor(returns))
         .padding(.horizontal, 8)
@@ -219,7 +219,7 @@ struct ClientsView: View {
     private func statusBadge(_ status: String) -> some View {
         let color = kycColor(status)
         return Text(status)
-            .font(AppTheme.Typography.label(iPad ? 12 : 10))
+            .font(AppTheme.Typography.label(iPad ? 13 : 10))
             .foregroundColor(color)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -245,11 +245,11 @@ struct ClientsView: View {
                 .foregroundColor(.secondary)
 
             Text("No clients found")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text("Try a different search or add a new client")
-                .font(AppTheme.Typography.body(14))
+                .font(AppTheme.Typography.body(iPad ? 16 : 14))
                 .foregroundColor(.secondary)
         }
     }
@@ -277,6 +277,8 @@ struct ClientDetailView: View {
     @State private var txSortAscending = false
     @State private var pendingActionsExpanded = false
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -349,7 +351,7 @@ struct ClientDetailView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Client Details")
-                    .font(AppTheme.Typography.accent(17))
+                    .font(AppTheme.Typography.accent(iPad ? 20 : 17))
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { showEditClient = true } label: {
@@ -434,23 +436,23 @@ struct ClientDetailView: View {
                     .fill(AppTheme.primary.opacity(0.1))
                     .frame(width: 36, height: 36)
                 Text(client.initials)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     .foregroundColor(AppTheme.primary)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(client.name)
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(AppTheme.formatCurrencyWithSymbol(client.aum))
-                        .font(AppTheme.Typography.numeric(13))
+                        .font(AppTheme.Typography.numeric(iPad ? 15 : 13))
                         .foregroundColor(AppTheme.primary)
 
                     Text(client.returns.formattedPercent)
-                        .font(AppTheme.Typography.numeric(12))
+                        .font(AppTheme.Typography.numeric(iPad ? 14 : 12))
                         .foregroundColor(AppTheme.returnColor(client.returns))
                 }
             }
@@ -492,25 +494,25 @@ struct ClientDetailView: View {
                         .frame(width: 44, height: 44)
 
                     Text(client.initials)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(AppTheme.primary)
                 }
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(client.name)
-                        .font(AppTheme.Typography.headline(16))
+                        .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
                     HStack(spacing: AppTheme.Spacing.small) {
                         Text(AppTheme.formatCurrencyWithSymbol(client.aum))
-                            .font(AppTheme.Typography.numeric(13))
+                            .font(AppTheme.Typography.numeric(iPad ? 15 : 13))
                             .foregroundColor(AppTheme.primary)
 
                         returnBadge(client.returns)
 
                         Text("\(client.holdings.count) funds")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -569,7 +571,7 @@ struct ClientDetailView: View {
                         Image(systemName: "arrow.left.arrow.right")
                             .font(.system(size: 12))
                         Text("Buy")
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -583,7 +585,7 @@ struct ClientDetailView: View {
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.system(size: 12))
                         Text("Start SIP")
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     }
                     .foregroundColor(AppTheme.success)
                     .frame(maxWidth: .infinity)
@@ -615,12 +617,12 @@ struct ClientDetailView: View {
                         .foregroundColor(AppTheme.error)
 
                     Text("\(store.pendingActions.count) pending actions")
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(AppTheme.error)
 
                     if urgentCount > 0 {
                         Text("\(urgentCount) urgent")
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
@@ -655,7 +657,7 @@ struct ClientDetailView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
 
                             Text(action.title)
-                                .font(AppTheme.Typography.accent(13))
+                                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                 .foregroundColor(.primary)
                                 .lineLimit(1)
 
@@ -663,7 +665,7 @@ struct ClientDetailView: View {
 
                             if action.priority == .high {
                                 Text("URGENT")
-                                    .font(AppTheme.Typography.label(9))
+                                    .font(AppTheme.Typography.label(iPad ? 11 : 9))
                                     .foregroundColor(AppTheme.error)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -708,7 +710,7 @@ struct ClientDetailView: View {
             Image(systemName: returns >= 0 ? "arrow.up.right" : "arrow.down.right")
                 .font(.system(size: 9))
             Text(returns.formattedPercent)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
         }
         .fixedSize()
         .foregroundColor(AppTheme.returnColor(returns))
@@ -729,13 +731,13 @@ struct ClientDetailView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(AppTheme.Typography.numeric(15))
+                    .font(AppTheme.Typography.numeric(iPad ? 18 : 15))
                     .foregroundColor(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
 
                 Text(label)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(.secondary)
             }
         }
@@ -832,7 +834,7 @@ struct ClientDetailView: View {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
                     HStack {
                         Text("Recent Activity")
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
 
                         Spacer()
@@ -841,7 +843,7 @@ struct ClientDetailView: View {
                             selectedTab = 3 // Transactions tab
                         } label: {
                             Text("View All")
-                                .font(AppTheme.Typography.accent(12))
+                                .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                                 .foregroundColor(AppTheme.primary)
                         }
                     }
@@ -850,12 +852,12 @@ struct ClientDetailView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(tx.fundName)
-                                    .font(AppTheme.Typography.accent(14))
+                                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                     .foregroundColor(.primary)
                                     .lineLimit(1)
 
                                 Text("\(tx.type) | \(tx.date)")
-                                    .font(AppTheme.Typography.label(11))
+                                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                     .foregroundColor(.secondary)
                             }
 
@@ -863,7 +865,7 @@ struct ClientDetailView: View {
 
                             VStack(alignment: .trailing, spacing: 2) {
                                 Text(tx.formattedAmount)
-                                    .font(AppTheme.Typography.numeric(14))
+                                    .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                                     .foregroundColor(.primary)
 
                                 statusBadge(tx.status)
@@ -886,7 +888,7 @@ struct ClientDetailView: View {
             // E. Client Information Card
             VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
                 Text("Client Information")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 clientInfoRow(label: "Email", value: client.email, icon: "envelope")
@@ -928,7 +930,7 @@ struct ClientDetailView: View {
                 .foregroundColor(AppTheme.primary)
 
             Text(title)
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 .foregroundColor(.primary)
 
             Spacer()
@@ -943,12 +945,12 @@ struct ClientDetailView: View {
                 .frame(width: 24)
 
             Text(label)
-                .font(AppTheme.Typography.label(12))
+                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                 .foregroundColor(.secondary)
                 .frame(width: 80, alignment: .leading)
 
             Text(value)
-                .font(AppTheme.Typography.body(13))
+                .font(AppTheme.Typography.body(iPad ? 15 : 13))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
@@ -1049,13 +1051,13 @@ struct ClientDetailView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(holding.fundName)
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                 .foregroundColor(.primary)
                                 .lineLimit(1)
 
                             if let cat = holding.fundCategory {
                                 Text(cat)
-                                    .font(AppTheme.Typography.label(11))
+                                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -1064,11 +1066,11 @@ struct ClientDetailView: View {
 
                         VStack(alignment: .trailing, spacing: 2) {
                             Text(holding.currentValue.formattedCurrency)
-                                .font(AppTheme.Typography.numeric(14))
+                                .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                                 .foregroundColor(.primary)
 
                             Text(holding.returnsPercentage.formattedPercent)
-                                .font(AppTheme.Typography.accent(12))
+                                .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                                 .foregroundColor(AppTheme.returnColor(holding.returnsPercentage))
                         }
 
@@ -1148,12 +1150,12 @@ struct ClientDetailView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(sip.fundName)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
                             .lineLimit(1)
 
                         Text("\(sip.frequency) | Day \(sip.sipDate)")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
 
@@ -1161,7 +1163,7 @@ struct ClientDetailView: View {
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(sip.formattedAmount)
-                            .font(AppTheme.Typography.numeric(14))
+                            .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                             .foregroundColor(.primary)
 
                         statusBadge(sip.status)
@@ -1245,7 +1247,7 @@ struct ClientDetailView: View {
                         .font(.system(size: 12))
                         .foregroundColor(AppTheme.primary)
                     Text("\(filtered.count) transactions")
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
 
@@ -1256,7 +1258,7 @@ struct ClientDetailView: View {
                         .font(.system(size: 12))
                         .foregroundColor(AppTheme.primary)
                     Text(AppTheme.formatCurrencyWithSymbol(totalFilteredValue))
-                        .font(AppTheme.Typography.numeric(13))
+                        .font(AppTheme.Typography.numeric(iPad ? 15 : 13))
                         .foregroundColor(.primary)
                 }
             }
@@ -1276,12 +1278,12 @@ struct ClientDetailView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(tx.fundName)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
                             .lineLimit(1)
 
                         Text("\(tx.type) | \(tx.date)")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
 
@@ -1289,7 +1291,7 @@ struct ClientDetailView: View {
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(tx.formattedAmount)
-                            .font(AppTheme.Typography.numeric(14))
+                            .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                             .foregroundColor(.primary)
 
                         statusBadge(tx.status)
@@ -1304,7 +1306,7 @@ struct ClientDetailView: View {
                         .font(.system(size: 32))
                         .foregroundColor(.secondary)
                     Text("No transactions match filters")
-                        .font(AppTheme.Typography.body(14))
+                        .font(AppTheme.Typography.body(iPad ? 16 : 14))
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -1392,17 +1394,17 @@ struct ClientDetailView: View {
                             .frame(width: 40, height: 40)
 
                         Text(member.initials)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(AppTheme.accent)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(member.name)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
 
                         Text(member.relationshipLabel)
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
 
@@ -1410,11 +1412,11 @@ struct ClientDetailView: View {
 
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(AppTheme.formatCurrencyWithSymbol(member.aum))
-                            .font(AppTheme.Typography.numeric(14))
+                            .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                             .foregroundColor(.primary)
 
                         Text("\(member.holdingsCount) holdings")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -1426,7 +1428,7 @@ struct ClientDetailView: View {
 
     private func statusBadge(_ status: String) -> some View {
         Text(status)
-            .font(AppTheme.Typography.label(10))
+            .font(AppTheme.Typography.label(iPad ? 12 : 10))
             .foregroundColor(AppTheme.statusColor(status))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -1440,7 +1442,7 @@ struct ClientDetailView: View {
                 .font(.system(size: 11))
 
             Text(text)
-                .font(AppTheme.Typography.label(12))
+                .font(AppTheme.Typography.label(iPad ? 14 : 12))
 
             Image(systemName: "chevron.down")
                 .font(.system(size: 9))
@@ -1465,6 +1467,8 @@ struct AddClientView: View {
     @ObservedObject var store: ClientStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var name = ""
     @State private var email = ""
@@ -1544,7 +1548,7 @@ struct AddClientView: View {
                     sectionCard(title: "Risk Profile", icon: "gauge.with.dots.needle.33percent") {
                         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                             Text("RISK TOLERANCE")
-                                .font(AppTheme.Typography.label(11))
+                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                 .foregroundColor(AppTheme.primary)
 
                             HStack(spacing: 0) {
@@ -1554,7 +1558,7 @@ struct AddClientView: View {
                                         riskProfile = profile
                                     } label: {
                                         Text(profile)
-                                            .font(AppTheme.Typography.accent(12))
+                                            .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                                             .foregroundColor(isSelected ? .white : .secondary)
                                             .frame(maxWidth: .infinity)
                                             .padding(.vertical, 10)
@@ -1579,11 +1583,11 @@ struct AddClientView: View {
                     sectionCard(title: "Address", icon: "mappin.and.ellipse") {
                         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                             Text("ADDRESS (OPTIONAL)")
-                                .font(AppTheme.Typography.label(11))
+                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                 .foregroundColor(AppTheme.primary)
 
                             TextField("Enter full address...", text: $address, axis: .vertical)
-                                .font(AppTheme.Typography.body(15))
+                                .font(AppTheme.Typography.body(iPad ? 17 : 15))
                                 .lineLimit(3...6)
                                 .padding(AppTheme.Spacing.compact)
                                 .background(
@@ -1610,7 +1614,7 @@ struct AddClientView: View {
                                     Image(systemName: "person.badge.plus")
                                         .font(.system(size: 16))
                                     Text("Add Client")
-                                        .font(AppTheme.Typography.accent(15))
+                                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                                 }
                             }
                         }
@@ -1721,7 +1725,7 @@ struct AddClientView: View {
                 }
 
                 Text(title)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
             }
 
@@ -1745,11 +1749,11 @@ struct AddClientView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
             HStack(spacing: 4) {
                 Text(label)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(AppTheme.primary)
                 if isRequired {
                     Text("*")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.error)
                 }
             }
@@ -1760,7 +1764,7 @@ struct AddClientView: View {
                     .foregroundColor(error != nil ? AppTheme.error : .secondary)
 
                 TextField(placeholder, text: text)
-                    .font(AppTheme.Typography.body(15))
+                    .font(AppTheme.Typography.body(iPad ? 17 : 15))
                     .keyboardType(keyboard)
                     .textInputAutocapitalization(autocapitalization)
                     .onChange(of: text.wrappedValue) { _, _ in
@@ -1783,7 +1787,7 @@ struct AddClientView: View {
                     Image(systemName: "exclamationmark.circle.fill")
                         .font(.system(size: 11))
                     Text(error)
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 }
                 .foregroundColor(AppTheme.error)
             }

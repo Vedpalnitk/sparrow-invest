@@ -5,6 +5,8 @@ struct HoldingsFilterBar: View {
     @Binding var sortBy: String
     @Binding var sortAscending: Bool
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     private let categories = ["All", "Equity", "Debt", "Hybrid"]
     private let sortOptions = ["Value", "Returns", "Invested"]
@@ -36,7 +38,7 @@ struct HoldingsFilterBar: View {
                             .font(.system(size: 11))
 
                         Text("Sort: \(sortBy)")
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 12))
 
                         Image(systemName: "chevron.down")
                             .font(.system(size: 9))

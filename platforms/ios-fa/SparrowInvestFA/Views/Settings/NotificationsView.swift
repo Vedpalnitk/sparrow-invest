@@ -187,6 +187,8 @@ struct NotificationLogEntry: Identifiable {
 struct NotificationsView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var preferences = NotificationPreferencesPayload()
     @State private var isLoading = true
@@ -255,7 +257,7 @@ struct NotificationsView: View {
                         NotificationLogsView()
                     } label: {
                         Text("View All")
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 12))
                             .foregroundColor(AppTheme.primary)
                     }
                 }
@@ -332,11 +334,11 @@ struct NotificationsView: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(category.displayName)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     Text(category.description)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
 
@@ -362,7 +364,7 @@ struct NotificationsView: View {
 
         return HStack(spacing: 4) {
             Text(channel.displayName)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
 
             Toggle("", isOn: Binding(
@@ -398,17 +400,17 @@ struct NotificationsView: View {
             // Content
             VStack(alignment: .leading, spacing: 2) {
                 Text(log.subject ?? log.category.replacingOccurrences(of: "_", with: " ").capitalized)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .lineLimit(1)
 
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(log.channel.capitalized)
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
 
                     Text(formatLogDate(log.sentAt ?? log.createdAt))
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
             }
@@ -428,7 +430,7 @@ struct NotificationsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(AppTheme.Typography.label(11))
+            .font(AppTheme.Typography.label(iPad ? 13 : 11))
             .foregroundColor(AppTheme.primary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, AppTheme.Spacing.compact)

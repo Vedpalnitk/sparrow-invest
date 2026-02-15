@@ -8,6 +8,8 @@ struct AllocationDonutChart: View {
     var title: String? = nil
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var animationProgress: CGFloat = 0
     @State private var selectedSlice: String? = nil
 
@@ -22,7 +24,7 @@ struct AllocationDonutChart: View {
                         .font(.system(size: 12))
                         .foregroundColor(AppTheme.primary)
                     Text(title)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(.primary)
                     Spacer()
                 }
@@ -88,11 +90,11 @@ struct AllocationDonutChart: View {
                 // Center text
                 VStack(spacing: 2) {
                     Text("Total")
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(.secondary)
 
                     Text(AppTheme.formatCurrencyWithSymbol(totalValue))
-                        .font(AppTheme.Typography.headline(16))
+                        .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                         .foregroundColor(.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -120,14 +122,14 @@ struct AllocationDonutChart: View {
                         .frame(width: 10, height: 10)
 
                     Text(item.assetClass)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
                     Spacer()
 
                     Text(String(format: "%.1f%%", item.percentage))
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
             }
@@ -143,7 +145,7 @@ struct AllocationDonutChart: View {
                 .foregroundColor(.secondary.opacity(0.5))
 
             Text("No allocation data")
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 .foregroundColor(.secondary)
         }
         .frame(height: 200)

@@ -3,6 +3,8 @@ import SwiftUI
 struct ReportsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var selectedTab = "Generate"
     @State private var clients: [FAClient] = []
@@ -121,11 +123,11 @@ struct ReportsView: View {
                         .foregroundColor(.secondary.opacity(0.4))
 
                     Text("No recent reports")
-                        .font(AppTheme.Typography.headline(17))
+                        .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                         .foregroundColor(.secondary)
 
                     Text("Reports you generate will appear here")
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                         .foregroundColor(.secondary.opacity(0.7))
                 }
                 .frame(maxWidth: .infinity)
@@ -147,25 +149,25 @@ struct ReportsView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: AppTheme.CornerRadius.small, style: .continuous)
                     .fill(reportColor(report.type).opacity(0.1))
-                    .frame(width: 40, height: 40)
+                    .frame(width: iPad ? 44 : 40, height: iPad ? 44 : 40)
 
                 Image(systemName: reportIcon(report.type))
-                    .font(.system(size: 16))
+                    .font(.system(size: iPad ? 18 : 16))
                     .foregroundColor(reportColor(report.type))
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(report.type)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 Text(report.clientName)
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
 
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text(report.format)
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(AppTheme.primary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
@@ -173,7 +175,7 @@ struct ReportsView: View {
                         .clipShape(Capsule())
 
                     Text(report.formattedDate)
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(.secondary)
                 }
             }
@@ -199,7 +201,7 @@ struct ReportsView: View {
     private var formatPickerSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("FORMAT")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
                 .tracking(0.5)
 
@@ -215,7 +217,7 @@ struct ReportsView: View {
                             Image(systemName: formatIcon(format))
                                 .font(.system(size: 10))
                             Text(format)
-                                .font(AppTheme.Typography.accent(12))
+                                .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                         }
                         .foregroundColor(isSelected ? .white : .secondary)
                         .padding(.horizontal, 14)
@@ -251,7 +253,7 @@ struct ReportsView: View {
     private var clientPickerSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("SELECT CLIENT")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
                 .tracking(0.5)
 
@@ -260,7 +262,7 @@ struct ReportsView: View {
                     ProgressView()
                         .scaleEffect(0.8)
                     Text("Loading clients...")
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                         .foregroundColor(.secondary)
                     Spacer()
                 }
@@ -289,7 +291,7 @@ struct ReportsView: View {
 
                             if let client = selectedClient {
                                 Text(client.initials)
-                                    .font(AppTheme.Typography.accent(13))
+                                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                     .foregroundColor(AppTheme.primary)
                             } else {
                                 Image(systemName: "person.fill")
@@ -300,12 +302,12 @@ struct ReportsView: View {
 
                         VStack(alignment: .leading, spacing: 1) {
                             Text(selectedClient?.name ?? "Choose a client")
-                                .font(AppTheme.Typography.accent(15))
+                                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                                 .foregroundColor(selectedClient != nil ? .primary : .secondary)
 
                             if let client = selectedClient {
                                 Text("AUM: \(client.formattedAum)")
-                                    .font(AppTheme.Typography.label(11))
+                                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -328,14 +330,14 @@ struct ReportsView: View {
     private var dateRangeSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("DATE RANGE")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
                 .tracking(0.5)
 
             HStack(spacing: AppTheme.Spacing.compact) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("From")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                     DatePicker("", selection: $fromDate, displayedComponents: .date)
                         .labelsHidden()
@@ -352,7 +354,7 @@ struct ReportsView: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("To")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                     DatePicker("", selection: $toDate, displayedComponents: .date)
                         .labelsHidden()
@@ -372,7 +374,7 @@ struct ReportsView: View {
                 .foregroundColor(.secondary.opacity(0.4))
 
             Text("Select a client to generate reports")
-                .font(AppTheme.Typography.caption(14))
+                .font(AppTheme.Typography.caption(iPad ? 16 : 14))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -385,7 +387,7 @@ struct ReportsView: View {
     private var reportTypesGrid: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("REPORT TYPE")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
                 .tracking(0.5)
 
@@ -419,12 +421,12 @@ struct ReportsView: View {
             }
 
             Text(type)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.primary)
                 .lineLimit(1)
 
             Text(description)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -445,7 +447,7 @@ struct ReportsView: View {
                     }
 
                     Text(isCurrentlyGenerating ? "Generating..." : "Generate \(selectedFormat)")
-                        .font(AppTheme.Typography.accent(12))
+                        .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)

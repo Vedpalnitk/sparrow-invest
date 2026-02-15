@@ -48,6 +48,8 @@ private let faqItems: [FAQItem] = [
 struct HelpSupportView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     // Feedback form
     @State private var feedbackSubject = ""
@@ -114,7 +116,7 @@ struct HelpSupportView: View {
     private func faqRow(_ item: FAQItem) -> some View {
         DisclosureGroup {
             Text(item.answer)
-                .font(AppTheme.Typography.caption(13))
+                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
                 .padding(.leading, 32)
                 .padding(.top, AppTheme.Spacing.small)
@@ -127,7 +129,7 @@ struct HelpSupportView: View {
                     .frame(width: 24)
 
                 Text(item.question)
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.leading)
             }
@@ -183,11 +185,11 @@ struct HelpSupportView: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     Text(subtitle)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
 
@@ -209,7 +211,7 @@ struct HelpSupportView: View {
             // Subject Field
             VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                 Text("SUBJECT")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(AppTheme.primary)
 
                 HStack(spacing: AppTheme.Spacing.small) {
@@ -218,7 +220,7 @@ struct HelpSupportView: View {
                         .foregroundColor(.secondary)
 
                     TextField("What's this about?", text: $feedbackSubject)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .textInputAutocapitalization(.sentences)
                 }
                 .padding(.horizontal, AppTheme.Spacing.medium)
@@ -231,20 +233,20 @@ struct HelpSupportView: View {
             // Message Field
             VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
                 Text("MESSAGE")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(AppTheme.primary)
 
                 ZStack(alignment: .topLeading) {
                     if feedbackMessage.isEmpty {
                         Text("Describe your issue or suggestion...")
-                            .font(AppTheme.Typography.body(15))
+                            .font(AppTheme.Typography.body(iPad ? 17 : 15))
                             .foregroundColor(.secondary.opacity(0.6))
                             .padding(.horizontal, AppTheme.Spacing.medium)
                             .padding(.top, AppTheme.Spacing.compact)
                     }
 
                     TextEditor(text: $feedbackMessage)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .scrollContentBackground(.hidden)
                         .padding(.horizontal, AppTheme.Spacing.small)
                         .padding(.vertical, AppTheme.Spacing.small)
@@ -261,7 +263,7 @@ struct HelpSupportView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 13))
                     Text(error)
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 }
                 .foregroundColor(AppTheme.error)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -273,7 +275,7 @@ struct HelpSupportView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 13))
                     Text("Thank you! Your feedback has been submitted.")
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 }
                 .foregroundColor(AppTheme.success)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -292,7 +294,7 @@ struct HelpSupportView: View {
                         Image(systemName: "paperplane.fill")
                             .font(.system(size: 14))
                         Text("Submit Feedback")
-                            .font(AppTheme.Typography.accent(15))
+                            .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -313,7 +315,7 @@ struct HelpSupportView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(AppTheme.Typography.label(11))
+            .font(AppTheme.Typography.label(iPad ? 13 : 11))
             .foregroundColor(AppTheme.primary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, AppTheme.Spacing.compact)

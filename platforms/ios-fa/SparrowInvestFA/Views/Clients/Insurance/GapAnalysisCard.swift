@@ -3,6 +3,8 @@ import SwiftUI
 struct GapAnalysisCard: View {
     let gapAnalysis: GapAnalysis?
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
@@ -18,7 +20,7 @@ struct GapAnalysisCard: View {
                 }
 
                 Text("Coverage Gap Analysis")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -63,7 +65,7 @@ struct GapAnalysisCard: View {
                     .foregroundColor(barColor)
 
                 Text(label)
-                    .font(AppTheme.Typography.accent(12))
+                    .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -73,12 +75,12 @@ struct GapAnalysisCard: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 10))
                         Text("Adequate")
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     }
                     .foregroundColor(Color(hex: "10B981"))
                 } else {
                     Text("Gap: \(formatAmount(recommended - current))")
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(Color(hex: "EF4444"))
                 }
             }
@@ -104,13 +106,13 @@ struct GapAnalysisCard: View {
 
             HStack {
                 Text("Current: \(formatAmount(current))")
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(.secondary)
 
                 Spacer()
 
                 Text("Recommended: \(formatAmount(recommended))")
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(.secondary)
             }
         }

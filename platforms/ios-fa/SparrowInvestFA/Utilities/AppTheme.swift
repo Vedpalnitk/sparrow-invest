@@ -241,6 +241,14 @@ enum AppTheme {
             sfPro(size, weight: .regular)
         }
 
+        /// Scale a font size for iPad. Adds +2pt for tiny sizes (<=11), +1pt for small (<=13).
+        static func scaled(_ base: CGFloat, iPad: Bool) -> CGFloat {
+            guard iPad else { return base }
+            if base <= 11 { return base + 2 }
+            if base <= 13 { return base + 1 }
+            return base
+        }
+
         // MARK: - Dashboard Text Constants
         enum DashboardText {
             static let heroLabel = Typography.label(11)
@@ -295,6 +303,16 @@ enum AppTheme {
         static let cardAppear: SwiftUI.Animation = .spring(response: 0.5, dampingFraction: 0.8)
         static let fabBreathing: SwiftUI.Animation = .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
     }
+
+    // MARK: - Adaptive Layout (iPad vs iPhone)
+
+    /// Returns adaptive column count: `regular` for iPad, `compact` for iPhone
+    static func adaptiveColumns(_ sizeClass: UserInterfaceSizeClass?, regular: Int = 4, compact: Int = 2) -> Int {
+        sizeClass == .regular ? regular : compact
+    }
+
+    /// Maximum content width for iPad to avoid overly stretched layouts
+    static let iPadMaxContentWidth: CGFloat = 900
 
     // MARK: - Helpers
     static func returnColor(_ value: Double) -> Color {
@@ -549,6 +567,29 @@ extension UIColor {
             (r, g, b) = (0, 0, 0)
         }
         self.init(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: 1)
+    }
+}
+
+// MARK: - Adaptive Content Width Modifier
+
+struct AdaptiveContentWidth: ViewModifier {
+    @Environment(\.horizontalSizeClass) private var sizeClass
+
+    func body(content: Content) -> some View {
+        if sizeClass == .regular {
+            content
+                .frame(maxWidth: AppTheme.iPadMaxContentWidth)
+                .frame(maxWidth: .infinity)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    /// Constrains content width on iPad for readable layouts
+    func adaptiveContentWidth() -> some View {
+        modifier(AdaptiveContentWidth())
     }
 }
 

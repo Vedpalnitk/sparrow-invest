@@ -3,6 +3,8 @@ import SwiftUI
 struct MoreView: View {
     @EnvironmentObject var authManager: AuthManager
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @AppStorage("themeMode") private var themeMode = "System"
 
     @State private var showNotifications = false
@@ -16,6 +18,7 @@ struct MoreView: View {
     @State private var showCommunications = false
     @State private var showProspects = false
     @State private var showFundUniverse = false
+    @State private var showWhitelistedFunds = false
 
     var body: some View {
         NavigationStack {
@@ -48,6 +51,8 @@ struct MoreView: View {
                                  subtitle: "Sales pipeline & leads") { showProspects = true }
                         menuItem(icon: "globe", title: "Fund Universe",
                                  subtitle: "Browse funds by category") { showFundUniverse = true }
+                        menuItem(icon: "star.circle", title: "My Picks",
+                                 subtitle: "Curated fund recommendations") { showWhitelistedFunds = true }
                     }
                     .glassCard(cornerRadius: AppTheme.CornerRadius.large, padding: AppTheme.Spacing.small)
 
@@ -70,7 +75,7 @@ struct MoreView: View {
                                 .foregroundColor(AppTheme.error)
 
                             Text("Logout")
-                                .font(AppTheme.Typography.accent(15))
+                                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                                 .foregroundColor(AppTheme.error)
 
                             Spacer()
@@ -80,7 +85,7 @@ struct MoreView: View {
 
                     // Version
                     Text("Sparrow FA v1.0.0")
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                         .frame(maxWidth: .infinity)
 
@@ -125,6 +130,9 @@ struct MoreView: View {
         .fullScreenCover(isPresented: $showFundUniverse) {
             FundUniverseView()
         }
+        .fullScreenCover(isPresented: $showWhitelistedFunds) {
+            WhitelistedFundsView()
+        }
     }
 
     private var darkModeBinding: Binding<Bool> {
@@ -148,11 +156,11 @@ struct MoreView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(authManager.user?.displayName ?? "Financial Advisor")
-                    .font(AppTheme.Typography.headline(16))
+                    .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     .foregroundColor(.primary)
 
                 Text(authManager.user?.email ?? "")
-                    .font(AppTheme.Typography.caption(13))
+                    .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                     .foregroundColor(.secondary)
             }
 
@@ -174,12 +182,12 @@ struct MoreView: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 12))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -203,7 +211,7 @@ struct MoreView: View {
                 .frame(width: 24)
 
             Text(title)
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(.primary)
 
             Spacer()

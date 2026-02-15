@@ -4,6 +4,8 @@ import LocalAuthentication
 struct SecurityView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var biometricEnabled = false
     @State private var twoFactorEnabled = false
@@ -70,11 +72,11 @@ struct SecurityView: View {
 
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text("Change Transaction PIN")
-                                        .font(AppTheme.Typography.accent(15))
+                                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                                         .foregroundColor(.primary)
 
                                     Text("PIN required to approve and execute trades")
-                                        .font(AppTheme.Typography.label(12))
+                                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                         .foregroundColor(.secondary)
                                 }
 
@@ -104,11 +106,11 @@ struct SecurityView: View {
 
                                 VStack(alignment: .leading, spacing: 1) {
                                     Text("Active Sessions")
-                                        .font(AppTheme.Typography.accent(15))
+                                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                                         .foregroundColor(.primary)
 
                                     Text("Manage logged-in devices")
-                                        .font(AppTheme.Typography.label(12))
+                                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                         .foregroundColor(.secondary)
                                 }
 
@@ -194,7 +196,7 @@ struct SecurityView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 13))
                     Text(error)
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 }
                 .foregroundColor(AppTheme.error)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -206,7 +208,7 @@ struct SecurityView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 13))
                     Text("Password updated successfully")
-                        .font(AppTheme.Typography.caption(13))
+                        .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 }
                 .foregroundColor(AppTheme.success)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -223,7 +225,7 @@ struct SecurityView: View {
                             .scaleEffect(0.8)
                     } else {
                         Text("Update Password")
-                            .font(AppTheme.Typography.accent(15))
+                            .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -252,7 +254,7 @@ struct SecurityView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
             Text(label)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
 
             HStack(spacing: AppTheme.Spacing.small) {
@@ -262,10 +264,10 @@ struct SecurityView: View {
 
                 if isSecure {
                     SecureField(placeholder, text: text)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                 } else {
                     TextField(placeholder, text: text)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                 }
 
                 if showToggle {
@@ -295,11 +297,11 @@ struct SecurityView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(biometricType) Login")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
 
                 Text("Use \(biometricType.lowercased()) to unlock the app")
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
             }
 
@@ -328,11 +330,11 @@ struct SecurityView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Two-Factor Authentication")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
 
                 Text("Extra security via OTP on login")
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
             }
 
@@ -364,11 +366,11 @@ struct SecurityView: View {
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Session Timeout")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
 
                 Text("Auto-lock after inactivity")
-                    .font(AppTheme.Typography.label(12))
+                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                     .foregroundColor(.secondary)
             }
 
@@ -390,7 +392,7 @@ struct SecurityView: View {
             } label: {
                 HStack(spacing: 4) {
                     Text(selectedTimeout)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(AppTheme.primary)
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 10))
@@ -421,12 +423,12 @@ struct SecurityView: View {
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     if let subtitle {
                         Text(subtitle)
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 14 : 12))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -446,7 +448,7 @@ struct SecurityView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(AppTheme.Typography.label(11))
+            .font(AppTheme.Typography.label(iPad ? 13 : 11))
             .foregroundColor(AppTheme.primary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, AppTheme.Spacing.compact)
@@ -460,7 +462,7 @@ struct SecurityView: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(AppTheme.success)
             Text("Settings saved")
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 .foregroundColor(.primary)
         }
         .padding(.horizontal, AppTheme.Spacing.medium)
@@ -599,6 +601,8 @@ struct SecurityView: View {
 struct ChangePinSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var currentPin = ""
     @State private var newPin = ""
@@ -618,7 +622,7 @@ struct ChangePinSheet: View {
                             .foregroundColor(AppTheme.primary)
 
                         Text("Transaction PIN is required when approving or executing trades.")
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -641,7 +645,7 @@ struct ChangePinSheet: View {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 13))
                             Text(error)
-                                .font(AppTheme.Typography.caption(13))
+                                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                         }
                         .foregroundColor(AppTheme.error)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -653,7 +657,7 @@ struct ChangePinSheet: View {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 13))
                             Text("Transaction PIN updated successfully")
-                                .font(AppTheme.Typography.caption(13))
+                                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                         }
                         .foregroundColor(AppTheme.success)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -670,7 +674,7 @@ struct ChangePinSheet: View {
                                     .scaleEffect(0.8)
                             } else {
                                 Text("Update PIN")
-                                    .font(AppTheme.Typography.accent(15))
+                                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -700,7 +704,7 @@ struct ChangePinSheet: View {
     private func pinField(label: String, placeholder: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.micro) {
             Text(label)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(AppTheme.primary)
 
             HStack(spacing: AppTheme.Spacing.small) {
@@ -709,7 +713,7 @@ struct ChangePinSheet: View {
                     .foregroundColor(.secondary)
 
                 SecureField(placeholder, text: text)
-                    .font(AppTheme.Typography.body(15))
+                    .font(AppTheme.Typography.body(iPad ? 17 : 15))
                     .keyboardType(.numberPad)
                     .onChange(of: text.wrappedValue) { _, newValue in
                         // Limit to 4 digits

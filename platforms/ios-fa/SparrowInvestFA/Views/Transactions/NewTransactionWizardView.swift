@@ -4,6 +4,8 @@ struct NewTransactionWizardView: View {
     @StateObject private var store = NewTransactionWizardStore()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         NavigationStack {
@@ -17,7 +19,7 @@ struct NewTransactionWizardView: View {
                         Image(systemName: "exclamationmark.circle.fill")
                             .font(.system(size: 14))
                         Text(error)
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     }
                     .foregroundColor(AppTheme.error)
                     .padding(AppTheme.Spacing.compact)
@@ -76,13 +78,13 @@ struct NewTransactionWizardView: View {
                                 .foregroundColor(.white)
                         } else {
                             Text("\(step + 1)")
-                                .font(AppTheme.Typography.label(11))
+                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                 .foregroundColor(step == store.currentStep ? .white : .secondary)
                         }
                     }
 
                     Text(stepTitle(step))
-                        .font(AppTheme.Typography.label(8))
+                        .font(AppTheme.Typography.label(iPad ? 10 : 8))
                         .foregroundColor(step <= store.currentStep ? AppTheme.primary : .secondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -155,17 +157,17 @@ struct NewTransactionWizardView: View {
                         .frame(width: 40, height: 40)
 
                     Text(client.initials)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(isSelected ? .white : AppTheme.primary)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(client.name)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(.primary)
 
                     Text(client.email)
-                        .font(AppTheme.Typography.label(12))
+                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
 
@@ -173,12 +175,12 @@ struct NewTransactionWizardView: View {
 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(client.formattedAum)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(.primary)
 
                     if let risk = client.riskProfile {
                         Text(risk)
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -213,18 +215,18 @@ struct NewTransactionWizardView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(fund.schemeName)
-                            .font(AppTheme.Typography.accent(14))
+                            .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             .foregroundColor(.primary)
 
                         HStack(spacing: AppTheme.Spacing.small) {
                             if let nav = fund.nav {
                                 Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                                    .font(AppTheme.Typography.label(12))
+                                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                     .foregroundColor(.secondary)
                             }
                             if let cat = fund.schemeCategory {
                                 Text(cat)
-                                    .font(AppTheme.Typography.label(11))
+                                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                     .foregroundColor(AppTheme.primary)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
@@ -296,7 +298,7 @@ struct NewTransactionWizardView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(fund.schemeName)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -304,13 +306,13 @@ struct NewTransactionWizardView: View {
                     HStack(spacing: AppTheme.Spacing.small) {
                         if let nav = fund.nav {
                             Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                                .font(AppTheme.Typography.label(11))
+                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                 .foregroundColor(.secondary)
                         }
                         if let ret = fund.returns1y {
                             let retColor = ret >= 0 ? AppTheme.success : AppTheme.error
                             Text(String(format: "%+.1f%% 1Y", ret))
-                                .font(AppTheme.Typography.label(10))
+                                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                 .foregroundColor(retColor)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -319,7 +321,7 @@ struct NewTransactionWizardView: View {
                         }
                         if let cat = fund.schemeCategory {
                             Text(cat)
-                                .font(AppTheme.Typography.label(10))
+                                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                 .foregroundColor(AppTheme.primary)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -348,7 +350,7 @@ struct NewTransactionWizardView: View {
                 // Transaction Type
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                     Text("TYPE")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
@@ -358,7 +360,7 @@ struct NewTransactionWizardView: View {
                                 store.transactionType = type
                             } label: {
                                 Text(type)
-                                    .font(AppTheme.Typography.accent(13))
+                                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                     .foregroundColor(isSelected ? .white : .primary)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
@@ -378,16 +380,16 @@ struct NewTransactionWizardView: View {
                 // Amount
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                     Text("AMOUNT")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     HStack(spacing: AppTheme.Spacing.small) {
                         Text("\u{20B9}")
-                            .font(AppTheme.Typography.numeric(18))
+                            .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                             .foregroundColor(.secondary)
 
                         TextField("Enter amount", text: $store.amount)
-                            .font(AppTheme.Typography.numeric(18))
+                            .font(AppTheme.Typography.numeric(iPad ? 22 : 18))
                             .keyboardType(.decimalPad)
                     }
                     .padding(.horizontal, AppTheme.Spacing.medium)
@@ -401,7 +403,7 @@ struct NewTransactionWizardView: View {
                 // Folio Number
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                     Text("FOLIO")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     HStack(spacing: 0) {
@@ -411,7 +413,7 @@ struct NewTransactionWizardView: View {
                                 store.isNewFolio = (option == "New Folio")
                             } label: {
                                 Text(option)
-                                    .font(AppTheme.Typography.accent(13))
+                                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                     .foregroundColor(isSelected ? .white : .secondary)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
@@ -432,7 +434,7 @@ struct NewTransactionWizardView: View {
 
                     if !store.isNewFolio {
                         TextField("Enter folio number", text: $store.folioNumber)
-                            .font(AppTheme.Typography.body(15))
+                            .font(AppTheme.Typography.body(iPad ? 17 : 15))
                             .padding(.horizontal, AppTheme.Spacing.medium)
                             .frame(height: 44)
                             .background(inputBackground)
@@ -445,7 +447,7 @@ struct NewTransactionWizardView: View {
                 // Payment Mode
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                     Text("PAYMENT MODE")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
@@ -458,7 +460,7 @@ struct NewTransactionWizardView: View {
                                     Image(systemName: paymentModeIcon(mode))
                                         .font(.system(size: 13))
                                     Text(mode)
-                                        .font(AppTheme.Typography.accent(13))
+                                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                 }
                                 .foregroundColor(isSelected ? .white : .primary)
                                 .frame(maxWidth: .infinity)
@@ -479,11 +481,11 @@ struct NewTransactionWizardView: View {
                 // Notes
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                     Text("NOTES (OPTIONAL)")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
 
                     TextField("Any additional notes...", text: $store.notes, axis: .vertical)
-                        .font(AppTheme.Typography.body(15))
+                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                         .lineLimit(3...6)
                         .padding(AppTheme.Spacing.compact)
                         .background(inputBackground)
@@ -557,7 +559,7 @@ struct NewTransactionWizardView: View {
                                 Image(systemName: "arrow.up.right.square.fill")
                                     .font(.system(size: 16))
                                 Text("Open \(platform == "BSE" ? "BSE Star MF" : "MF Utility")")
-                                    .font(AppTheme.Typography.accent(14))
+                                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                             }
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -570,12 +572,12 @@ struct NewTransactionWizardView: View {
                         if store.platformVisited || store.skipOrderId {
                             VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                                 Text("ORDER ID")
-                                    .font(AppTheme.Typography.label(11))
+                                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                                     .foregroundColor(AppTheme.primary)
 
                                 if !store.skipOrderId {
                                     TextField("Enter order ID from platform", text: $store.orderId)
-                                        .font(AppTheme.Typography.body(15))
+                                        .font(AppTheme.Typography.body(iPad ? 17 : 15))
                                         .padding(.horizontal, AppTheme.Spacing.medium)
                                         .frame(height: 44)
                                         .background(inputBackground)
@@ -593,7 +595,7 @@ struct NewTransactionWizardView: View {
                                             .foregroundColor(store.skipOrderId ? AppTheme.primary : .secondary)
 
                                         Text("Skip \u{2014} Record without Order ID")
-                                            .font(AppTheme.Typography.accent(13))
+                                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                             .foregroundColor(.secondary)
                                     }
                                 }
@@ -626,11 +628,11 @@ struct NewTransactionWizardView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
 
                     Text(description)
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
@@ -672,16 +674,16 @@ struct NewTransactionWizardView: View {
                                     .frame(width: 36, height: 36)
 
                                 Text(client.initials)
-                                    .font(AppTheme.Typography.accent(13))
+                                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                     .foregroundColor(AppTheme.primary)
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(client.name)
-                                    .font(AppTheme.Typography.accent(14))
+                                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                     .foregroundColor(.primary)
                                 Text(client.email)
-                                    .font(AppTheme.Typography.label(12))
+                                    .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -693,18 +695,18 @@ struct NewTransactionWizardView: View {
                     if let fund = store.selectedFund {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(fund.schemeName)
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                 .foregroundColor(.primary)
 
                             HStack(spacing: AppTheme.Spacing.small) {
                                 if let nav = fund.nav {
                                     Text("NAV: \u{20B9}\(String(format: "%.2f", nav))")
-                                        .font(AppTheme.Typography.label(12))
+                                        .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                         .foregroundColor(.secondary)
                                 }
                                 if let cat = fund.schemeCategory {
                                     Text(cat)
-                                        .font(AppTheme.Typography.label(10))
+                                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                                         .foregroundColor(AppTheme.secondary)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
@@ -756,7 +758,7 @@ struct NewTransactionWizardView: View {
                 .foregroundColor(.secondary)
 
             TextField(placeholder, text: text)
-                .font(AppTheme.Typography.body(15))
+                .font(AppTheme.Typography.body(iPad ? 17 : 15))
         }
         .padding(.horizontal, AppTheme.Spacing.medium)
         .frame(height: 44)
@@ -788,7 +790,7 @@ struct NewTransactionWizardView: View {
                 }
 
                 Text(label)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(iconColor)
             }
 
@@ -802,11 +804,11 @@ struct NewTransactionWizardView: View {
     private func reviewRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
             Spacer()
             Text(value)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.primary)
         }
         .padding(.vertical, 4)
@@ -826,10 +828,10 @@ struct NewTransactionWizardView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(AppTheme.Typography.headline(16))
+                    .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     .foregroundColor(.primary)
                 Text(subtitle)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     .foregroundColor(.secondary)
             }
         }
@@ -852,7 +854,7 @@ struct NewTransactionWizardView: View {
                     }
                 } label: {
                     Text(store.currentStep == 0 ? "Cancel" : "Back")
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -873,7 +875,7 @@ struct NewTransactionWizardView: View {
                                     .tint(.white)
                             } else {
                                 Text("Submit Transaction")
-                                    .font(AppTheme.Typography.accent(15))
+                                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                             }
                         }
                         .foregroundColor(.white)
@@ -888,7 +890,7 @@ struct NewTransactionWizardView: View {
                         withAnimation { store.currentStep += 1 }
                     } label: {
                         Text("Next")
-                            .font(AppTheme.Typography.accent(15))
+                            .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)

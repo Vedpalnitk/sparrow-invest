@@ -13,6 +13,8 @@ struct KpiDetailSheet: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var selectedDataIndex: Int? = nil
     @State private var chartDrawProgress: CGFloat = 0
     @State private var selectedPeriod = "6M"
@@ -98,12 +100,12 @@ struct KpiDetailSheet: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title.uppercased())
-                        .font(AppTheme.Typography.accent(11))
+                        .font(AppTheme.Typography.accent(iPad ? 13 : 11))
                         .tracking(1.0)
                         .foregroundColor(.white.opacity(0.7))
 
                     Text(value)
-                        .font(AppTheme.Typography.display(28))
+                        .font(AppTheme.Typography.display(iPad ? 34 : 28))
                         .foregroundColor(.white)
                 }
 
@@ -179,12 +181,12 @@ struct KpiDetailSheet: View {
                     .foregroundColor(isPositive ? AppTheme.success : AppTheme.error)
 
                 Text(String(format: "%+.1f%%", change))
-                    .font(AppTheme.Typography.accent(18))
+                    .font(AppTheme.Typography.accent(iPad ? 21 : 18))
                     .foregroundColor(isPositive ? AppTheme.success : AppTheme.error)
             }
 
             Text(label)
-                .font(AppTheme.Typography.label(13))
+                .font(AppTheme.Typography.label(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -207,14 +209,14 @@ struct KpiDetailSheet: View {
                     .foregroundColor(color)
 
                 Text(value)
-                    .font(AppTheme.Typography.accent(16))
+                    .font(AppTheme.Typography.accent(iPad ? 19 : 16))
                     .foregroundColor(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
 
             Text(label)
-                .font(AppTheme.Typography.label(13))
+                .font(AppTheme.Typography.label(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -235,7 +237,7 @@ struct KpiDetailSheet: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
             HStack {
                 Text("Trend")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -254,7 +256,7 @@ struct KpiDetailSheet: View {
                             }
                         } label: {
                             Text(period)
-                                .font(AppTheme.Typography.accent(11))
+                                .font(AppTheme.Typography.accent(iPad ? 13 : 11))
                                 .foregroundColor(selectedPeriod == period ? .white : .secondary)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
@@ -383,7 +385,7 @@ struct KpiDetailSheet: View {
                     ForEach(Array(data.enumerated()), id: \.offset) { i, item in
                         if i > 0 { Spacer() }
                         Text(item.0)
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(selectedDataIndex == i ? color : .secondary)
                     }
                 }
@@ -470,10 +472,10 @@ struct KpiDetailSheet: View {
     private func tooltipView(label: String, value: Double) -> some View {
         VStack(spacing: 1) {
             Text(label)
-                .font(AppTheme.Typography.label(10))
+                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                 .foregroundColor(.secondary)
             Text(formatTooltipValue(value))
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.primary)
         }
         .padding(.horizontal, AppTheme.Spacing.small)
@@ -510,7 +512,7 @@ struct KpiDetailSheet: View {
                     .foregroundColor(AppTheme.warning)
 
                 Text("Top Performers")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.primary)
             }
 
@@ -523,13 +525,13 @@ struct KpiDetailSheet: View {
                             .frame(width: 28, height: 28)
 
                         Text("#\(index + 1)")
-                            .font(AppTheme.Typography.accent(12))
+                            .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                             .foregroundColor(rankColor(index))
                     }
 
                     // Client name
                     Text(client.name)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
@@ -540,7 +542,7 @@ struct KpiDetailSheet: View {
                         Image(systemName: client.returns >= 0 ? "arrow.up.right" : "arrow.down.right")
                             .font(.system(size: 10))
                         Text(client.returns.formattedPercent)
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     }
                     .foregroundColor(AppTheme.returnColor(client.returns))
                     .padding(.horizontal, 8)
@@ -578,7 +580,7 @@ struct KpiDetailSheet: View {
     private func breakdownSection(_ items: [BreakdownItem]) -> some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.compact) {
             Text("Breakdown")
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(.primary)
 
             if usesPieChart {
@@ -610,10 +612,10 @@ struct KpiDetailSheet: View {
                 // Center label
                 VStack(spacing: 0) {
                     Text("\(items.count)")
-                        .font(AppTheme.Typography.accent(16))
+                        .font(AppTheme.Typography.accent(iPad ? 19 : 16))
                         .foregroundColor(.primary)
                     Text("Types")
-                        .font(AppTheme.Typography.label(10))
+                        .font(AppTheme.Typography.label(iPad ? 12 : 10))
                         .foregroundColor(.secondary)
                 }
             }
@@ -628,14 +630,14 @@ struct KpiDetailSheet: View {
                             .frame(width: 12, height: 12)
 
                         Text(item.label)
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                             .foregroundColor(.primary)
                             .lineLimit(1)
 
                         Spacer()
 
                         Text(String(format: "%.0f%%", item.percentage))
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -681,13 +683,13 @@ struct KpiDetailSheet: View {
                 .frame(width: 8, height: 8)
 
             Text(item.label)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.primary)
 
             Spacer()
 
             Text("\(item.value)")
-                .font(AppTheme.Typography.numeric(13))
+                .font(AppTheme.Typography.numeric(iPad ? 15 : 13))
                 .foregroundColor(.primary)
 
             GeometryReader { geo in
@@ -703,7 +705,7 @@ struct KpiDetailSheet: View {
             .frame(width: 60, height: 6)
 
             Text(String(format: "%.0f%%", item.percentage))
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .frame(width: 32, alignment: .trailing)
         }

@@ -8,6 +8,8 @@ struct SipListView: View {
     @State private var showActionBanner = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     var body: some View {
         NavigationStack {
@@ -57,7 +59,7 @@ struct SipListView: View {
                     Image(systemName: "plus")
                         .font(.system(size: 14))
                     Text("New SIP")
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 }
                 .foregroundColor(.white)
                 .padding(.horizontal, 14)
@@ -88,7 +90,7 @@ struct SipListView: View {
                             store.selectedFilter = filter
                         } label: {
                             Text(filter)
-                                .font(AppTheme.Typography.accent(13))
+                                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                                 .foregroundColor(store.selectedFilter == filter ? .white : .secondary)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
@@ -143,13 +145,13 @@ struct SipListView: View {
     private var summaryBar: some View {
         HStack {
             Text("\(store.filteredSips.count) SIPs")
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(.primary)
 
             Spacer()
 
             Text("\(AppTheme.formatCurrencyWithSymbol(store.totalMonthlyValue))/month")
-                .font(AppTheme.Typography.accent(15))
+                .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 .foregroundColor(AppTheme.primary)
         }
         .padding(.horizontal, AppTheme.Spacing.medium)
@@ -175,13 +177,13 @@ struct SipListView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(sip.fundName)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(.primary)
                         .lineLimit(2)
 
                     if let clientName = sip.clientName {
                         Text(clientName)
-                            .font(AppTheme.Typography.label(12))
+                            .font(AppTheme.Typography.label(iPad ? 15 : 12))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -190,7 +192,7 @@ struct SipListView: View {
 
                 VStack(alignment: .trailing, spacing: 4) {
                     Text(sip.formattedAmount)
-                        .font(AppTheme.Typography.numeric(14))
+                        .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                         .foregroundColor(.primary)
 
                     statusBadge(sip.status)
@@ -202,12 +204,12 @@ struct SipListView: View {
                 // Frequency & Date
                 HStack(spacing: AppTheme.Spacing.small) {
                     Text("\(sip.frequency.capitalized) - Day \(sip.sipDate)")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
 
                     if sip.installmentsPaid > 0 {
                         Text("\(sip.installmentsPaid) paid")
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(AppTheme.primary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -280,7 +282,7 @@ struct SipListView: View {
                 }
 
                 Text(label)
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
             }
             .foregroundColor(color)
             .padding(.horizontal, AppTheme.Spacing.compact)
@@ -295,7 +297,7 @@ struct SipListView: View {
 
     private func statusBadge(_ status: String) -> some View {
         Text(status)
-            .font(AppTheme.Typography.label(10))
+            .font(AppTheme.Typography.label(iPad ? 12 : 10))
             .foregroundColor(AppTheme.statusColor(status))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -311,7 +313,7 @@ struct SipListView: View {
                 .font(.system(size: 16))
 
             Text(message)
-                .font(AppTheme.Typography.accent(14))
+                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
 
             Spacer()
         }
@@ -334,7 +336,7 @@ struct SipListView: View {
                 .foregroundColor(.secondary)
 
             Text("No SIPs found")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text(store.selectedFilter == "All"
@@ -348,7 +350,7 @@ struct SipListView: View {
                     showCreateSip = true
                 } label: {
                     Text("Create SIP")
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                         .foregroundColor(.white)
                         .padding(.horizontal, 24)
                         .padding(.vertical, 12)

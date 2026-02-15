@@ -9,6 +9,8 @@ struct ProactiveRecommendationsCard: View {
 
     @State private var isExpanded = true
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     private var recommendations: [Recommendation] {
         var items: [Recommendation] = []
@@ -84,12 +86,12 @@ struct ProactiveRecommendationsCard: View {
             }
 
             Text("AVYA RECOMMENDS")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.primary)
 
             if !recommendations.isEmpty {
                 Text("\(recommendations.count)")
-                    .font(AppTheme.Typography.label(10))
+                    .font(AppTheme.Typography.label(iPad ? 12 : 10))
                     .foregroundColor(.white)
                     .frame(width: 20, height: 20)
                     .background(Circle().fill(AppTheme.error))
@@ -110,7 +112,7 @@ struct ProactiveRecommendationsCard: View {
 
             VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                 Text(rec.text)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     .foregroundColor(.primary)
                     .lineLimit(2)
 
@@ -119,7 +121,7 @@ struct ProactiveRecommendationsCard: View {
                         onViewClient(rec.clientId)
                     } label: {
                         Text("View Client")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(AppTheme.primary)
                             .padding(.horizontal, AppTheme.Spacing.compact)
                             .padding(.vertical, AppTheme.Spacing.micro)
@@ -136,7 +138,7 @@ struct ProactiveRecommendationsCard: View {
                             Image(systemName: "sparkles")
                                 .font(.system(size: 9))
                             Text("Ask Avya")
-                                .font(AppTheme.Typography.label(11))
+                                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         }
                         .foregroundColor(.white)
                         .padding(.horizontal, AppTheme.Spacing.compact)
@@ -160,7 +162,7 @@ struct ProactiveRecommendationsCard: View {
                 .foregroundColor(AppTheme.success)
 
             Text("All clear! No urgent recommendations.")
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

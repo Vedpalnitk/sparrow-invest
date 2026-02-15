@@ -7,6 +7,8 @@ struct GlassFloatingButton: View {
     let label: String?
     let action: () -> Void
     var tintColor: Color? = nil
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     init(icon: String, label: String? = nil, tintColor: Color? = nil, action: @escaping () -> Void) {
         self.icon = icon
@@ -22,7 +24,7 @@ struct GlassFloatingButton: View {
                     .font(.system(size: 16, weight: .medium))
                 if let label {
                     Text(label)
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                 }
             }
             .foregroundColor(tintColor ?? AppTheme.primary)

@@ -3,6 +3,8 @@ import SwiftUI
 struct CommunicationsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @StateObject private var store = CommunicationStore()
     @StateObject private var clientStore = ClientStore()
 
@@ -86,16 +88,16 @@ struct CommunicationsView: View {
             ZStack {
                 Circle()
                     .fill(color.opacity(0.1))
-                    .frame(width: 32, height: 32)
+                    .frame(width: iPad ? 38 : 32, height: iPad ? 38 : 32)
                 Image(systemName: icon)
-                    .font(.system(size: 13))
+                    .font(.system(size: iPad ? 16 : 13))
                     .foregroundColor(color)
             }
             Text(value)
-                .font(AppTheme.Typography.headline(20))
+                .font(AppTheme.Typography.headline(iPad ? 24 : 20))
                 .foregroundColor(.primary)
             Text(label)
-                .font(AppTheme.Typography.caption(10))
+                .font(AppTheme.Typography.caption(iPad ? 13 : 10))
                 .foregroundColor(.secondary)
                 .lineLimit(1)
         }
@@ -108,7 +110,7 @@ struct CommunicationsView: View {
     private var channelFilterToggle: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Channel")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -133,7 +135,7 @@ struct CommunicationsView: View {
                 Image(systemName: icon)
                     .font(.system(size: 13))
                 Text(label)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
             }
             .foregroundColor(isSelected ? .white : color)
             .frame(maxWidth: .infinity)
@@ -153,7 +155,7 @@ struct CommunicationsView: View {
     private var typeFilterSelector: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Type")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -178,7 +180,7 @@ struct CommunicationsView: View {
             }
         } label: {
             Text(label)
-                .font(AppTheme.Typography.label(12))
+                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                 .fixedSize()
                 .foregroundColor(isSelected ? .white : AppTheme.primary)
                 .padding(.horizontal, 12)
@@ -203,12 +205,12 @@ struct CommunicationsView: View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             HStack {
                 Text("History")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(.secondary)
                     .textCase(.uppercase)
                 Spacer()
                 Text("\(store.total) total")
-                    .font(AppTheme.Typography.caption(11))
+                    .font(AppTheme.Typography.caption(iPad ? 13 : 11))
                     .foregroundColor(.secondary)
             }
 
@@ -221,10 +223,10 @@ struct CommunicationsView: View {
                         .font(.system(size: 36))
                         .foregroundColor(.secondary.opacity(0.4))
                     Text("No communications yet")
-                        .font(AppTheme.Typography.body(14))
+                        .font(AppTheme.Typography.body(iPad ? 16 : 14))
                         .foregroundColor(.secondary)
                     Text("Tap compose to send your first message")
-                        .font(AppTheme.Typography.caption(12))
+                        .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                         .foregroundColor(.secondary.opacity(0.6))
                 }
                 .frame(maxWidth: .infinity)
@@ -266,22 +268,22 @@ struct CommunicationsView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(log.client?.name ?? "Unknown")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.primary)
                     .lineLimit(1)
                 Text(log.subject ?? log.type)
-                    .font(AppTheme.Typography.caption(12))
+                    .font(AppTheme.Typography.caption(iPad ? 15 : 12))
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                 Text(formatDate(log.createdAt))
-                    .font(AppTheme.Typography.caption(11))
+                    .font(AppTheme.Typography.caption(iPad ? 13 : 11))
                     .foregroundColor(.secondary.opacity(0.7))
             }
 
             Spacer()
 
             Text(log.status)
-                .font(AppTheme.Typography.label(10))
+                .font(AppTheme.Typography.label(iPad ? 12 : 10))
                 .foregroundColor(statusColor(log.status))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -301,14 +303,14 @@ struct CommunicationsView: View {
                         .font(.system(size: 10))
                     Text("Previous")
                 }
-                .font(AppTheme.Typography.label(13))
+                .font(AppTheme.Typography.label(iPad ? 15 : 13))
                 .foregroundColor(store.page <= 1 ? .secondary.opacity(0.4) : AppTheme.primary)
             }
             .disabled(store.page <= 1)
 
             Spacer()
             Text("Page \(store.page) of \(store.totalPages)")
-                .font(AppTheme.Typography.caption(12))
+                .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                 .foregroundColor(.secondary)
             Spacer()
 
@@ -320,7 +322,7 @@ struct CommunicationsView: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 10))
                 }
-                .font(AppTheme.Typography.label(13))
+                .font(AppTheme.Typography.label(iPad ? 15 : 13))
                 .foregroundColor(store.page >= store.totalPages ? .secondary.opacity(0.4) : AppTheme.primary)
             }
             .disabled(store.page >= store.totalPages)
@@ -354,6 +356,8 @@ private struct ComposeSheet: View {
     let clients: [FAClient]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var selectedClient: FAClient?
     @State private var searchQuery = ""
@@ -404,7 +408,7 @@ private struct ComposeSheet: View {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(AppTheme.success)
                         Text("Copied to clipboard")
-                            .font(AppTheme.Typography.accent(13))
+                            .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
@@ -434,11 +438,11 @@ private struct ComposeSheet: View {
             }
 
             Text("Sent successfully!")
-                .font(AppTheme.Typography.headline(20))
+                .font(AppTheme.Typography.headline(iPad ? 24 : 20))
                 .foregroundColor(.primary)
 
             Text("Your message has been delivered")
-                .font(AppTheme.Typography.body(14))
+                .font(AppTheme.Typography.body(iPad ? 16 : 14))
                 .foregroundColor(.secondary)
 
             Button {
@@ -446,7 +450,7 @@ private struct ComposeSheet: View {
                 dismiss()
             } label: {
                 Text("Done")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -465,7 +469,7 @@ private struct ComposeSheet: View {
     private var clientSelection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Select Client")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -474,7 +478,7 @@ private struct ComposeSheet: View {
                     .font(.system(size: 14))
                     .foregroundColor(.secondary)
                 TextField("Search clients...", text: $searchQuery)
-                    .font(AppTheme.Typography.body(14))
+                    .font(AppTheme.Typography.body(iPad ? 16 : 14))
             }
             .padding(.horizontal, AppTheme.Spacing.compact)
             .padding(.vertical, 10)
@@ -505,16 +509,16 @@ private struct ComposeSheet: View {
                                 .fill(AppTheme.primary.opacity(0.1))
                                 .frame(width: 36, height: 36)
                             Text(String(client.name.prefix(1)).uppercased())
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                 .foregroundColor(AppTheme.primary)
                         }
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(client.name)
-                                .font(AppTheme.Typography.accent(14))
+                                .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                 .foregroundColor(.primary)
                             Text(client.email)
-                                .font(AppTheme.Typography.caption(12))
+                                .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                                 .foregroundColor(.secondary)
                         }
                         Spacer()
@@ -539,16 +543,16 @@ private struct ComposeSheet: View {
                         .fill(AppTheme.primary.opacity(0.1))
                         .frame(width: 32, height: 32)
                     Text(String(selectedClient?.name.prefix(1) ?? "?").uppercased())
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(AppTheme.primary)
                 }
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text(selectedClient?.name ?? "")
-                        .font(AppTheme.Typography.accent(14))
+                        .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                         .foregroundColor(.primary)
                     Text(selectedClient?.email ?? "")
-                        .font(AppTheme.Typography.caption(12))
+                        .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                         .foregroundColor(.secondary)
                 }
 
@@ -598,12 +602,12 @@ private struct ComposeSheet: View {
                     // Subject field
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                         Text("Subject")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                             .textCase(.uppercase)
 
                         TextField("Email subject", text: $subject)
-                            .font(AppTheme.Typography.body(14))
+                            .font(AppTheme.Typography.body(iPad ? 16 : 14))
                             .padding(.horizontal, AppTheme.Spacing.compact)
                             .padding(.vertical, 10)
                             .background(
@@ -626,7 +630,7 @@ private struct ComposeSheet: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 12))
                     Text(error)
-                        .font(AppTheme.Typography.caption(12))
+                        .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                 }
                 .foregroundColor(AppTheme.error)
             }
@@ -641,7 +645,7 @@ private struct ComposeSheet: View {
     private var channelToggle: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Channel")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -661,7 +665,7 @@ private struct ComposeSheet: View {
                 Image(systemName: icon)
                     .font(.system(size: 13))
                 Text(label)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
             }
             .foregroundColor(isSelected ? .white : color)
             .frame(maxWidth: .infinity)
@@ -681,7 +685,7 @@ private struct ComposeSheet: View {
     private var templateSelector: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Template")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -695,7 +699,7 @@ private struct ComposeSheet: View {
                             }
                         } label: {
                             Text(template.label)
-                                .font(AppTheme.Typography.label(12))
+                                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                 .fixedSize()
                                 .foregroundColor(selectedType == template.type ? .white : AppTheme.primary)
                                 .padding(.horizontal, 12)
@@ -724,7 +728,7 @@ private struct ComposeSheet: View {
         return VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             HStack {
                 Text("Message Preview")
-                    .font(AppTheme.Typography.label(11))
+                    .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     .foregroundColor(.secondary)
                     .textCase(.uppercase)
 
@@ -741,7 +745,7 @@ private struct ComposeSheet: View {
                         Image(systemName: "doc.on.doc")
                             .font(.system(size: 10))
                         Text("Copy")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                     }
                     .foregroundColor(AppTheme.primary)
                 }
@@ -749,7 +753,7 @@ private struct ComposeSheet: View {
             }
 
             Text(previewText)
-                .font(AppTheme.Typography.body(13))
+                .font(AppTheme.Typography.body(iPad ? 15 : 13))
                 .foregroundColor(.primary)
                 .padding(AppTheme.Spacing.compact)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -778,7 +782,7 @@ private struct ComposeSheet: View {
                     Image(systemName: channel == "WHATSAPP" ? "paperplane.fill" : "envelope.fill")
                         .font(.system(size: 14))
                     Text(channel == "WHATSAPP" ? "Send via WhatsApp" : "Send via Email")
-                        .font(AppTheme.Typography.accent(15))
+                        .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                 }
             }
             .foregroundColor(.white)
@@ -844,6 +848,8 @@ private struct BulkSendSheet: View {
     let clients: [FAClient]
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
 
     @State private var selectedIds: Set<String> = []
     @State private var channel = "EMAIL"
@@ -895,32 +901,32 @@ private struct BulkSendSheet: View {
             }
 
             Text("Bulk send complete")
-                .font(AppTheme.Typography.headline(20))
+                .font(AppTheme.Typography.headline(iPad ? 24 : 20))
                 .foregroundColor(.primary)
 
             HStack(spacing: AppTheme.Spacing.medium) {
                 VStack(spacing: 4) {
                     Text("\(result.sent)")
-                        .font(AppTheme.Typography.headline(22))
+                        .font(AppTheme.Typography.headline(iPad ? 26 : 22))
                         .foregroundColor(AppTheme.success)
                     Text("Sent")
-                        .font(AppTheme.Typography.caption(11))
+                        .font(AppTheme.Typography.caption(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
                 VStack(spacing: 4) {
                     Text("\(result.failed)")
-                        .font(AppTheme.Typography.headline(22))
+                        .font(AppTheme.Typography.headline(iPad ? 26 : 22))
                         .foregroundColor(result.failed > 0 ? AppTheme.error : .secondary)
                     Text("Failed")
-                        .font(AppTheme.Typography.caption(11))
+                        .font(AppTheme.Typography.caption(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
                 VStack(spacing: 4) {
                     Text("\(result.total)")
-                        .font(AppTheme.Typography.headline(22))
+                        .font(AppTheme.Typography.headline(iPad ? 26 : 22))
                         .foregroundColor(.primary)
                     Text("Total")
-                        .font(AppTheme.Typography.caption(11))
+                        .font(AppTheme.Typography.caption(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                 }
             }
@@ -930,7 +936,7 @@ private struct BulkSendSheet: View {
                 dismiss()
             } label: {
                 Text("Done")
-                    .font(AppTheme.Typography.accent(15))
+                    .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -958,12 +964,12 @@ private struct BulkSendSheet: View {
             VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
                 HStack {
                     Text("Select Clients")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
                         .textCase(.uppercase)
                     Spacer()
                     Text("\(selectedIds.count) selected")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(AppTheme.primary)
                 }
 
@@ -973,7 +979,7 @@ private struct BulkSendSheet: View {
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
                     TextField("Search clients...", text: $searchQuery)
-                        .font(AppTheme.Typography.body(14))
+                        .font(AppTheme.Typography.body(iPad ? 16 : 14))
                 }
                 .padding(.horizontal, AppTheme.Spacing.compact)
                 .padding(.vertical, 10)
@@ -1007,7 +1013,7 @@ private struct BulkSendSheet: View {
                             Image(systemName: allSelected ? "checkmark.circle.fill" : "circle")
                                 .font(.system(size: 14))
                             Text(allSelected ? "Deselect All" : "Select All")
-                                .font(AppTheme.Typography.label(12))
+                                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                         }
                         .foregroundColor(AppTheme.primary)
                     }
@@ -1033,16 +1039,16 @@ private struct BulkSendSheet: View {
                                     .fill(AppTheme.primary.opacity(0.1))
                                     .frame(width: 32, height: 32)
                                 Text(String(client.name.prefix(1)).uppercased())
-                                    .font(AppTheme.Typography.accent(12))
+                                    .font(AppTheme.Typography.accent(iPad ? 14 : 12))
                                     .foregroundColor(AppTheme.primary)
                             }
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(client.name)
-                                    .font(AppTheme.Typography.accent(14))
+                                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                                     .foregroundColor(.primary)
                                 Text(client.email)
-                                    .font(AppTheme.Typography.caption(12))
+                                    .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
@@ -1058,7 +1064,7 @@ private struct BulkSendSheet: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 12))
                     Text(error)
-                        .font(AppTheme.Typography.caption(12))
+                        .font(AppTheme.Typography.caption(iPad ? 14 : 12))
                 }
                 .foregroundColor(AppTheme.error)
             }
@@ -1075,7 +1081,7 @@ private struct BulkSendSheet: View {
                         Image(systemName: channel == "WHATSAPP" ? "paperplane.fill" : "envelope.fill")
                             .font(.system(size: 14))
                         Text("Send to \(selectedIds.count) client\(selectedIds.count == 1 ? "" : "s")")
-                            .font(AppTheme.Typography.accent(15))
+                            .font(AppTheme.Typography.accent(iPad ? 18 : 15))
                     }
                 }
                 .foregroundColor(.white)
@@ -1094,7 +1100,7 @@ private struct BulkSendSheet: View {
     private var bulkChannelToggle: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Channel")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -1114,7 +1120,7 @@ private struct BulkSendSheet: View {
                 Image(systemName: icon)
                     .font(.system(size: 13))
                 Text(label)
-                    .font(AppTheme.Typography.accent(13))
+                    .font(AppTheme.Typography.accent(iPad ? 15 : 13))
             }
             .foregroundColor(isSelected ? .white : color)
             .frame(maxWidth: .infinity)
@@ -1134,7 +1140,7 @@ private struct BulkSendSheet: View {
     private var bulkTemplateSelector: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.small) {
             Text("Template")
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
                 .textCase(.uppercase)
 
@@ -1147,7 +1153,7 @@ private struct BulkSendSheet: View {
                             }
                         } label: {
                             Text(template.label)
-                                .font(AppTheme.Typography.label(12))
+                                .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                 .fixedSize()
                                 .foregroundColor(selectedType == template.type ? .white : AppTheme.primary)
                                 .padding(.horizontal, 12)

@@ -4,6 +4,8 @@ struct FundDetailView: View {
     let schemeCode: Int
     @StateObject private var store = FundsStore()
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.horizontalSizeClass) private var sizeClass
+    private var iPad: Bool { sizeClass == .regular }
     @State private var selectedChartPeriod = "1Y"
 
     private var filteredNavHistory: [NavHistoryPoint] {
@@ -90,7 +92,7 @@ struct FundDetailView: View {
     private func fundHeader(_ fund: FAFundDetail) -> some View {
         VStack(spacing: AppTheme.Spacing.compact) {
             Text(fund.schemeName)
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.center)
 
@@ -107,16 +109,16 @@ struct FundDetailView: View {
                 // NAV
                 VStack(spacing: 4) {
                     Text("NAV")
-                        .font(AppTheme.Typography.label(11))
+                        .font(AppTheme.Typography.label(iPad ? 13 : 11))
                         .foregroundColor(.secondary)
 
                     Text(fund.nav != nil ? "\u{20B9}\(String(format: "%.4f", fund.nav!))" : "-")
-                        .font(AppTheme.Typography.numeric(20))
+                        .font(AppTheme.Typography.numeric(iPad ? 24 : 20))
                         .foregroundColor(AppTheme.primary)
 
                     if let navDate = fund.formattedNavDate {
                         Text(navDate)
-                            .font(AppTheme.Typography.label(10))
+                            .font(AppTheme.Typography.label(iPad ? 12 : 10))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -125,14 +127,14 @@ struct FundDetailView: View {
                 if let returns1y = fund.returns1y {
                     VStack(spacing: 4) {
                         Text("1Y Return")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
 
                         HStack(spacing: 2) {
                             Image(systemName: returns1y >= 0 ? "arrow.up.right" : "arrow.down.right")
                                 .font(.system(size: 12))
                             Text(returns1y.formattedPercent)
-                                .font(AppTheme.Typography.numeric(20))
+                                .font(AppTheme.Typography.numeric(iPad ? 24 : 20))
                         }
                         .foregroundColor(AppTheme.returnColor(returns1y))
                     }
@@ -164,10 +166,10 @@ struct FundDetailView: View {
                 if let aum = fund.aum {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("AUM")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                         Text(AppTheme.formatCurrencyWithSymbol(aum))
-                            .font(AppTheme.Typography.numeric(14))
+                            .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                             .foregroundColor(.primary)
                     }
                 }
@@ -177,10 +179,10 @@ struct FundDetailView: View {
                 if let expense = fund.expenseRatio {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("Expense Ratio")
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                         Text(String(format: "%.2f%%", expense))
-                            .font(AppTheme.Typography.numeric(14))
+                            .font(AppTheme.Typography.numeric(iPad ? 17 : 14))
                             .foregroundColor(.primary)
                     }
                 }
@@ -191,16 +193,16 @@ struct FundDetailView: View {
     private func returnColumn(_ period: String, _ value: Double?) -> some View {
         VStack(spacing: 4) {
             Text(period)
-                .font(AppTheme.Typography.label(11))
+                .font(AppTheme.Typography.label(iPad ? 13 : 11))
                 .foregroundColor(.secondary)
 
             if let value {
                 Text(value.formattedPercent)
-                    .font(AppTheme.Typography.headline(16))
+                    .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     .foregroundColor(AppTheme.returnColor(value))
             } else {
                 Text("-")
-                    .font(AppTheme.Typography.accent(16))
+                    .font(AppTheme.Typography.accent(iPad ? 19 : 16))
                     .foregroundColor(.secondary)
             }
         }
@@ -276,13 +278,13 @@ struct FundDetailView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(holding.name)
-                        .font(AppTheme.Typography.accent(13))
+                        .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
                     if let sector = holding.sector {
                         Text(sector)
-                            .font(AppTheme.Typography.label(11))
+                            .font(AppTheme.Typography.label(iPad ? 13 : 11))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -290,7 +292,7 @@ struct FundDetailView: View {
                 Spacer()
 
                 Text(String(format: "%.2f%%", holding.percentage))
-                    .font(AppTheme.Typography.numeric(13))
+                    .font(AppTheme.Typography.numeric(iPad ? 15 : 13))
                     .foregroundColor(AppTheme.primary)
             }
 
@@ -330,7 +332,7 @@ struct FundDetailView: View {
                 }
 
                 Text(title)
-                    .font(AppTheme.Typography.headline(16))
+                    .font(AppTheme.Typography.headline(iPad ? 19 : 16))
                     .foregroundColor(.primary)
             }
 
@@ -344,13 +346,13 @@ struct FundDetailView: View {
     private func infoRow(_ label: String, _ value: String) -> some View {
         HStack {
             Text(label)
-                .font(AppTheme.Typography.caption(13))
+                .font(AppTheme.Typography.caption(iPad ? 15 : 13))
                 .foregroundColor(.secondary)
 
             Spacer()
 
             Text(value)
-                .font(AppTheme.Typography.accent(13))
+                .font(AppTheme.Typography.accent(iPad ? 15 : 13))
                 .foregroundColor(.primary)
                 .multilineTextAlignment(.trailing)
         }
@@ -360,7 +362,7 @@ struct FundDetailView: View {
 
     private func categoryBadge(_ category: String) -> some View {
         Text(category)
-            .font(AppTheme.Typography.label(10))
+            .font(AppTheme.Typography.label(iPad ? 12 : 10))
             .foregroundColor(AppTheme.primary)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -371,7 +373,7 @@ struct FundDetailView: View {
     private func riskBadge(_ risk: String) -> some View {
         let color = riskColor(risk)
         return Text(risk)
-            .font(AppTheme.Typography.label(10))
+            .font(AppTheme.Typography.label(iPad ? 12 : 10))
             .foregroundColor(color)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -399,7 +401,7 @@ struct FundDetailView: View {
                 .foregroundColor(AppTheme.warning)
 
             Text("Something went wrong")
-                .font(AppTheme.Typography.headline(17))
+                .font(AppTheme.Typography.headline(iPad ? 20 : 17))
                 .foregroundColor(.primary)
 
             Text(message)
@@ -411,7 +413,7 @@ struct FundDetailView: View {
                 Task { await store.loadFundDetail(schemeCode: schemeCode) }
             } label: {
                 Text("Retry")
-                    .font(AppTheme.Typography.accent(14))
+                    .font(AppTheme.Typography.accent(iPad ? 17 : 14))
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 10)
