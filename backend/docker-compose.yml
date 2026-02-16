@@ -3,24 +3,24 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: mf-postgres
+    container_name: si-postgres
     environment:
-      POSTGRES_USER: mfuser
-      POSTGRES_PASSWORD: mfpassword
-      POSTGRES_DB: mutualfunds
+      POSTGRES_USER: siuser
+      POSTGRES_PASSWORD: sipassword
+      POSTGRES_DB: sparrowinvest
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U mfuser -d mutualfunds']
+      test: ['CMD-SHELL', 'pg_isready -U siuser -d sparrowinvest']
       interval: 5s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
-    container_name: mf-redis
+    container_name: si-redis
     ports:
       - '6379:6379'
     volumes:
@@ -33,7 +33,7 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: mf-minio
+    container_name: si-minio
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
