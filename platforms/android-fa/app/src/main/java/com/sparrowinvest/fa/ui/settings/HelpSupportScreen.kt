@@ -161,10 +161,10 @@ fun HelpSupportScreen(
                     HelpItem(
                         icon = Icons.Default.Email,
                         title = "Email Support",
-                        subtitle = "support@sparrowinvest.com",
+                        subtitle = "support@sparrow-invest.com",
                         onClick = {
                             val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                data = Uri.parse("mailto:support@sparrowinvest.com")
+                                data = Uri.parse("mailto:support@sparrow-invest.com")
                                 putExtra(Intent.EXTRA_SUBJECT, "FA App Support Request")
                             }
                             context.startActivity(Intent.createChooser(intent, "Send Email"))

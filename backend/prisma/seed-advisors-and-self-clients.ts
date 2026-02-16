@@ -22,11 +22,11 @@ const FUNDS = [
 
 // New Financial Advisors
 const NEW_ADVISORS = [
-  { name: 'Priya Sharma', email: 'priya.sharma@sparrowinvest.com', city: 'Mumbai', phone: '+91 98765 11111' },
-  { name: 'Arun Mehta', email: 'arun.mehta@sparrowinvest.com', city: 'Delhi', phone: '+91 98765 22222' },
-  { name: 'Kavitha Nair', email: 'kavitha.nair@sparrowinvest.com', city: 'Bengaluru', phone: '+91 98765 33333' },
-  { name: 'Sanjay Gupta', email: 'sanjay.gupta@sparrowinvest.com', city: 'Chennai', phone: '+91 98765 44444' },
-  { name: 'Neha Deshmukh', email: 'neha.deshmukh@sparrowinvest.com', city: 'Pune', phone: '+91 98765 55555' },
+  { name: 'Priya Sharma', email: 'priya.sharma@sparrow-invest.com', city: 'Mumbai', phone: '+91 98765 11111' },
+  { name: 'Arun Mehta', email: 'arun.mehta@sparrow-invest.com', city: 'Delhi', phone: '+91 98765 22222' },
+  { name: 'Kavitha Nair', email: 'kavitha.nair@sparrow-invest.com', city: 'Bengaluru', phone: '+91 98765 33333' },
+  { name: 'Sanjay Gupta', email: 'sanjay.gupta@sparrow-invest.com', city: 'Chennai', phone: '+91 98765 44444' },
+  { name: 'Neha Deshmukh', email: 'neha.deshmukh@sparrow-invest.com', city: 'Pune', phone: '+91 98765 55555' },
 ];
 
 // Self-assisted clients (will be assigned to a platform advisor)
@@ -45,27 +45,27 @@ const SELF_ASSISTED_CLIENTS = [
 
 // Clients for each new advisor
 const ADVISOR_CLIENTS: Record<string, Array<{ name: string; email: string; phone: string; city: string; state: string; risk: string; age: number }>> = {
-  'priya.sharma@sparrowinvest.com': [
+  'priya.sharma@sparrow-invest.com': [
     { name: 'Ramesh Iyer', email: 'ramesh.iyer@email.com', phone: '+91 76543 11111', city: 'Mumbai', state: 'Maharashtra', risk: 'MODERATE', age: 48 },
     { name: 'Lakshmi Venkat', email: 'lakshmi.venkat@email.com', phone: '+91 76543 22222', city: 'Mumbai', state: 'Maharashtra', risk: 'CONSERVATIVE', age: 55 },
     { name: 'Deepak Shah', email: 'deepak.shah@email.com', phone: '+91 76543 33333', city: 'Thane', state: 'Maharashtra', risk: 'AGGRESSIVE', age: 34 },
   ],
-  'arun.mehta@sparrowinvest.com': [
+  'arun.mehta@sparrow-invest.com': [
     { name: 'Suresh Yadav', email: 'suresh.yadav@email.com', phone: '+91 76543 44444', city: 'Delhi', state: 'Delhi', risk: 'MODERATE', age: 41 },
     { name: 'Geeta Rastogi', email: 'geeta.rastogi@email.com', phone: '+91 76543 55555', city: 'Ghaziabad', state: 'Uttar Pradesh', risk: 'CONSERVATIVE', age: 58 },
     { name: 'Mohit Arora', email: 'mohit.arora@email.com', phone: '+91 76543 66666', city: 'Noida', state: 'Uttar Pradesh', risk: 'AGGRESSIVE', age: 29 },
     { name: 'Anita Bhardwaj', email: 'anita.bhardwaj@email.com', phone: '+91 76543 77777', city: 'Faridabad', state: 'Haryana', risk: 'MODERATE', age: 36 },
   ],
-  'kavitha.nair@sparrowinvest.com': [
+  'kavitha.nair@sparrow-invest.com': [
     { name: 'Ravi Kumar', email: 'ravi.kumar@email.com', phone: '+91 76543 88888', city: 'Bengaluru', state: 'Karnataka', risk: 'AGGRESSIVE', age: 32 },
     { name: 'Suma Rao', email: 'suma.rao@email.com', phone: '+91 76543 99999', city: 'Bengaluru', state: 'Karnataka', risk: 'MODERATE', age: 44 },
     { name: 'Vinay Gowda', email: 'vinay.gowda@email.com', phone: '+91 76544 11111', city: 'Mysuru', state: 'Karnataka', risk: 'CONSERVATIVE', age: 61 },
   ],
-  'sanjay.gupta@sparrowinvest.com': [
+  'sanjay.gupta@sparrow-invest.com': [
     { name: 'Balaji Krishnan', email: 'balaji.krishnan@email.com', phone: '+91 76544 22222', city: 'Chennai', state: 'Tamil Nadu', risk: 'MODERATE', age: 39 },
     { name: 'Meenakshi Sundaram', email: 'meenakshi.s@email.com', phone: '+91 76544 33333', city: 'Chennai', state: 'Tamil Nadu', risk: 'CONSERVATIVE', age: 52 },
   ],
-  'neha.deshmukh@sparrowinvest.com': [
+  'neha.deshmukh@sparrow-invest.com': [
     { name: 'Prasad Kulkarni', email: 'prasad.kulkarni@email.com', phone: '+91 76544 44444', city: 'Pune', state: 'Maharashtra', risk: 'AGGRESSIVE', age: 27 },
     { name: 'Swati Patil', email: 'swati.patil@email.com', phone: '+91 76544 55555', city: 'Pune', state: 'Maharashtra', risk: 'MODERATE', age: 38 },
     { name: 'Ajay Deshpande', email: 'ajay.deshpande@email.com', phone: '+91 76544 66666', city: 'Nashik', state: 'Maharashtra', risk: 'CONSERVATIVE', age: 47 },
@@ -251,10 +251,10 @@ async function main() {
   console.log('\n🤖 Creating Self-Service Platform Advisor...');
 
   const selfServiceAdvisor = await prisma.user.upsert({
-    where: { email: 'self-service@sparrowinvest.com' },
+    where: { email: 'self-service@sparrow-invest.com' },
     update: {},
     create: {
-      email: 'self-service@sparrowinvest.com',
+      email: 'self-service@sparrow-invest.com',
       passwordHash: await bcrypt.hash('SelfService@123', 10),
       role: 'advisor',
       isActive: true,
@@ -342,14 +342,14 @@ async function main() {
   // =====================
   console.log('\n👤 Creating demo Staff Member...');
 
-  const priyaAdvisorId = createdAdvisors['priya.sharma@sparrowinvest.com'];
+  const priyaAdvisorId = createdAdvisors['priya.sharma@sparrow-invest.com'];
   if (priyaAdvisorId) {
     const staffPassword = await bcrypt.hash('Staff@123', 10);
     const staffUser = await prisma.user.upsert({
-      where: { email: 'neha.staff@sparrowinvest.com' },
+      where: { email: 'neha.staff@sparrow-invest.com' },
       update: {},
       create: {
-        email: 'neha.staff@sparrowinvest.com',
+        email: 'neha.staff@sparrow-invest.com',
         passwordHash: staffPassword,
         role: 'fa_staff',
         isActive: true,
@@ -375,7 +375,7 @@ async function main() {
       },
     });
 
-    console.log(`  ✓ Neha Sharma (neha.staff@sparrowinvest.com) → Staff for Priya Sharma`);
+    console.log(`  ✓ Neha Sharma (neha.staff@sparrow-invest.com) → Staff for Priya Sharma`);
     console.log(`    Allowed pages: Dashboard, Clients, Transactions, Funds`);
   }
 
@@ -410,8 +410,8 @@ async function main() {
 
   console.log('\n✅ Seeding completed successfully!');
   console.log('\n📝 Login credentials:');
-  console.log('   Advisors: [email]@sparrowinvest.com / Advisor@123');
-  console.log('   Staff:    neha.staff@sparrowinvest.com / Staff@123');
+  console.log('   Advisors: [email]@sparrow-invest.com / Advisor@123');
+  console.log('   Staff:    neha.staff@sparrow-invest.com / Staff@123');
   console.log('   Self-assisted clients: [email]@demo.com / Demo@123\n');
 
   await prisma.$disconnect();

@@ -477,7 +477,7 @@ class AvyaChatStore: ObservableObject {
         #if DEBUG
         return "http://localhost:3501/api/v1"
         #else
-        return "https://api.sparrowinvest.com/api/v1"
+        return "https://api.sparrow-invest.com/api/v1"
         #endif
     }
 }

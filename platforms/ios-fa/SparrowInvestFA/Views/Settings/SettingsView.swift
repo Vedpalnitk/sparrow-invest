@@ -64,15 +64,15 @@ struct SettingsView: View {
                     VStack(spacing: 0) {
                         menuItem(icon: "hand.raised", title: "Privacy Policy",
                                  subtitle: "How we handle your data") {
-                            openURL("https://sparrowinvest.com/privacy")
+                            openURL("https://sparrow-invest.com/privacy")
                         }
                         menuItem(icon: "doc.text", title: "Terms of Service",
                                  subtitle: "Usage terms and conditions") {
-                            openURL("https://sparrowinvest.com/terms")
+                            openURL("https://sparrow-invest.com/terms")
                         }
                         menuItem(icon: "building.columns", title: "Regulatory Info",
                                  subtitle: "SEBI & AMFI disclosures") {
-                            openURL("https://sparrowinvest.com/regulatory")
+                            openURL("https://sparrow-invest.com/regulatory")
                         }
                     }
                     .glassCard(cornerRadius: AppTheme.CornerRadius.large, padding: AppTheme.Spacing.small)

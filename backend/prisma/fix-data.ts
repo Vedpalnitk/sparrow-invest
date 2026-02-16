@@ -123,7 +123,7 @@ async function fixAdvisorMapping() {
 
   // Get the main advisor
   const advisor = await prisma.user.findFirst({
-    where: { email: 'advisor@sparrowinvest.com' }
+    where: { email: 'advisor@sparrow-invest.com' }
   });
 
   if (!advisor) {
@@ -144,7 +144,7 @@ async function fixAdvisorMapping() {
   // Filter to those with advisors that don't match our known advisors
   const knownAdvisorIds = [
     advisor.id,
-    (await prisma.user.findFirst({ where: { email: 'admin@sparrowinvest.com' } }))?.id,
+    (await prisma.user.findFirst({ where: { email: 'admin@sparrow-invest.com' } }))?.id,
     (await prisma.user.findFirst({ where: { email: 'admin@sparrow.com' } }))?.id,
   ].filter(Boolean);
 

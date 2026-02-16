@@ -326,7 +326,7 @@ export default function AdvisorLoginPage() {
                       border: `1px solid ${colors.inputBorder}`,
                       color: colors.textPrimary,
                     }}
-                    placeholder="advisor@sparrowinvest.com"
+                    placeholder="advisor@sparrow-invest.com"
                     required
                   />
                 </div>
@@ -397,7 +397,7 @@ export default function AdvisorLoginPage() {
                 className="text-sm font-medium transition-colors hover:opacity-80"
                 style={{ color: colors.textTertiary }}
               >
-                Back to sparrowinvest.com
+                Back to sparrow-invest.com
               </Link>
             </div>
           </div>

@@ -146,7 +146,7 @@ app.enableCors({
 
 **Environment variable**:
 ```env
-CORS_ORIGINS=https://app.sparrowinvest.com,https://admin.sparrowinvest.com
+CORS_ORIGINS=https://app.sparrow-invest.com,https://admin.sparrow-invest.com
 ```
 
 ### 2.4 Remove Development Role Bypass 🔴
@@ -656,7 +656,7 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
       - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.letsencrypt.acme.email=admin@sparrowinvest.com"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@sparrow-invest.com"
       - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
@@ -678,7 +678,7 @@ services:
       - REDIS_HOST=redis
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`api.sparrowinvest.com`)"
+      - "traefik.http.routers.backend.rule=Host(`api.sparrow-invest.com`)"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
     depends_on:
       - postgres
@@ -697,7 +697,7 @@ services:
       - REDIS_HOST=redis
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ml.rule=Host(`ml.sparrowinvest.com`)"
+      - "traefik.http.routers.ml.rule=Host(`ml.sparrow-invest.com`)"
       - "traefik.http.routers.ml.tls.certresolver=letsencrypt"
     depends_on:
       - redis
@@ -754,7 +754,7 @@ REDIS_HOST=redis
 REDIS_PORT=6379
 
 # CORS
-CORS_ORIGINS=https://app.sparrowinvest.com,https://admin.sparrowinvest.com
+CORS_ORIGINS=https://app.sparrow-invest.com,https://admin.sparrow-invest.com
 
 # ML Service
 ML_SERVICE_URL=ml-service:3503
@@ -919,7 +919,7 @@ jobs:
       - name: Build
         run: cd platforms/web && npm run build
         env:
-          NEXT_PUBLIC_API_URL: https://api.sparrowinvest.com
+          NEXT_PUBLIC_API_URL: https://api.sparrow-invest.com
 
   deploy:
     needs: build

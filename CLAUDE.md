@@ -126,6 +126,15 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 - Web API services in `platforms/web/src/services/`
 - iOS API services in `platforms/ios-consumer/SparrowInvest/Services/`
 
+### Subdomain Portal Separation
+- `app.sparrow-invest.com` → FA portal only (admin routes blocked)
+- `admin.sparrow-invest.com` → Admin portal only (advisor routes blocked)
+- `localhost:3500` → Both portals (dev mode, no restrictions)
+- Implemented via Next.js edge middleware (`platforms/web/middleware.ts`) reading `Host` header
+- Defense-in-depth: client-side hostname guards in `AdminLayout.tsx`, `AdvisorLayout.tsx`, and `index.tsx`
+- Env vars `NEXT_PUBLIC_APP_HOSTNAME` / `NEXT_PUBLIC_ADMIN_HOSTNAME` control behavior; unset = dev mode
+- Vercel preview deployments fall into dev mode (full access)
+
 ### State Management
 - Web: React Context API (no Redux), localStorage for persistence
 - iOS: SwiftUI @Observable stores, UserDefaults for persistence
@@ -133,6 +142,7 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 ## Key Files
 
 ### Web App
+- `platforms/web/middleware.ts` - Edge middleware for subdomain-based portal separation
 - `platforms/web/src/pages/_app.tsx` - Next.js app wrapper with ThemeProvider
 - `platforms/web/src/context/ThemeContext.tsx` - Web theme management
 - `platforms/web/src/utils/v4-colors.ts` - V4 design system colors
@@ -175,6 +185,13 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 
 ## Environment Setup
 
+### Web App (.env.local)
+```bash
+# Subdomain-based portal separation (unset for local dev = full access)
+NEXT_PUBLIC_APP_HOSTNAME=app.sparrow-invest.com
+NEXT_PUBLIC_ADMIN_HOSTNAME=admin.sparrow-invest.com
+```
+
 ### Backend (.env)
 ```bash
 DATABASE_URL="postgresql://user:pass@localhost:5432/sparrowinvest"
@@ -195,6 +212,8 @@ PORT=3501
 | Backend status values mismatch | Backend uses title case (`Pending`, `Completed`), not uppercase (`PENDING`, `EXECUTED`) |
 | iOS WebView cookies not persisting | Enable `setAcceptThirdPartyCookies()` on the WebView instance |
 | Emulator can't reach backend | Use `10.0.2.2` instead of `localhost` for Android emulator |
+| Admin routes 404 in production | Check `NEXT_PUBLIC_APP_HOSTNAME` — middleware blocks `/admin/*` on app subdomain |
+| Middleware not running | `middleware.ts` must be at `platforms/web/middleware.ts` (project root, not `src/`) for Pages Router |
 
 ---
 
@@ -212,9 +231,9 @@ All demo users use the format `firstname.lastname@demo.com` with password `Demo@
 
 | Email | Password | Name |
 |-------|----------|------|
-| `priya.sharma@sparrowinvest.com` | `Advisor@123` | Priya Sharma |
-| `arun.mehta@sparrowinvest.com` | `Advisor@123` | Arun Mehta |
-| `kavitha.nair@sparrowinvest.com` | `Advisor@123` | Kavitha Nair |
+| `priya.sharma@sparrow-invest.com` | `Advisor@123` | Priya Sharma |
+| `arun.mehta@sparrow-invest.com` | `Advisor@123` | Arun Mehta |
+| `kavitha.nair@sparrow-invest.com` | `Advisor@123` | Kavitha Nair |
 
 ### User Types
 

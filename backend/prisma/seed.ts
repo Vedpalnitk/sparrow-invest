@@ -120,10 +120,10 @@ async function main() {
   // Create admin user for Admin Portal
   const adminPassword = await bcrypt.hash('Admin@123', 10);
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@sparrowinvest.com' },
+    where: { email: 'admin@sparrow-invest.com' },
     update: {},
     create: {
-      email: 'admin@sparrowinvest.com',
+      email: 'admin@sparrow-invest.com',
       passwordHash: adminPassword,
       role: 'super_admin',
       isActive: true,
@@ -140,10 +140,10 @@ async function main() {
   // Create Financial Advisor user for FA Portal
   const advisorPassword = await bcrypt.hash('Advisor@123', 10);
   const advisor = await prisma.user.upsert({
-    where: { email: 'advisor@sparrowinvest.com' },
+    where: { email: 'advisor@sparrow-invest.com' },
     update: {},
     create: {
-      email: 'advisor@sparrowinvest.com',
+      email: 'advisor@sparrow-invest.com',
       passwordHash: advisorPassword,
       role: 'advisor',
       isActive: true,
@@ -910,7 +910,7 @@ async function seedAdvisorProfiles(advisorUserId: string) {
   // Create additional sample advisor profiles
   const additionalAdvisors = [
     {
-      email: 'neha.mehta@sparrowinvest.com',
+      email: 'neha.mehta@sparrow-invest.com',
       password: 'Advisor@123',
       name: 'Neha Mehta',
       displayName: 'Neha Mehta, CFA',
@@ -927,7 +927,7 @@ async function seedAdvisorProfiles(advisorUserId: string) {
       languages: ['English', 'Hindi', 'Kannada'],
     },
     {
-      email: 'arun.kumar@sparrowinvest.com',
+      email: 'arun.kumar@sparrow-invest.com',
       password: 'Advisor@123',
       name: 'Arun Kumar',
       displayName: 'Arun Kumar, MBA Finance',

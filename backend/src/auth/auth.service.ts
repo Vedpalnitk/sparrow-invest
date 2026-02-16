@@ -170,7 +170,7 @@ export class AuthService {
     }
 
     // Check if this is a self-assisted client (advisor is Self-Service Platform)
-    const isSelfAssisted = client?.advisor?.email === 'self-service@sparrowinvest.com';
+    const isSelfAssisted = client?.advisor?.email === 'self-service@sparrow-invest.com';
 
     // If user is a managed client (has FAClient but NOT self-assisted), add client details
     if (client && !isSelfAssisted) {
@@ -253,7 +253,7 @@ export class AuthService {
     }
 
     // Check if this is a self-assisted client (advisor is Self-Service Platform)
-    const isSelfAssisted = client.advisor?.email === 'self-service@sparrowinvest.com';
+    const isSelfAssisted = client.advisor?.email === 'self-service@sparrow-invest.com';
 
     // Get client's holdings
     const holdings = await this.prisma.fAHolding.findMany({

@@ -151,7 +151,7 @@ struct HelpSupportView: View {
 
             // Email
             contactItem(icon: "envelope.fill", title: "Email Support",
-                        subtitle: "support@sparrowinvest.com") {
+                        subtitle: "support@sparrow-invest.com") {
                 openEmail()
             }
 
@@ -164,7 +164,7 @@ struct HelpSupportView: View {
             // User Guide
             contactItem(icon: "book.fill", title: "User Guide",
                         subtitle: "Learn how to use the app") {
-                openURL("https://sparrowinvest.com/guide")
+                openURL("https://sparrow-invest.com/guide")
             }
         }
         .glassCard(cornerRadius: AppTheme.CornerRadius.large, padding: AppTheme.Spacing.small)
@@ -346,7 +346,7 @@ struct HelpSupportView: View {
     // MARK: - Actions
 
     private func openEmail() {
-        guard let url = URL(string: "mailto:support@sparrowinvest.com?subject=FA%20App%20Support%20Request") else { return }
+        guard let url = URL(string: "mailto:support@sparrow-invest.com?subject=FA%20App%20Support%20Request") else { return }
         UIApplication.shared.open(url)
     }
 

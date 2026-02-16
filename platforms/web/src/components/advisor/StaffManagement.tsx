@@ -333,7 +333,7 @@ export default function StaffManagement() {
                   type="email"
                   value={addForm.email}
                   onChange={(e) => setAddForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="staff@sparrowinvest.com"
+                  placeholder="staff@sparrow-invest.com"
                 />
               </div>
               <div>

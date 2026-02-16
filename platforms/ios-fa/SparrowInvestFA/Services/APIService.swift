@@ -13,7 +13,7 @@ class APIService {
         // Use localhost for iOS Simulator
         self.baseURL = "http://localhost:3501/api/v1"
         #else
-        self.baseURL = "https://api.sparrowinvest.com/api/v1"
+        self.baseURL = "https://api.sparrow-invest.com/api/v1"
         #endif
 
         let config = URLSessionConfiguration.default
@@ -90,6 +90,36 @@ class APIService {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode(T.self, from: data)
+    }
+
+    // MARK: - File Upload
+
+    /// Multipart file upload returning decoded response
+    func uploadFile<T: Decodable>(_ endpoint: String, fileData: Data, fileName: String, mimeType: String) async throws -> T {
+        let url = URL(string: "\(baseURL)\(endpoint)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        if let token = getAuthToken() {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: \(mimeType)\r\n\r\n".data(using: .utf8)!)
+        body.append(fileData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        request.httpBody = body
+
+        let (data, response) = try await session.data(for: request)
+        try validateResponse(response)
+        return try JSONDecoder().decode(T.self, from: data)
     }
 
     // MARK: - Token Management

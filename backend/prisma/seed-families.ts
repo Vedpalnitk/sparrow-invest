@@ -67,7 +67,7 @@ async function main() {
 
   // Get the advisor
   const advisor = await prisma.user.findFirst({
-    where: { email: 'advisor@sparrowinvest.com' }
+    where: { email: 'advisor@sparrow-invest.com' }
   });
 
   if (!advisor) {

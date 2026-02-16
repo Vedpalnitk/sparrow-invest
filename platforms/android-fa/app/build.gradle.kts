@@ -24,7 +24,7 @@ android {
         }
 
         buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3501/api/v1/\"")
-        buildConfigField("String", "PRODUCTION_URL", "\"https://api.sparrowinvest.com/api/v1/\"")
+        buildConfigField("String", "PRODUCTION_URL", "\"https://api.sparrow-invest.com/api/v1/\"")
     }
 
     buildTypes {
@@ -39,7 +39,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "BASE_URL", "\"https://api.sparrowinvest.com/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://api.sparrow-invest.com/api/v1/\"")
         }
     }
 

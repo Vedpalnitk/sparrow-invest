@@ -13,7 +13,7 @@ class APIService {
         // Use localhost for iOS Simulator
         self.baseURL = "http://localhost:3501/api/v1"
         #else
-        self.baseURL = "https://api.sparrowinvest.com/api/v1"
+        self.baseURL = "https://api.sparrow-invest.com/api/v1"
         #endif
 
         let config = URLSessionConfiguration.default

@@ -63,7 +63,7 @@ async function main() {
   }
 
   // Seed advisor profiles
-  const advisorUser = await prisma.user.findUnique({ where: { email: 'advisor@sparrowinvest.com' } });
+  const advisorUser = await prisma.user.findUnique({ where: { email: 'advisor@sparrow-invest.com' } });
 
   if (advisorUser) {
     const existingProfile = await prisma.advisorProfile.findUnique({ where: { userId: advisorUser.id } });
@@ -95,12 +95,12 @@ async function main() {
   }
 
   // Create additional advisor
-  const existingNeha = await prisma.user.findUnique({ where: { email: 'neha.mehta@sparrowinvest.com' } });
+  const existingNeha = await prisma.user.findUnique({ where: { email: 'neha.mehta@sparrow-invest.com' } });
   if (!existingNeha) {
     const hashedPassword = await bcrypt.hash('Advisor@123', 10);
     const user = await prisma.user.create({
       data: {
-        email: 'neha.mehta@sparrowinvest.com',
+        email: 'neha.mehta@sparrow-invest.com',
         passwordHash: hashedPassword,
         role: 'advisor',
         isActive: true,

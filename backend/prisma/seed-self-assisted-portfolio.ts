@@ -462,13 +462,13 @@ async function main() {
 
   // First, get or create the self-service advisor
   let selfServiceAdvisor = await prisma.user.findFirst({
-    where: { email: 'self-service@sparrowinvest.com' }
+    where: { email: 'self-service@sparrow-invest.com' }
   });
 
   if (!selfServiceAdvisor) {
     selfServiceAdvisor = await prisma.user.create({
       data: {
-        email: 'self-service@sparrowinvest.com',
+        email: 'self-service@sparrow-invest.com',
         passwordHash: await bcrypt.hash('SelfService@123', 10),
         role: 'advisor',
         isActive: true,

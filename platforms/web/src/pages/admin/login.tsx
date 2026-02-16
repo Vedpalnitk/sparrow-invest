@@ -329,7 +329,7 @@ export default function AdminLoginPage() {
                       border: `1px solid ${colors.inputBorder}`,
                       color: colors.textPrimary,
                     }}
-                    placeholder="admin@sparrowinvest.com"
+                    placeholder="admin@sparrow-invest.com"
                     required
                   />
                 </div>
@@ -403,7 +403,7 @@ export default function AdminLoginPage() {
                 }}
               >
                 <p className="text-xs text-center" style={{ color: colors.textSecondary }}>
-                  Demo: <span className="font-medium" style={{ color: colors.primary }}>admin@sparrowinvest.com</span> / <span className="font-medium" style={{ color: colors.primary }}>Admin@123</span>
+                  Demo: <span className="font-medium" style={{ color: colors.primary }}>admin@sparrow-invest.com</span> / <span className="font-medium" style={{ color: colors.primary }}>Admin@123</span>
                 </p>
               </div>
             </div>
@@ -415,7 +415,7 @@ export default function AdminLoginPage() {
                 className="text-sm font-medium transition-colors hover:opacity-80"
                 style={{ color: colors.textTertiary }}
               >
-                Back to sparrowinvest.com
+                Back to sparrow-invest.com
               </Link>
             </div>
           </div>

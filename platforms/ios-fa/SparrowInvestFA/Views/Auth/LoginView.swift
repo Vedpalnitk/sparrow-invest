@@ -48,7 +48,7 @@ struct LoginView: View {
                                     .font(.system(size: 16))
                                     .foregroundColor(.secondary)
 
-                                TextField("", text: $email, prompt: Text("email@sparrowinvest.com").foregroundColor(.gray))
+                                TextField("", text: $email, prompt: Text("email@sparrow-invest.com").foregroundColor(.gray))
                                     .font(AppTheme.Typography.body(iPad ? 17 : 15))
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
@@ -140,10 +140,10 @@ struct LoginView: View {
                             .foregroundColor(.secondary)
 
                         Button {
-                            email = "advisor@sparrowinvest.com"
+                            email = "advisor@sparrow-invest.com"
                             password = "Advisor@123"
                         } label: {
-                            Text("advisor@sparrowinvest.com / Advisor@123")
+                            Text("advisor@sparrow-invest.com / Advisor@123")
                                 .font(AppTheme.Typography.label(iPad ? 14 : 12))
                                 .foregroundColor(AppTheme.primary)
                         }
