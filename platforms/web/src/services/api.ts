@@ -1361,6 +1361,33 @@ export const insuranceApi = {
 
   getPaymentHistory: (clientId: string, policyId: string) =>
     request(`/api/v1/clients/${clientId}/insurance/${policyId}/payments`),
+
+  uploadDocument: async (clientId: string, policyId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers: Record<string, string> = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE}/api/v1/clients/${clientId}/insurance/${policyId}/documents`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+      throw new Error(error.message || 'Upload failed');
+    }
+    return response.json();
+  },
+
+  listDocuments: (clientId: string, policyId: string) =>
+    request(`/api/v1/clients/${clientId}/insurance/${policyId}/documents`),
+
+  getDocumentUrl: (clientId: string, policyId: string, docId: string) =>
+    request<{ url: string; fileName: string; mimeType: string }>(`/api/v1/clients/${clientId}/insurance/${policyId}/documents/${docId}/download`),
+
+  deleteDocument: (clientId: string, policyId: string, docId: string) =>
+    request<{ message: string }>(`/api/v1/clients/${clientId}/insurance/${policyId}/documents/${docId}`, { method: 'DELETE' }),
 };
 
 // ============= User Actions API =============
@@ -1872,4 +1899,140 @@ export const authProfileApi = {
       method: 'POST',
       body: { currentPassword, newPassword },
     }),
+};
+
+// ============= Meeting Notes API =============
+
+export interface MeetingNote {
+  id: string;
+  clientId?: string;
+  prospectId?: string;
+  title: string;
+  content: string;
+  meetingType: 'CALL' | 'IN_PERSON' | 'VIDEO' | 'EMAIL' | 'OTHER';
+  meetingDate: string;
+  createdAt?: string;
+}
+
+export interface CreateNoteRequest {
+  title: string;
+  content: string;
+  meetingType: string;
+  meetingDate: string;
+}
+
+export const notesApi = {
+  getByClient: (clientId: string) =>
+    request<MeetingNote[]>(`/api/v1/clients/${clientId}/notes`),
+
+  create: (clientId: string, data: CreateNoteRequest) =>
+    request<MeetingNote>(`/api/v1/clients/${clientId}/notes`, {
+      method: 'POST',
+      body: data,
+    }),
+
+  delete: (clientId: string, noteId: string) =>
+    request<void>(`/api/v1/clients/${clientId}/notes/${noteId}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ============= Whitelisted Funds (My Picks) API =============
+
+export interface WhitelistedFund {
+  id: string;
+  schemeCode: number;
+  schemeName: string;
+  schemeCategory?: string;
+  nav?: number;
+  returns1y?: number;
+  returns3y?: number;
+  returns5y?: number;
+  riskRating?: number;
+  fundRating?: number;
+  aum?: number;
+  year: number;
+  notes?: string;
+  addedAt: string;
+}
+
+export interface AddToWhitelistRequest {
+  schemeCode: number;
+  year: number;
+  notes?: string;
+}
+
+export const whitelistApi = {
+  getAll: () =>
+    request<WhitelistedFund[]>('/api/v1/advisor/whitelist'),
+
+  add: (data: AddToWhitelistRequest) =>
+    request<WhitelistedFund>('/api/v1/advisor/whitelist', {
+      method: 'POST',
+      body: data,
+    }),
+
+  remove: (id: string) =>
+    request<void>(`/api/v1/advisor/whitelist/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ============= Chat API =============
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  userId: string;
+  title: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface ChatMessageResponse {
+  messageId: string;
+  status: 'processing' | 'complete' | 'error';
+  createdAt: string;
+}
+
+export interface ChatMessageStatus {
+  messageId: string;
+  status: 'processing' | 'complete' | 'error';
+  content?: string;
+  error?: string;
+}
+
+export interface ChatMessageDto {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  createdAt: string;
+}
+
+export const chatApi = {
+  createSession: (title?: string) =>
+    request<ChatSession>('/api/v1/chat/sessions', {
+      method: 'POST',
+      body: { title },
+    }),
+
+  getSessions: () =>
+    request<ChatSession[]>('/api/v1/chat/sessions'),
+
+  getSessionMessages: (sessionId: string) =>
+    request<ChatMessageDto[]>(`/api/v1/chat/sessions/${sessionId}/messages`),
+
+  sendMessage: (sessionId: string, content: string) =>
+    request<ChatMessageResponse>('/api/v1/chat/messages', {
+      method: 'POST',
+      body: { sessionId, content },
+    }),
+
+  getMessageStatus: (messageId: string) =>
+    request<ChatMessageStatus>(`/api/v1/chat/messages/${messageId}/status`),
 };

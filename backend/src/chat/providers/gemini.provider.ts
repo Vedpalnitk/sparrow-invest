@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { LLMProvider, LLMMessage, LLMOptions } from './llm-provider.interface';
 
 export class GeminiProvider implements LLMProvider {
@@ -29,9 +29,17 @@ export class GeminiProvider implements LLMProvider {
         systemInstruction: systemMessage?.content || undefined,
         generationConfig: {
           temperature: options?.temperature ?? 0.7,
-          maxOutputTokens: options?.maxTokens ?? 512,
+          maxOutputTokens: options?.maxTokens ?? 1024,
           topP: options?.topP ?? 0.9,
         },
+        // Relax safety filters for financial content — terms like "loss", "crash",
+        // "risk" are legitimate in portfolio discussions and should not be blocked
+        safetySettings: [
+          { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+          { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+          { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+          { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH },
+        ],
       });
 
       // Map messages to Gemini format (assistant → model)
