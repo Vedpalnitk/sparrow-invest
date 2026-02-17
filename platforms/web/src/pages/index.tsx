@@ -165,6 +165,22 @@ const icons = {
       <path d="M9 12l2 2 4-4" />
     </svg>
   ),
+  phone: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+      <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+      <line x1="12" y1="18" x2="12" y2="18" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  ),
+  apple: (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+    </svg>
+  ),
+  playStore: (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+      <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-1.04l2.538 1.47a1 1 0 010 1.726l-2.538 1.47-2.539-2.333 2.539-2.333zM5.864 3.458L16.8 9.79l-2.302 2.302-8.635-8.635z" />
+    </svg>
+  ),
   arrowRight: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
       <path d="M5 12h14M12 5l7 7-7 7" />
@@ -458,7 +474,7 @@ const Home = () => {
                 style={{ boxShadow: `0 4px 12px ${colors.shadow}` }}
               />
               <span className="text-lg font-bold tracking-tight" style={{ color: colors.text }}>
-                Sparrow<span style={{ color: colors.primary }}>.</span>
+                Sparrow <span style={{ color: colors.primary }}>Invest</span>
               </span>
             </Link>
 
@@ -800,6 +816,163 @@ const Home = () => {
           </div>
         </Section>
 
+        {/* ─── Mobile Apps ─── */}
+        <Section className="relative py-20 md:py-28" id="apps" style={{ zIndex: 1 }}>
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <span className="text-xs font-bold uppercase tracking-[0.2em] mb-3 inline-block" style={{ color: colors.primary }}>
+                Mobile Apps
+              </span>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight" style={{ color: colors.text }}>
+                Your portfolio, always in your pocket
+              </h2>
+              <p className="mt-4 text-base leading-relaxed" style={{ color: colors.textSecondary }}>
+                Native apps for both investors and financial advisors. Track portfolios, execute trades, and stay connected — anywhere, anytime.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Consumer App */}
+              <div
+                className="relative overflow-hidden rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  background: colors.surface,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: `1px solid ${colors.border}`,
+                  boxShadow: `0 8px 40px ${colors.shadow}`,
+                }}
+              >
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full" style={{ background: `${colors.primary}08` }} />
+                <div className="relative z-10">
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.primaryDark} 0%, ${colors.accent} 100%)`,
+                      color: '#FFFFFF',
+                      boxShadow: `0 8px 24px ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)'}`,
+                    }}
+                  >
+                    {icons.phone}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2" style={{ color: colors.text }}>For Investors</h3>
+                  <p className="text-sm leading-relaxed mb-6" style={{ color: colors.textSecondary }}>
+                    Track your mutual fund portfolio, monitor goal progress, submit investment requests to your advisor, and get AI-driven insights — all from your phone.
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      'Real-time portfolio tracking & NAV updates',
+                      'Goal-based progress monitoring',
+                      'Submit trade requests to your FA',
+                      'Family portfolio overview',
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${colors.success}15`, color: colors.success }}>
+                          {icons.check}
+                        </div>
+                        <span className="text-sm" style={{ color: colors.textSecondary }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3 mt-8">
+                    <button
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5"
+                      style={{
+                        background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.85)',
+                        color: isDark ? colors.text : '#FFFFFF',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'transparent'}`,
+                      }}
+                    >
+                      {icons.apple}
+                      App Store
+                    </button>
+                    <button
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5"
+                      style={{
+                        background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.85)',
+                        color: isDark ? colors.text : '#FFFFFF',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'transparent'}`,
+                      }}
+                    >
+                      {icons.playStore}
+                      Google Play
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Advisor App */}
+              <div
+                className="relative overflow-hidden rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  background: colors.surface,
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: `1px solid ${colors.border}`,
+                  boxShadow: `0 8px 40px ${colors.shadow}`,
+                }}
+              >
+                <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full" style={{ background: `${colors.accent}08` }} />
+                <div className="relative z-10">
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+                    style={{
+                      background: `linear-gradient(135deg, ${colors.accent} 0%, ${colors.primaryDeep} 100%)`,
+                      color: '#FFFFFF',
+                      boxShadow: `0 8px 24px ${isDark ? 'rgba(56,189,248,0.2)' : 'rgba(56,189,248,0.15)'}`,
+                    }}
+                  >
+                    {icons.users}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2" style={{ color: colors.text }}>For Advisors</h3>
+                  <p className="text-sm leading-relaxed mb-6" style={{ color: colors.textSecondary }}>
+                    Manage your entire practice on the go. Review client portfolios, approve trade requests, execute transactions, and receive real-time alerts.
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      'Client portfolio management & analytics',
+                      'One-tap trade execution via BSE & MFU',
+                      'AI-powered fund recommendations',
+                      'SEBI-compliant reporting on the go',
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-2.5">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${colors.success}15`, color: colors.success }}>
+                          {icons.check}
+                        </div>
+                        <span className="text-sm" style={{ color: colors.textSecondary }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3 mt-8">
+                    <button
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5"
+                      style={{
+                        background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.85)',
+                        color: isDark ? colors.text : '#FFFFFF',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'transparent'}`,
+                      }}
+                    >
+                      {icons.apple}
+                      App Store
+                    </button>
+                    <button
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:-translate-y-0.5"
+                      style={{
+                        background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.85)',
+                        color: isDark ? colors.text : '#FFFFFF',
+                        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'transparent'}`,
+                      }}
+                    >
+                      {icons.playStore}
+                      Google Play
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Section>
+
         {/* ─── CTA ─── */}
         <Section className="relative py-20 md:py-28" style={{ zIndex: 1 }}>
           <div className="max-w-6xl mx-auto px-6">
@@ -864,7 +1037,7 @@ const Home = () => {
                     className="w-8 h-8 rounded-lg flex-shrink-0"
                     style={{ boxShadow: `0 4px 12px ${colors.shadow}` }}
                   />
-                  <span className="text-base font-bold" style={{ color: colors.text }}>Sparrow</span>
+                  <span className="text-base font-bold" style={{ color: colors.text }}>Sparrow <span style={{ color: colors.primary }}>Invest</span></span>
                 </div>
                 <p className="text-xs leading-relaxed" style={{ color: colors.textTertiary }}>
                   AI-powered wealth management platform for financial advisors in India.
