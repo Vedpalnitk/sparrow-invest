@@ -12,7 +12,7 @@ AI-powered mutual fund portfolio management platform with goal-aligned recommend
 
 ## Project Structure
 ```
-mutual-fundsv1/
+sparrow-invest/
 ├── platforms/
 │   ├── web/                # Next.js web application
 │   │   ├── src/
