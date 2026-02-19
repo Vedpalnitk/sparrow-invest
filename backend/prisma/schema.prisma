@@ -150,7 +150,8 @@ model Provider {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  schemes Scheme[]
+  schemes         Scheme[]
+  commissionRates CommissionRateMaster[]
 
   @@map("providers")
 }
@@ -718,6 +719,17 @@ model User {
   ownedStaff         FAStaffMember[] @relation("FAStaffOwner")
   staffProfile       FAStaffMember? @relation("FAStaffUser")
 
+  // Business Management Relations
+  branches           Branch[]
+  commissionRates    CommissionRateMaster[]
+  commissionRecords  CommissionRecord[]
+  brokerageUploads   BrokerageUpload[]
+  aumSnapshots       AUMSnapshot[]
+  crmTasks           CRMTask[]       @relation("TaskAdvisor")
+  crmActivities      CRMActivityLog[] @relation("ActivityAdvisor")
+  complianceRecords  ComplianceRecord[]
+  auditLogs          AuditLog[]
+
   @@map("users")
 }
 
@@ -919,6 +931,9 @@ model FAClient {
   familyGroupId   String?     @map("family_group_id") // UUID to group family members
   familyRole      String?     @map("family_role") // SELF, SPOUSE, CHILD, PARENT, SIBLING
   familyHeadId    String?     @map("family_head_id") // Reference to primary family member
+  assignedRmId    String?     @map("assigned_rm_id") // Staff member assigned as RM
+  tags            String[]    @default([])
+  importantDates  Json?       @map("important_dates") // { anniversary: "2025-06-15", ... }
   lastActiveAt DateTime?      @map("last_active_at")
   createdAt    DateTime       @default(now()) @map("created_at")
   updatedAt    DateTime       @updatedAt @map("updated_at")
@@ -938,10 +953,15 @@ model FAClient {
   communications   FACommunicationLog[] @relation("ClientCommunications")
   insurancePolicies InsurancePolicy[]
 
+  // Business Management Relations
+  crmTasks         CRMTask[]
+  crmActivities    CRMActivityLog[]
+
   @@unique([advisorId, email])
   @@index([advisorId])
   @@index([status])
   @@index([familyGroupId])
+  @@index([assignedRmId])
   @@map("fa_clients")
 }
 
@@ -1413,6 +1433,8 @@ model AdvisorProfile {
   minInvestment   Decimal? @map("min_investment") @db.Decimal(14, 2)
   feeStructure    String?  @map("fee_structure")
   avatarUrl       String?  @map("avatar_url")
+  companyName     String?  @map("company_name")
+  companyLogoUrl  String?  @map("company_logo_url")
   city            String?
   languages       String[]
   isVerified      Boolean  @default(false) @map("is_verified")
@@ -1514,6 +1536,77 @@ enum CommunicationType {
   CUSTOM
 }
 
+// =============================================
+// BUSINESS MANAGEMENT ENUMS
+// =============================================
+
+enum StaffRole {
+  RM
+  OPERATIONS
+  COMPLIANCE_OFFICER
+  BRANCH_MANAGER
+  SENIOR_ADVISOR
+}
+
+enum CommissionStatus {
+  EXPECTED
+  RECEIVED
+  DISCREPANCY
+  RECONCILED
+}
+
+enum BrokerageUploadStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum BrokerageSource {
+  CAMS
+  KFINTECH
+  MANUAL
+}
+
+enum CRMTaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum CRMTaskCategory {
+  FOLLOW_UP
+  REVIEW
+  ONBOARDING
+  KYC_UPDATE
+  COMPLAINT
+  GENERAL
+}
+
+enum CRMActivityType {
+  CALL
+  EMAIL
+  MEETING
+  NOTE
+  TASK_CREATED
+  TASK_COMPLETED
+}
+
+enum ComplianceType {
+  ARN
+  EUIN
+  KYC
+  SEBI_REGISTRATION
+  INSURANCE_LICENSE
+}
+
+enum ComplianceStatus {
+  VALID
+  EXPIRING_SOON
+  EXPIRED
+}
+
 model NotificationPreference {
   id        String              @id @default(uuid())
   userId    String              @map("user_id")
@@ -1574,20 +1667,30 @@ model FACommunicationLog {
 }
 
 model FAStaffMember {
-  id           String   @id @default(uuid())
-  ownerId      String   @map("owner_id")
-  staffUserId  String   @unique @map("staff_user_id")
-  displayName  String   @map("display_name")
-  allowedPages String[] @map("allowed_pages")
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id           String     @id @default(uuid())
+  ownerId      String     @map("owner_id")
+  staffUserId  String     @unique @map("staff_user_id")
+  displayName  String     @map("display_name")
+  allowedPages String[]   @map("allowed_pages")
+  staffRole    StaffRole  @default(RM) @map("staff_role")
+  euin         String?
+  euinExpiry   DateTime?  @map("euin_expiry") @db.Date
+  branchId     String?    @map("branch_id")
+  isActive     Boolean    @default(true) @map("is_active")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
 
-  owner     User @relation("FAStaffOwner", fields: [ownerId], references: [id])
-  staffUser User @relation("FAStaffUser", fields: [staffUserId], references: [id], onDelete: Cascade)
+  owner     User    @relation("FAStaffOwner", fields: [ownerId], references: [id])
+  staffUser User    @relation("FAStaffUser", fields: [staffUserId], references: [id], onDelete: Cascade)
+  branch    Branch? @relation(fields: [branchId], references: [id])
+
+  // CRM relations
+  assignedTasks  CRMTask[]        @relation("TaskAssignee")
+  activityLogs   CRMActivityLog[]
 
   @@unique([ownerId, staffUserId])
   @@index([ownerId])
+  @@index([branchId])
   @@map("fa_staff_members")
 }
 
@@ -1744,4 +1847,212 @@ model PolicyDocument {
 
   @@index([policyId])
   @@map("policy_documents")
+}
+
+// =============================================
+// BUSINESS MANAGEMENT - BRANCHES
+// =============================================
+
+model Branch {
+  id        String   @id @default(uuid())
+  advisorId String   @map("advisor_id")
+  name      String
+  city      String?
+  code      String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  advisor User            @relation(fields: [advisorId], references: [id])
+  staff   FAStaffMember[]
+
+  @@unique([advisorId, code])
+  @@index([advisorId])
+  @@map("branches")
+}
+
+// =============================================
+// BUSINESS MANAGEMENT - COMMISSION TRACKING
+// =============================================
+
+model CommissionRateMaster {
+  id               String    @id @default(uuid())
+  advisorId        String    @map("advisor_id")
+  amcId            String    @map("amc_id")
+  schemeCategory   String    @map("scheme_category")
+  trailRatePercent Decimal   @map("trail_rate_percent") @db.Decimal(6, 4)
+  upfrontRatePercent Decimal @default(0) @map("upfront_rate_percent") @db.Decimal(6, 4)
+  effectiveFrom    DateTime  @map("effective_from") @db.Date
+  effectiveTo      DateTime? @map("effective_to") @db.Date
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  advisor  User     @relation(fields: [advisorId], references: [id])
+  amc      Provider @relation(fields: [amcId], references: [id])
+
+  @@index([advisorId])
+  @@index([amcId])
+  @@map("commission_rate_master")
+}
+
+model CommissionRecord {
+  id           String           @id @default(uuid())
+  advisorId    String           @map("advisor_id")
+  period       String           // "2026-01", "2026-02", etc.
+  amcId        String           @map("amc_id")
+  aumAmount    Decimal          @default(0) @map("aum_amount") @db.Decimal(16, 2)
+  expectedTrail Decimal         @default(0) @map("expected_trail") @db.Decimal(14, 2)
+  actualTrail  Decimal          @default(0) @map("actual_trail") @db.Decimal(14, 2)
+  status       CommissionStatus @default(EXPECTED)
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
+
+  advisor User @relation(fields: [advisorId], references: [id])
+
+  @@unique([advisorId, period, amcId])
+  @@index([advisorId])
+  @@index([period])
+  @@map("commission_records")
+}
+
+model BrokerageUpload {
+  id          String                @id @default(uuid())
+  advisorId   String                @map("advisor_id")
+  fileName    String                @map("file_name")
+  fileUrl     String?               @map("file_url")
+  source      BrokerageSource       @default(MANUAL)
+  recordCount Int                   @default(0) @map("record_count")
+  status      BrokerageUploadStatus @default(PENDING)
+  parsedData  Json?                 @map("parsed_data")
+  errorMessage String?              @map("error_message")
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  advisor User @relation(fields: [advisorId], references: [id])
+
+  @@index([advisorId])
+  @@map("brokerage_uploads")
+}
+
+// =============================================
+// BUSINESS MANAGEMENT - AUM SNAPSHOTS
+// =============================================
+
+model AUMSnapshot {
+  id          String   @id @default(uuid())
+  advisorId   String   @map("advisor_id")
+  date        DateTime @db.Date
+  totalAum    Decimal  @default(0) @map("total_aum") @db.Decimal(16, 2)
+  equityAum   Decimal  @default(0) @map("equity_aum") @db.Decimal(16, 2)
+  debtAum     Decimal  @default(0) @map("debt_aum") @db.Decimal(16, 2)
+  hybridAum   Decimal  @default(0) @map("hybrid_aum") @db.Decimal(16, 2)
+  clientCount Int      @default(0) @map("client_count")
+  sipBookSize Decimal  @default(0) @map("sip_book_size") @db.Decimal(14, 2)
+  netFlows    Decimal  @default(0) @map("net_flows") @db.Decimal(14, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  advisor User @relation(fields: [advisorId], references: [id])
+
+  @@unique([advisorId, date])
+  @@index([advisorId, date(sort: Desc)])
+  @@map("aum_snapshots")
+}
+
+// =============================================
+// BUSINESS MANAGEMENT - CRM
+// =============================================
+
+model CRMTask {
+  id           String          @id @default(uuid())
+  advisorId    String          @map("advisor_id")
+  clientId     String?         @map("client_id")
+  assignedToId String?         @map("assigned_to_id")
+  title        String
+  description  String?
+  dueDate      DateTime?       @map("due_date") @db.Date
+  priority     ActionPriority  @default(MEDIUM)
+  status       CRMTaskStatus   @default(OPEN)
+  category     CRMTaskCategory @default(GENERAL)
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
+
+  advisor    User           @relation("TaskAdvisor", fields: [advisorId], references: [id])
+  client     FAClient?      @relation(fields: [clientId], references: [id])
+  assignedTo FAStaffMember? @relation("TaskAssignee", fields: [assignedToId], references: [id])
+
+  @@index([advisorId])
+  @@index([clientId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("crm_tasks")
+}
+
+model CRMActivityLog {
+  id        String          @id @default(uuid())
+  advisorId String          @map("advisor_id")
+  clientId  String?         @map("client_id")
+  staffId   String?         @map("staff_id")
+  type      CRMActivityType
+  summary   String
+  details   String?
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  advisor User           @relation("ActivityAdvisor", fields: [advisorId], references: [id])
+  client  FAClient?      @relation(fields: [clientId], references: [id])
+  staff   FAStaffMember? @relation(fields: [staffId], references: [id])
+
+  @@index([advisorId, createdAt(sort: Desc)])
+  @@index([clientId])
+  @@index([staffId])
+  @@map("crm_activity_logs")
+}
+
+// =============================================
+// BUSINESS MANAGEMENT - COMPLIANCE
+// =============================================
+
+model ComplianceRecord {
+  id          String           @id @default(uuid())
+  advisorId   String           @map("advisor_id")
+  type        ComplianceType
+  entityId    String?          @map("entity_id") // Staff ID, Client ID, or Advisor ID
+  entityName  String?          @map("entity_name")
+  expiryDate  DateTime         @map("expiry_date") @db.Date
+  status      ComplianceStatus @default(VALID)
+  documentUrl String?          @map("document_url")
+  notes       String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  advisor User @relation(fields: [advisorId], references: [id])
+
+  @@index([advisorId])
+  @@index([type])
+  @@index([status])
+  @@index([expiryDate])
+  @@map("compliance_records")
+}
+
+// =============================================
+// BUSINESS MANAGEMENT - AUDIT LOG
+// =============================================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  oldValue   Json?    @map("old_value")
+  newValue   Json?    @map("new_value")
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
 }

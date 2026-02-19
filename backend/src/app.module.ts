@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
@@ -31,6 +31,12 @@ import { CommunicationsModule } from './communications/communications.module';
 import { StaffModule } from './staff/staff.module';
 import { InsuranceModule } from './insurance/insurance.module';
 import { StorageModule } from './storage/storage.module';
+import { AuditModule } from './audit/audit.module';
+import { BranchesModule } from './branches/branches.module';
+import { CRMModule } from './crm/crm.module';
+import { CommissionsModule } from './commissions/commissions.module';
+import { BusinessIntelligenceModule } from './business-intelligence/business-intelligence.module';
+import { ComplianceModule } from './compliance/compliance.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -39,10 +45,14 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
       isGlobal: true,
       load: [configuration],
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,   // 60 seconds
-      limit: 100,   // 100 requests per minute (global default)
-    }]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [{
+        ttl: 60000,
+        limit: config.get('nodeEnv') === 'production' ? 100 : 1000,
+      }],
+    }),
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
@@ -83,6 +93,18 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     InsuranceModule,
     // Object Storage (MinIO)
     StorageModule,
+    // Business Management - Audit Trail (global)
+    AuditModule,
+    // Business Management - Branch Management
+    BranchesModule,
+    // Business Management - CRM
+    CRMModule,
+    // Business Management - Commission Tracking
+    CommissionsModule,
+    // Business Management - BI & Revenue Analytics
+    BusinessIntelligenceModule,
+    // Business Management - Compliance Tracking
+    ComplianceModule,
   ],
   controllers: [],
   providers: [

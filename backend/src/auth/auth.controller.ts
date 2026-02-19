@@ -1,5 +1,9 @@
-import { Controller, Post, Get, Put, Body, HttpCode, HttpStatus, UseGuards, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller, Post, Get, Put, Body, HttpCode, HttpStatus, UseGuards, Query,
+  UseInterceptors, UploadedFile, BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, AuthResponseDto, UpdateProfileDto, ChangePasswordDto } from './dto/login.dto';
@@ -49,6 +53,23 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Updated profile' })
   async updateProfile(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
     return this.authService.updateProfile(user.id, dto);
+  }
+
+  @Post('me/logo')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Upload company logo for advisor' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: 'Logo uploaded' })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadLogo(
+    @CurrentUser() user: any,
+    @UploadedFile() file: { buffer: Buffer; originalname?: string; mimetype?: string; size?: number },
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+    return this.authService.uploadAdvisorLogo(user.id, file);
   }
 
   @Post('me/change-password')

@@ -55,6 +55,16 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @ApiProperty({ example: 'Sharma Wealth Advisors', required: false })
+  @IsOptional()
+  @IsString()
+  companyName?: string;
+
+  @ApiProperty({ example: 'Priya Sharma', required: false })
+  @IsOptional()
+  @IsString()
+  displayName?: string;
 }
 
 export class ChangePasswordDto {

@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import AdvisorLayout from '@/components/layout/AdvisorLayout'
 import { useFATheme, formatDate } from '@/utils/fa'
+import { useTheme } from '@/context/ThemeContext'
 import { AdvisorPreferences, ReportFormat } from '@/utils/faTypes'
 import { notificationPreferencesApi, NotificationPreferences, authProfileApi, AuthProfile } from '@/services/api'
 import {
@@ -94,6 +95,7 @@ const DASHBOARD_WIDGETS = [
 
 const SettingsPage = () => {
   const { colors, isDark } = useFATheme()
+  const { setTheme: applyTheme } = useTheme()
   const { user } = useAuth()
   const isAdvisor = user?.role === 'advisor'
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
@@ -105,8 +107,11 @@ const SettingsPage = () => {
   // Profile from API
   const [profile, setProfile] = useState<AuthProfile | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
-  const [profileForm, setProfileForm] = useState({ name: '', phone: '' })
+  const [profileForm, setProfileForm] = useState({ name: '', phone: '', companyName: '', displayName: '' })
   const [profileDirty, setProfileDirty] = useState(false)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
 
   // Notification preferences from API
   const [notifPrefs, setNotifPrefs] = useState<NotificationPreferences | null>(null)
@@ -153,7 +158,15 @@ const SettingsPage = () => {
     try {
       const data = await authProfileApi.get()
       setProfile(data)
-      setProfileForm({ name: data.name || '', phone: data.phone || '' })
+      setProfileForm({
+        name: data.name || '',
+        phone: data.phone || '',
+        companyName: data.advisorProfile?.companyName || '',
+        displayName: data.advisorProfile?.displayName || '',
+      })
+      if (data.advisorProfile?.companyLogoUrl) {
+        setLogoPreview(data.advisorProfile.companyLogoUrl)
+      }
       setProfileDirty(false)
     } catch (err) {
       console.error('Failed to load profile:', err)
@@ -249,13 +262,35 @@ const SettingsPage = () => {
   }
 
   const handleSaveProfile = async () => {
-    if (!profileDirty) return
+    if (!profileDirty && !logoFile) return
     setIsSaving(true)
     try {
-      const updated = await authProfileApi.update({
+      // Upload logo first if selected
+      if (logoFile) {
+        setLogoUploading(true)
+        try {
+          const result = await authProfileApi.uploadLogo(logoFile)
+          setLogoPreview(result.companyLogoUrl)
+          setLogoFile(null)
+        } catch (err) {
+          console.error('Failed to upload logo:', err)
+          showError('Failed to upload logo')
+          return
+        } finally {
+          setLogoUploading(false)
+        }
+      }
+
+      // Update profile fields
+      const updateData: any = {
         name: profileForm.name,
         phone: profileForm.phone,
-      })
+      }
+      if (profile?.role === 'advisor') {
+        updateData.companyName = profileForm.companyName
+        updateData.displayName = profileForm.displayName
+      }
+      const updated = await authProfileApi.update(updateData)
       setProfile(updated)
       setProfileDirty(false)
       showSuccess('Profile saved successfully!')
@@ -426,6 +461,103 @@ const SettingsPage = () => {
                       </div>
                     </FACard>
 
+                    {/* Company Branding (Advisors Only) */}
+                    {profile.role === 'advisor' && (
+                      <FACard>
+                        <div className="flex items-center gap-3 mb-6">
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center"
+                            style={{ background: `${colors.secondary}15`, color: colors.secondary }}
+                          >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold" style={{ color: colors.textPrimary }}>Company Branding</h3>
+                            <p className="text-sm" style={{ color: colors.textSecondary }}>Customize how you appear in the sidebar</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <FALabel>Display Name</FALabel>
+                            <FAInput
+                              value={profileForm.displayName}
+                              onChange={(e) => { setProfileForm(f => ({ ...f, displayName: e.target.value })); setProfileDirty(true) }}
+                              placeholder="Your professional name"
+                            />
+                          </div>
+                          <div>
+                            <FALabel>Company Name</FALabel>
+                            <FAInput
+                              value={profileForm.companyName}
+                              onChange={(e) => { setProfileForm(f => ({ ...f, companyName: e.target.value })); setProfileDirty(true) }}
+                              placeholder="Your firm or company name"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Logo Upload */}
+                        <div className="mt-4">
+                          <FALabel>Company Logo</FALabel>
+                          <div className="flex items-center gap-4">
+                            {/* Preview */}
+                            <div
+                              className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+                              style={{
+                                background: logoPreview ? 'transparent' : colors.chipBg,
+                                border: `2px dashed ${colors.chipBorder}`,
+                              }}
+                            >
+                              {logoPreview ? (
+                                <img
+                                  src={logoPreview}
+                                  alt="Logo preview"
+                                  className="w-full h-full object-cover rounded-xl"
+                                />
+                              ) : (
+                                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: colors.textTertiary }}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                                </svg>
+                              )}
+                            </div>
+                            <div>
+                              <label
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-all hover:shadow-md"
+                                style={{
+                                  background: colors.chipBg,
+                                  color: colors.primary,
+                                  border: `1px solid ${colors.chipBorder}`,
+                                }}
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                </svg>
+                                {logoUploading ? 'Uploading...' : 'Upload Logo'}
+                                <input
+                                  type="file"
+                                  accept="image/jpeg,image/png"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) {
+                                      setLogoFile(file)
+                                      setLogoPreview(URL.createObjectURL(file))
+                                      setProfileDirty(true)
+                                    }
+                                  }}
+                                />
+                              </label>
+                              <p className="text-xs mt-1" style={{ color: colors.textTertiary }}>
+                                JPG or PNG, max 10 MB
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </FACard>
+                    )}
+
                     {/* Account Info */}
                     <FACard>
                       <div className="flex items-center gap-3 mb-6">
@@ -467,8 +599,8 @@ const SettingsPage = () => {
 
                     {/* Save Button */}
                     <div className="flex justify-end">
-                      <FAButton onClick={handleSaveProfile} disabled={isSaving || !profileDirty}>
-                        {isSaving ? 'Saving...' : profileDirty ? 'Save Profile' : 'Saved'}
+                      <FAButton onClick={handleSaveProfile} disabled={isSaving || (!profileDirty && !logoFile)}>
+                        {isSaving ? 'Saving...' : (profileDirty || logoFile) ? 'Save Profile' : 'Saved'}
                       </FAButton>
                     </div>
                   </>
@@ -644,7 +776,10 @@ const SettingsPage = () => {
                     ].map(theme => (
                       <button
                         key={theme.value}
-                        onClick={() => setPreferences({ ...preferences, theme: theme.value as 'light' | 'dark' | 'system' })}
+                        onClick={() => {
+                          setPreferences({ ...preferences, theme: theme.value as 'light' | 'dark' | 'system' })
+                          applyTheme(theme.value as 'light' | 'dark' | 'system')
+                        }}
                         className="p-4 rounded-xl flex flex-col items-center gap-3 transition-all hover:scale-[1.02]"
                         style={{
                           background: preferences.theme === theme.value ? `${colors.primary}15` : colors.chipBg,

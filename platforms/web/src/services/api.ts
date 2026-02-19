@@ -1773,6 +1773,13 @@ export const savedAnalysisApi = {
 
 // ============= Auth Profile API =============
 
+export interface AdvisorProfileData {
+  displayName: string;
+  companyName: string | null;
+  companyLogoUrl: string | null;
+  avatarUrl: string | null;
+}
+
 export interface AuthProfile {
   id: string;
   name: string;
@@ -1781,6 +1788,7 @@ export interface AuthProfile {
   role: string;
   isVerified: boolean;
   clientType?: string;
+  advisorProfile?: AdvisorProfileData;
 }
 
 // ============= Staff API =============
@@ -1901,7 +1909,7 @@ export const communicationsApi = {
 
 export const authProfileApi = {
   get: () => request<AuthProfile>('/api/v1/auth/me'),
-  update: (data: { name?: string; phone?: string }) =>
+  update: (data: { name?: string; phone?: string; companyName?: string; displayName?: string }) =>
     request<AuthProfile>('/api/v1/auth/me', {
       method: 'PUT',
       body: data,
@@ -1911,6 +1919,23 @@ export const authProfileApi = {
       method: 'POST',
       body: { currentPassword, newPassword },
     }),
+  uploadLogo: async (file: File): Promise<{ companyLogoUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const headers: Record<string, string> = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE}/api/v1/auth/me/logo`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+      throw new Error(error.message || 'Upload failed');
+    }
+    return response.json();
+  },
 };
 
 // ============= Meeting Notes API =============
@@ -2048,3 +2073,310 @@ export const chatApi = {
   getMessageStatus: (messageId: string) =>
     request<ChatMessageStatus>(`/api/v1/chat/messages/${messageId}/status`),
 };
+
+// ============= Branches API =============
+
+export interface Branch {
+  id: string;
+  name: string;
+  city?: string;
+  code?: string;
+  isActive: boolean;
+  staffCount: number;
+  staff: Array<{ id: string; displayName: string; staffRole: string }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const branchesApi = {
+  list: () =>
+    request<Branch[]>('/api/v1/branches'),
+
+  get: (id: string) =>
+    request<Branch>(`/api/v1/branches/${id}`),
+
+  create: (data: { name: string; city?: string; code?: string }) =>
+    request<Branch>('/api/v1/branches', {
+      method: 'POST',
+      body: data,
+    }),
+
+  update: (id: string, data: { name?: string; city?: string; code?: string; isActive?: boolean }) =>
+    request<Branch>(`/api/v1/branches/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+
+  remove: (id: string) =>
+    request<{ success: boolean }>(`/api/v1/branches/${id}`, {
+      method: 'DELETE',
+    }),
+};
+
+// ============= CRM API =============
+
+export interface CRMTask {
+  id: string;
+  title: string;
+  description?: string;
+  clientId?: string;
+  clientName?: string;
+  assignedToId?: string;
+  assignedToName?: string;
+  dueDate?: string;
+  priority: string;
+  status: string;
+  category: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CRMTaskSummary {
+  total: number;
+  open: number;
+  inProgress: number;
+  overdue: number;
+  completedThisMonth: number;
+}
+
+export interface CRMActivity {
+  id: string;
+  type: string;
+  summary: string;
+  details?: string;
+  clientId?: string;
+  clientName?: string;
+  staffId?: string;
+  staffName?: string;
+  createdAt: string;
+}
+
+export const crmApi = {
+  listTasks: (params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return request<CRMTask[]>(`/api/v1/crm/tasks${query}`);
+  },
+  createTask: (data: { title: string; description?: string; clientId?: string; assignedToId?: string; dueDate?: string; priority?: string; category?: string }) =>
+    request<CRMTask>('/api/v1/crm/tasks', { method: 'POST', body: data }),
+  updateTask: (id: string, data: Partial<CRMTask>) =>
+    request<CRMTask>(`/api/v1/crm/tasks/${id}`, { method: 'PUT', body: data }),
+  completeTask: (id: string) =>
+    request<{ id: string; status: string }>(`/api/v1/crm/tasks/${id}/complete`, { method: 'PUT' }),
+  getOverdueTasks: () =>
+    request<CRMTask[]>('/api/v1/crm/tasks/overdue'),
+  getTaskSummary: () =>
+    request<CRMTaskSummary>('/api/v1/crm/tasks/summary'),
+  listActivities: (params?: Record<string, string>) => {
+    const query = params ? '?' + new URLSearchParams(params).toString() : '';
+    return request<CRMActivity[]>(`/api/v1/crm/activities${query}`);
+  },
+  createActivity: (data: { type: string; summary: string; details?: string; clientId?: string }) =>
+    request<CRMActivity>('/api/v1/crm/activities', { method: 'POST', body: data }),
+};
+
+// ============= Team (Staff extensions) API =============
+
+export const teamApi = {
+  getEuinExpiry: () =>
+    request<Array<{ id: string; displayName: string; email: string; euin: string; euinExpiry: string; branchName: string; daysUntilExpiry: number }>>('/api/v1/staff/euin-expiry'),
+  getStaffClients: (staffId: string) =>
+    request<Array<{ id: string; name: string; email: string; aum: number; sipCount: number; status: string }>>(`/api/v1/staff/${staffId}/clients`),
+  reassignClients: (staffId: string, targetStaffId: string) =>
+    request<{ reassignedCount: number }>(`/api/v1/staff/${staffId}/reassign-clients`, { method: 'POST', body: { targetStaffId } }),
+  assignBranch: (staffId: string, branchId: string) =>
+    request<{ id: string; branchId: string }>(`/api/v1/staff/${staffId}/assign-branch`, { method: 'PUT', body: { branchId } }),
+};
+
+// ============= Client extensions API =============
+
+export const clientExtApi = {
+  assignRm: (clientId: string, assignedRmId: string | null) =>
+    request<{ id: string; assignedRmId: string }>(`/api/v1/clients/${clientId}/assign-rm`, { method: 'PUT', body: { assignedRmId } }),
+  updateTags: (clientId: string, tags: string[]) =>
+    request<{ id: string; tags: string[] }>(`/api/v1/clients/${clientId}/tags`, { method: 'PUT', body: { tags } }),
+  getDormantClients: () =>
+    request<Array<{ id: string; name: string; email: string; aum: number; lastTransactionDate: string; daysSinceLastTxn: number }>>('/api/v1/clients/dormant'),
+};
+
+// ============= Compliance API =============
+
+export interface ComplianceRecordData {
+  id: string; type: string; entityId: string | null; entityName: string | null
+  expiryDate: string; status: string; documentUrl: string | null
+  notes: string | null; daysUntilExpiry: number; createdAt: string
+}
+
+export interface ComplianceDashboard {
+  total: number; valid: number; expiringSoon: number; expired: number
+  byType: Record<string, { valid: number; expiringSoon: number; expired: number }>
+  upcoming: ComplianceRecordData[]
+}
+
+export interface RiskCheckResult {
+  clientId: string; clientName: string; kycStatus: string
+  suitability: string; issueCount: number; issues: string[]
+}
+
+export const complianceApi = {
+  listRecords: (filters?: { type?: string; status?: string }) => {
+    const params = new URLSearchParams()
+    if (filters?.type) params.set('type', filters.type)
+    if (filters?.status) params.set('status', filters.status)
+    const qs = params.toString()
+    return request<ComplianceRecordData[]>(`/api/v1/compliance/records${qs ? `?${qs}` : ''}`)
+  },
+  createRecord: (data: { type: string; entityId?: string; entityName?: string; expiryDate: string; documentUrl?: string; notes?: string }) =>
+    request<ComplianceRecordData>('/api/v1/compliance/records', { method: 'POST', body: data }),
+  updateRecord: (id: string, data: { expiryDate?: string; status?: string; documentUrl?: string; notes?: string }) =>
+    request<ComplianceRecordData>(`/api/v1/compliance/records/${id}`, { method: 'PUT', body: data }),
+  getDashboard: () =>
+    request<ComplianceDashboard>('/api/v1/compliance/dashboard'),
+  riskCheck: (clientId: string) =>
+    request<RiskCheckResult>(`/api/v1/compliance/risk-check/${clientId}`),
+};
+
+// ============= Business Intelligence API =============
+
+export interface AumOverview {
+  totalAum: number; equityAum: number; debtAum: number; hybridAum: number; otherAum: number
+  byCategory: Record<string, number>
+}
+
+export interface AumSnapshot {
+  date: string; totalAum: number; equityAum: number; debtAum: number; hybridAum: number
+  clientCount: number; sipBookSize: number; netFlows: number
+}
+
+export interface NetFlowPeriod {
+  period: string; purchases: number; redemptions: number; net: number
+}
+
+export interface SipHealth {
+  total: number; active: number; paused: number; cancelled: number
+  totalMonthlyAmount: number; mandateExpiringCount: number
+}
+
+export interface RevenueProjection {
+  currentAum: number; avgTrailRate: number; currentMonthlyTrail: number; annual12MProjection: number
+  projections: Array<{ period: string; projectedAum: number; projectedTrail: number }>
+}
+
+export interface ClientConcentration {
+  totalAum: number; topN: number; topNAum: number; concentrationPercent: number
+  clients: Array<{ id: string; name: string; aum: number; rank: number; percentOfTotal: number; cumulativePercent: number }>
+}
+
+export const biApi = {
+  getAumOverview: () =>
+    request<AumOverview>('/api/v1/bi/aum'),
+  getAumByBranch: () =>
+    request<Array<{ name: string; aum: number; clientCount: number }>>('/api/v1/bi/aum/by-branch'),
+  getAumByRm: () =>
+    request<Array<{ id: string; name: string; aum: number; clientCount: number }>>('/api/v1/bi/aum/by-rm'),
+  getAumByClient: (topN = 20) =>
+    request<Array<{ id: string; name: string; aum: number; holdingsCount: number }>>(`/api/v1/bi/aum/by-client?topN=${topN}`),
+  getAumSnapshots: (days = 90) =>
+    request<AumSnapshot[]>(`/api/v1/bi/aum/snapshots?days=${days}`),
+  getNetFlows: (months = 6) =>
+    request<NetFlowPeriod[]>(`/api/v1/bi/net-flows?months=${months}`),
+  getSipHealth: () =>
+    request<SipHealth>('/api/v1/bi/sip-health'),
+  getRevenueProjection: () =>
+    request<RevenueProjection>('/api/v1/bi/revenue-projection'),
+  getClientConcentration: (topN = 10) =>
+    request<ClientConcentration>(`/api/v1/bi/client-concentration?topN=${topN}`),
+  getDormantClients: () =>
+    request<Array<{ id: string; name: string; email: string; aum: number; lastTransactionDate: string; daysSinceLastTxn: number }>>('/api/v1/bi/dormant-clients'),
+  triggerSnapshot: () =>
+    request<{ success: boolean; date: string }>('/api/v1/bi/snapshot', { method: 'POST' }),
+};
+
+// ============= Commissions API =============
+
+export interface CommissionRate {
+  id: string; amcId: string; amcName: string; amcShortName: string | null
+  schemeCategory: string; trailRatePercent: number; upfrontRatePercent: number
+  effectiveFrom: string; effectiveTo: string | null
+}
+
+export interface CommissionRecord {
+  id: string; period: string; amcId: string; amcName: string; amcShortName: string | null
+  aumAmount: number; expectedTrail: number; actualTrail: number
+  difference: number; status: string
+}
+
+export interface BrokerageUploadResult {
+  id: string; fileName: string; source: string; recordCount: number
+  status: string; totalBrokerage: number; amcBreakdown: Record<string, number>
+}
+
+export interface BrokerageUploadHistory {
+  id: string; fileName: string; source: string; recordCount: number
+  status: string; errorMessage: string | null; totalBrokerage: number; createdAt: string
+}
+
+export const commissionsApi = {
+  // Rate Master
+  listRates: () =>
+    request<CommissionRate[]>('/api/v1/commissions/rates'),
+  createRate: (data: { amcId: string; schemeCategory: string; trailRatePercent: number; upfrontRatePercent?: number; effectiveFrom: string; effectiveTo?: string }) =>
+    request<CommissionRate>('/api/v1/commissions/rates', { method: 'POST', body: data }),
+  updateRate: (id: string, data: { trailRatePercent?: number; upfrontRatePercent?: number; effectiveFrom?: string; effectiveTo?: string }) =>
+    request<CommissionRate>(`/api/v1/commissions/rates/${id}`, { method: 'PUT', body: data }),
+  deleteRate: (id: string) =>
+    request<{ success: boolean }>(`/api/v1/commissions/rates/${id}`, { method: 'DELETE' }),
+
+  // Expected Calculation
+  calculateExpected: (period: string) =>
+    request<{ period: string; recordCount: number; totalExpectedTrail: number }>('/api/v1/commissions/calculate-expected', { method: 'POST', body: { period } }),
+
+  // Upload
+  uploadBrokerage: (file: File) =>
+    requestUpload<BrokerageUploadResult>('/api/v1/commissions/upload', file),
+  listUploads: () =>
+    request<BrokerageUploadHistory[]>('/api/v1/commissions/uploads'),
+
+  // Reconciliation
+  reconcile: (period: string) =>
+    request<{ period: string; totalRecords: number; matched: number; discrepancies: number; records: CommissionRecord[] }>('/api/v1/commissions/reconcile', { method: 'POST', body: { period } }),
+
+  // Records
+  listRecords: (filters?: { period?: string; amcId?: string; status?: string }) => {
+    const params = new URLSearchParams()
+    if (filters?.period) params.set('period', filters.period)
+    if (filters?.amcId) params.set('amcId', filters.amcId)
+    if (filters?.status) params.set('status', filters.status)
+    const qs = params.toString()
+    return request<CommissionRecord[]>(`/api/v1/commissions/records${qs ? `?${qs}` : ''}`)
+  },
+  getDiscrepancies: () =>
+    request<CommissionRecord[]>('/api/v1/commissions/discrepancies'),
+};
+
+// ============= Upload Helper =============
+
+export async function requestUpload<T>(
+  endpoint: string,
+  file: File,
+  fieldName = 'file',
+): Promise<T> {
+  const formData = new FormData();
+  formData.append(fieldName, file);
+
+  const headers: Record<string, string> = {};
+  const token = getAuthToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error(error.message || `Upload failed: ${res.status}`);
+  }
+
+  return res.json();
+}

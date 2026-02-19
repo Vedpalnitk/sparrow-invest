@@ -83,4 +83,17 @@ export class CreateClientDto {
   @ApiPropertyOptional({ type: NomineeDto })
   @IsOptional()
   nominee?: NomineeDto;
+
+  @ApiPropertyOptional({ description: 'Staff member ID assigned as RM' })
+  @IsString()
+  @IsOptional()
+  assignedRmId?: string;
+
+  @ApiPropertyOptional({ example: ['HNI', 'NRI'], description: 'Client tags' })
+  @IsOptional()
+  tags?: string[];
+
+  @ApiPropertyOptional({ example: { anniversary: '2025-06-15' }, description: 'Important dates' })
+  @IsOptional()
+  importantDates?: Record<string, string>;
 }

@@ -21,6 +21,9 @@ export class StaffService {
             createdAt: true,
           },
         },
+        branch: {
+          select: { id: true, name: true, code: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -31,6 +34,11 @@ export class StaffService {
       email: s.staffUser.email,
       phone: s.staffUser.phone,
       allowedPages: s.allowedPages,
+      staffRole: s.staffRole,
+      euin: s.euin,
+      euinExpiry: s.euinExpiry?.toISOString().split('T')[0] || null,
+      branchId: s.branchId,
+      branch: s.branch,
       isActive: s.isActive,
       lastLoginAt: s.staffUser.lastLoginAt,
       createdAt: s.createdAt,
@@ -52,6 +60,9 @@ export class StaffService {
             createdAt: true,
           },
         },
+        branch: {
+          select: { id: true, name: true, code: true },
+        },
       },
     });
 
@@ -63,6 +74,11 @@ export class StaffService {
       email: staff.staffUser.email,
       phone: staff.staffUser.phone,
       allowedPages: staff.allowedPages,
+      staffRole: staff.staffRole,
+      euin: staff.euin,
+      euinExpiry: staff.euinExpiry?.toISOString().split('T')[0] || null,
+      branchId: staff.branchId,
+      branch: staff.branch,
       isActive: staff.isActive,
       lastLoginAt: staff.staffUser.lastLoginAt,
       createdAt: staff.createdAt,
@@ -105,6 +121,10 @@ export class StaffService {
           staffUserId: user.id,
           displayName: dto.displayName,
           allowedPages: dto.allowedPages,
+          staffRole: dto.staffRole || 'RM',
+          euin: dto.euin,
+          euinExpiry: dto.euinExpiry ? new Date(dto.euinExpiry) : null,
+          branchId: dto.branchId || null,
         },
       });
 
@@ -114,6 +134,10 @@ export class StaffService {
         email: user.email,
         phone: user.phone,
         allowedPages: staffMember.allowedPages,
+        staffRole: staffMember.staffRole,
+        euin: staffMember.euin,
+        euinExpiry: staffMember.euinExpiry?.toISOString().split('T')[0] || null,
+        branchId: staffMember.branchId,
         isActive: staffMember.isActive,
         createdAt: staffMember.createdAt,
       };
@@ -131,6 +155,10 @@ export class StaffService {
     const updateData: any = {};
     if (dto.displayName !== undefined) updateData.displayName = dto.displayName;
     if (dto.allowedPages !== undefined) updateData.allowedPages = dto.allowedPages;
+    if (dto.staffRole !== undefined) updateData.staffRole = dto.staffRole;
+    if (dto.euin !== undefined) updateData.euin = dto.euin;
+    if (dto.euinExpiry !== undefined) updateData.euinExpiry = new Date(dto.euinExpiry);
+    if (dto.branchId !== undefined) updateData.branchId = dto.branchId || null;
     if (dto.isActive !== undefined) {
       updateData.isActive = dto.isActive;
       // Also toggle user active status
@@ -147,6 +175,9 @@ export class StaffService {
         staffUser: {
           select: { email: true, phone: true, lastLoginAt: true },
         },
+        branch: {
+          select: { id: true, name: true, code: true },
+        },
       },
     });
 
@@ -156,6 +187,11 @@ export class StaffService {
       email: updated.staffUser.email,
       phone: updated.staffUser.phone,
       allowedPages: updated.allowedPages,
+      staffRole: updated.staffRole,
+      euin: updated.euin,
+      euinExpiry: updated.euinExpiry?.toISOString().split('T')[0] || null,
+      branchId: updated.branchId,
+      branch: updated.branch,
       isActive: updated.isActive,
       lastLoginAt: updated.staffUser.lastLoginAt,
       createdAt: updated.createdAt,
@@ -165,5 +201,89 @@ export class StaffService {
 
   async deactivate(id: string, ownerId: string) {
     return this.update(id, ownerId, { isActive: false });
+  }
+
+  async getEuinExpiry(ownerId: string, daysAhead = 90) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + daysAhead);
+
+    const staff = await this.prisma.fAStaffMember.findMany({
+      where: {
+        ownerId,
+        isActive: true,
+        euinExpiry: { lte: cutoff },
+      },
+      include: {
+        staffUser: { select: { email: true } },
+        branch: { select: { name: true } },
+      },
+      orderBy: { euinExpiry: 'asc' },
+    });
+
+    return staff.map((s) => ({
+      id: s.id,
+      displayName: s.displayName,
+      email: s.staffUser.email,
+      euin: s.euin,
+      euinExpiry: s.euinExpiry?.toISOString().split('T')[0] || null,
+      branchName: s.branch?.name || null,
+      daysUntilExpiry: s.euinExpiry
+        ? Math.ceil((s.euinExpiry.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : null,
+    }));
+  }
+
+  async getStaffClients(staffId: string, ownerId: string) {
+    const staff = await this.prisma.fAStaffMember.findFirst({
+      where: { id: staffId, ownerId },
+    });
+    if (!staff) throw new NotFoundException('Staff member not found');
+
+    const clients = await this.prisma.fAClient.findMany({
+      where: { advisorId: ownerId, assignedRmId: staffId },
+      include: {
+        holdings: true,
+        sips: { where: { status: 'ACTIVE' } },
+      },
+    });
+
+    return clients.map((c) => ({
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      aum: c.holdings.reduce((sum, h) => sum + Number(h.currentValue || 0), 0),
+      sipCount: c.sips.length,
+      status: c.status,
+    }));
+  }
+
+  async reassignClients(staffId: string, ownerId: string, targetStaffId: string, userId: string) {
+    const [sourceStaff, targetStaff] = await Promise.all([
+      this.prisma.fAStaffMember.findFirst({ where: { id: staffId, ownerId } }),
+      this.prisma.fAStaffMember.findFirst({ where: { id: targetStaffId, ownerId } }),
+    ]);
+    if (!sourceStaff) throw new NotFoundException('Source staff not found');
+    if (!targetStaff) throw new NotFoundException('Target staff not found');
+
+    const result = await this.prisma.fAClient.updateMany({
+      where: { advisorId: ownerId, assignedRmId: staffId },
+      data: { assignedRmId: targetStaffId },
+    });
+
+    return { reassignedCount: result.count, fromStaff: sourceStaff.displayName, toStaff: targetStaff.displayName };
+  }
+
+  async assignBranch(staffId: string, ownerId: string, branchId: string) {
+    const staff = await this.prisma.fAStaffMember.findFirst({ where: { id: staffId, ownerId } });
+    if (!staff) throw new NotFoundException('Staff member not found');
+
+    const updated = await this.prisma.fAStaffMember.update({
+      where: { id: staffId },
+      data: { branchId: branchId || null },
+      include: { branch: { select: { id: true, name: true, code: true } } },
+    });
+
+    return { id: updated.id, branchId: updated.branchId, branch: updated.branch };
   }
 }

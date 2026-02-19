@@ -3,10 +3,12 @@ import {
   UnauthorizedException,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { LoginDto, RegisterDto, AuthResponseDto, UpdateProfileDto, ChangePasswordDto } from './dto/login.dto';
 
 @Injectable()
@@ -14,6 +16,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private storageService: StorageService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
@@ -145,6 +148,28 @@ export class AuthService {
       },
     });
 
+    // If user is an advisor, include advisor profile data
+    let advisorProfileData: any = undefined;
+    if (user.role === 'advisor') {
+      const ap = await this.prisma.advisorProfile.findUnique({
+        where: { userId },
+        select: {
+          displayName: true,
+          companyName: true,
+          companyLogoUrl: true,
+          avatarUrl: true,
+        },
+      });
+      if (ap) {
+        advisorProfileData = {
+          displayName: ap.displayName,
+          companyName: ap.companyName,
+          companyLogoUrl: ap.companyLogoUrl,
+          avatarUrl: ap.avatarUrl,
+        };
+      }
+    }
+
     // Build profile response
     const profile: any = {
       id: user.id,
@@ -153,6 +178,7 @@ export class AuthService {
       phone: user.phone || client?.phone,
       role: user.role,
       isVerified: user.isVerified,
+      advisorProfile: advisorProfileData,
     };
 
     // If staff, add staff-specific info
@@ -541,6 +567,20 @@ export class AuthService {
       },
     });
 
+    // If advisor, update advisor-specific fields
+    if (user.role === 'advisor') {
+      const advisorData: any = {};
+      if (dto.companyName !== undefined) advisorData.companyName = dto.companyName;
+      if (dto.displayName !== undefined) advisorData.displayName = dto.displayName;
+
+      if (Object.keys(advisorData).length > 0) {
+        await this.prisma.advisorProfile.updateMany({
+          where: { userId },
+          data: advisorData,
+        });
+      }
+    }
+
     // Return updated profile
     return this.getProfile(userId);
   }
@@ -568,5 +608,29 @@ export class AuthService {
     });
 
     return { message: 'Password changed successfully' };
+  }
+
+  async uploadAdvisorLogo(
+    userId: string,
+    file: { buffer: Buffer; originalname?: string; mimetype?: string; size?: number },
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role !== 'advisor') throw new BadRequestException('Only advisors can upload a company logo');
+
+    this.storageService.validateFile(file);
+
+    const ext = file.originalname?.split('.').pop() || 'png';
+    const fileKey = `advisors/${userId}/logo.${ext}`;
+    await this.storageService.uploadAdvisorAsset(fileKey, file.buffer, file.mimetype || 'image/png');
+
+    const logoUrl = await this.storageService.getAdvisorAssetUrl(fileKey);
+
+    await this.prisma.advisorProfile.updateMany({
+      where: { userId },
+      data: { companyLogoUrl: logoUrl },
+    });
+
+    return { companyLogoUrl: logoUrl };
   }
 }

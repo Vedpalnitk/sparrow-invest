@@ -87,4 +87,30 @@ export class ClientsController {
   ) {
     return this.clientsService.deactivate(id, getEffectiveAdvisorId(user));
   }
+
+  @Put(':id/assign-rm')
+  @ApiOperation({ summary: 'Assign/reassign RM to client' })
+  async assignRm(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() body: { assignedRmId: string | null },
+  ) {
+    return this.clientsService.assignRm(id, getEffectiveAdvisorId(user), body.assignedRmId);
+  }
+
+  @Put(':id/tags')
+  @ApiOperation({ summary: 'Update client tags' })
+  async updateTags(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() body: { tags: string[] },
+  ) {
+    return this.clientsService.updateTags(id, getEffectiveAdvisorId(user), body.tags);
+  }
+
+  @Get('dormant')
+  @ApiOperation({ summary: 'Get dormant clients (no txn in 12+ months)' })
+  async getDormantClients(@CurrentUser() user: any) {
+    return this.clientsService.getDormantClients(getEffectiveAdvisorId(user));
+  }
 }

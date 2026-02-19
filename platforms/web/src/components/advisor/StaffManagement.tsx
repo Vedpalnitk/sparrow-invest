@@ -23,6 +23,17 @@ const PAGE_OPTIONS = [
       { href: '/advisor/transactions', label: 'Transactions' },
       { href: '/advisor/communications', label: 'Communications' },
       { href: '/advisor/insights', label: 'Insights' },
+      { href: '/advisor/crm', label: 'CRM' },
+    ],
+  },
+  {
+    section: 'Business',
+    pages: [
+      { href: '/advisor/business', label: 'AUM & Analytics' },
+      { href: '/advisor/commissions', label: 'Commissions' },
+      { href: '/advisor/team', label: 'Team' },
+      { href: '/advisor/branches', label: 'Branches' },
+      { href: '/advisor/compliance', label: 'Compliance' },
     ],
   },
   {

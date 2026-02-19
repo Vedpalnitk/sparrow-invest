@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import * as Minio from 'minio';
 
 const BUCKET = 'insurance-documents';
+const ADVISOR_BUCKET = 'advisor-assets';
 
 const ALLOWED_MIME_TYPES = [
   'application/pdf',
@@ -31,14 +32,15 @@ export class StorageService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    try {
-      const exists = await this.client.bucketExists(BUCKET);
-      if (!exists) {
-        await this.client.makeBucket(BUCKET);
+    for (const bucket of [BUCKET, ADVISOR_BUCKET]) {
+      try {
+        const exists = await this.client.bucketExists(bucket);
+        if (!exists) {
+          await this.client.makeBucket(bucket);
+        }
+      } catch {
+        console.warn(`[StorageService] Could not initialise bucket "${bucket}". Is MinIO running?`);
       }
-    } catch {
-      // MinIO may not be running in dev — log silently
-      console.warn(`[StorageService] Could not initialise bucket "${BUCKET}". Is MinIO running?`);
     }
   }
 
@@ -71,5 +73,19 @@ export class StorageService implements OnModuleInit {
 
   async deleteDocument(fileKey: string): Promise<void> {
     await this.client.removeObject(BUCKET, fileKey);
+  }
+
+  async uploadAdvisorAsset(
+    fileKey: string,
+    buffer: Buffer,
+    mimeType: string,
+  ): Promise<void> {
+    await this.client.putObject(ADVISOR_BUCKET, fileKey, buffer, buffer.length, {
+      'Content-Type': mimeType,
+    });
+  }
+
+  async getAdvisorAssetUrl(fileKey: string, expiry = 86400): Promise<string> {
+    return this.client.presignedGetObject(ADVISOR_BUCKET, fileKey, expiry);
   }
 }

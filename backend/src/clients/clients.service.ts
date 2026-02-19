@@ -142,6 +142,9 @@ export class ClientsService {
         nomineeName: dto.nominee?.name,
         nomineeRelation: dto.nominee?.relationship,
         nomineePercent: dto.nominee?.percentage,
+        assignedRmId: dto.assignedRmId || null,
+        tags: dto.tags || [],
+        importantDates: dto.importantDates || null,
       },
       include: {
         holdings: true,
@@ -175,6 +178,9 @@ export class ClientsService {
         nomineeName: dto.nominee?.name,
         nomineeRelation: dto.nominee?.relationship,
         nomineePercent: dto.nominee?.percentage,
+        assignedRmId: dto.assignedRmId,
+        tags: dto.tags,
+        importantDates: dto.importantDates,
       },
       include: {
         holdings: true,
@@ -273,6 +279,10 @@ export class ClientsService {
       familyGroupId: client.familyGroupId,
       familyRole: client.familyRole,
       familyHeadId: client.familyHeadId,
+      // Business management fields
+      assignedRmId: client.assignedRmId,
+      tags: client.tags || [],
+      importantDates: client.importantDates,
       nominee: client.nomineeName
         ? {
             name: client.nomineeName,
@@ -419,6 +429,55 @@ export class ClientsService {
       kycStatus: fc.kycStatus,
       hasFolio: holdings.length > 0,
     };
+  }
+
+  async assignRm(id: string, advisorId: string, assignedRmId: string | null) {
+    await this.findOne(id, advisorId);
+    const client = await this.prisma.fAClient.update({
+      where: { id },
+      data: { assignedRmId },
+    });
+    return { id: client.id, assignedRmId: client.assignedRmId };
+  }
+
+  async updateTags(id: string, advisorId: string, tags: string[]) {
+    await this.findOne(id, advisorId);
+    const client = await this.prisma.fAClient.update({
+      where: { id },
+      data: { tags },
+    });
+    return { id: client.id, tags: client.tags };
+  }
+
+  async getDormantClients(advisorId: string) {
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - 12);
+
+    const clients = await this.prisma.fAClient.findMany({
+      where: {
+        advisorId,
+        status: 'ACTIVE',
+        transactions: {
+          none: { date: { gte: cutoff } },
+        },
+      },
+      include: {
+        holdings: true,
+        transactions: { orderBy: { date: 'desc' }, take: 1 },
+      },
+    });
+
+    return clients.map((c) => ({
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      aum: c.holdings.reduce((sum, h) => sum + Number(h.currentValue || 0), 0),
+      lastTransactionDate: c.transactions[0]?.date?.toISOString().split('T')[0] || null,
+      daysSinceLastTxn: c.transactions[0]?.date
+        ? Math.ceil((Date.now() - c.transactions[0].date.getTime()) / (1000 * 60 * 60 * 24))
+        : null,
+    }));
   }
 
   private formatLastActive(date: Date | null): string {

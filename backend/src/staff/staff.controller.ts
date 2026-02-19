@@ -58,4 +58,36 @@ export class StaffController {
     this.ensureAdvisor(user);
     return this.staffService.deactivate(id, user.id);
   }
+
+  @Get('euin-expiry')
+  getEuinExpiry(@CurrentUser() user: any) {
+    this.ensureAdvisor(user);
+    return this.staffService.getEuinExpiry(user.id);
+  }
+
+  @Get(':id/clients')
+  getStaffClients(@CurrentUser() user: any, @Param('id') id: string) {
+    this.ensureAdvisor(user);
+    return this.staffService.getStaffClients(id, user.id);
+  }
+
+  @Post(':id/reassign-clients')
+  reassignClients(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() body: { targetStaffId: string },
+  ) {
+    this.ensureAdvisor(user);
+    return this.staffService.reassignClients(id, user.id, body.targetStaffId, user.id);
+  }
+
+  @Put(':id/assign-branch')
+  assignBranch(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() body: { branchId: string },
+  ) {
+    this.ensureAdvisor(user);
+    return this.staffService.assignBranch(id, user.id, body.branchId);
+  }
 }
