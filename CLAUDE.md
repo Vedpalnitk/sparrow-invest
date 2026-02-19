@@ -142,6 +142,8 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 - Deploy prod: `git push origin main` → `ssh server` → build frontend manually, `pm2 restart sparrow-invest-prod`
 - Deploy dev: `ssh server "/home/ved/deploy.sh sparrow-invest dev"` (builds both backend + frontend)
 - **Note**: `deploy.sh` for prod fails on backend build (no DATABASE_URL) — build frontend directly instead
+- **Prod safety**: No backend runs on prod — no `.env`, no `DATABASE_URL`, no database. Only the `sparrow_dev` database exists (used by dev backend on port 3501). When prod backend is needed, create a `sparrow_prod` database and `backend/.env` on the prod server path.
+- **Firewall**: Ports 3500, 3501, 3502 restricted to localhost only via UFW (`127.0.0.1`)
 
 ### State Management
 - Web: React Context API (no Redux), localStorage for persistence
