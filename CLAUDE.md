@@ -2,7 +2,7 @@
 
 ## Project Overview
 AI-powered mutual fund portfolio management platform with goal-aligned recommendations. The project consists of multiple platforms and services:
-- **Next.js Web App** - Admin dashboard and user portal (port 3500)
+- **Next.js Web App** - Admin dashboard and user portal (prod: 3500, dev: 3502)
 - **iOS Consumer App** - Native SwiftUI mobile app for consumers (ios-consumer)
 - **iOS FA App** - Native SwiftUI mobile app for Financial Advisors (ios-fa)
 - **Android Consumer App** - Native Kotlin/Jetpack Compose app for consumers (android-consumer)
@@ -127,13 +127,21 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 - iOS API services in `platforms/ios-consumer/SparrowInvest/Services/`
 
 ### Subdomain Portal Separation
-- `app.sparrow-invest.com` → FA portal only (admin routes blocked)
+- `sparrow-invest.com` → Landing page only (login/advisor/admin routes blocked, not yet public)
 - `admin.sparrow-invest.com` → Admin portal only (advisor routes blocked)
-- `localhost:3500` → Both portals (dev mode, no restrictions)
+- `localhost:3502` → Dev frontend (full access, no restrictions)
 - Implemented via Next.js edge middleware (`platforms/web/middleware.ts`) reading `Host` header
 - Defense-in-depth: client-side hostname guards in `AdminLayout.tsx`, `AdvisorLayout.tsx`, and `index.tsx`
 - Env vars `NEXT_PUBLIC_APP_HOSTNAME` / `NEXT_PUBLIC_ADMIN_HOSTNAME` control behavior; unset = dev mode
-- Vercel preview deployments fall into dev mode (full access)
+- **Landing page status**: "Launching Soon" badges replace login/get-started buttons (not open to public)
+
+### Deployment Architecture
+- **Prod** (`main` branch): frontend-only on port **3500**, serves landing page via Cloudflare tunnel (`sparrow-invest.com`)
+- **Dev** (`dev` branch): full stack on ports **3502** (frontend) + **3501** (backend)
+- Cloudflare tunnel (`sparrow-tunnel` PM2 process) routes `sparrow-invest.com` → `localhost:3500` (prod)
+- Deploy prod: `git push origin main` → `ssh server` → build frontend manually, `pm2 restart sparrow-invest-prod`
+- Deploy dev: `ssh server "/home/ved/deploy.sh sparrow-invest dev"` (builds both backend + frontend)
+- **Note**: `deploy.sh` for prod fails on backend build (no DATABASE_URL) — build frontend directly instead
 
 ### State Management
 - Web: React Context API (no Redux), localStorage for persistence
@@ -188,8 +196,10 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 ### Web App (.env.local)
 ```bash
 # Subdomain-based portal separation (unset for local dev = full access)
-NEXT_PUBLIC_APP_HOSTNAME=app.sparrow-invest.com
+NEXT_PUBLIC_APP_HOSTNAME=sparrow-invest.com
 NEXT_PUBLIC_ADMIN_HOSTNAME=admin.sparrow-invest.com
+# Server-side API proxy target (local dev points to deployed backend)
+BACKEND_URL=https://sparrow-invest.com
 ```
 
 ### Backend (.env)
