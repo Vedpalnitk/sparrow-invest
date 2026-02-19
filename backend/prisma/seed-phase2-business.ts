@@ -521,7 +521,7 @@ async function main() {
 
   // ── Look up existing advisors ──
   const advisors = await prisma.user.findMany({
-    where: { role: 'advisor', email: { not: 'self-service@sparrowinvest.com' } },
+    where: { role: 'advisor', email: { notIn: ['self-service@sparrowinvest.com', 'self-service@sparrow-invest.com'] } },
   });
 
   if (advisors.length === 0) {
@@ -532,22 +532,26 @@ async function main() {
   console.log(`Found ${advisors.length} advisors: ${advisors.map(a => a.email).join(', ')}\n`);
 
   // ── Seed FULL data for primary advisors ──
-  const primaryEmails = ['advisor@sparrowinvest.com', 'priya.sharma@sparrowinvest.com'];
-  const prefixes = ['Main', 'PS'];
+  // Match both @sparrowinvest.com and @sparrow-invest.com formats
+  const primaryPatterns = [
+    { match: (e: string) => e.startsWith('advisor@') && !e.includes('test'), prefix: 'Main' },
+    { match: (e: string) => e.startsWith('priya.sharma@'), prefix: 'PS' },
+  ];
 
-  for (let i = 0; i < primaryEmails.length; i++) {
-    const advisor = advisors.find(a => a.email === primaryEmails[i]);
+  const seededIds = new Set<string>();
+  for (const pat of primaryPatterns) {
+    const advisor = advisors.find(a => pat.match(a.email));
     if (!advisor) {
-      console.log(`⚠️  ${primaryEmails[i]} not found, skipping`);
+      console.log(`⚠️  No advisor matching pattern found, skipping`);
       continue;
     }
-    const stats = await seedForAdvisor(advisor.id, advisor.email, prefixes[i]);
+    seededIds.add(advisor.id);
+    const stats = await seedForAdvisor(advisor.id, advisor.email, pat.prefix);
     console.log(`\n  📊 Summary: ${stats.branches} branches, ${stats.rateCount} rates, ${stats.recordCount} commission records, ${stats.uploads} uploads, ${stats.snapshots} AUM snapshots, ${stats.tasks} CRM tasks, ${stats.activities} activities, ${stats.compliance} compliance, ${stats.audits} audit logs`);
   }
 
   // ── Seed smaller set for remaining advisors ──
-  const seededIds = new Set(primaryEmails.map(e => advisors.find(a => a.email === e)?.id).filter(Boolean));
-  const otherAdvisors = advisors.filter(a => !seededIds.has(a.id)).slice(0, 3);
+  const otherAdvisors = advisors.filter(a => !seededIds.has(a.id) && !a.email.includes('test')).slice(0, 3);
 
   if (otherAdvisors.length > 0) {
     console.log('\n\n🔄 Seeding smaller data sets for other advisors...');
