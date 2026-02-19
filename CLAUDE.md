@@ -2,12 +2,12 @@
 
 ## Project Overview
 AI-powered mutual fund portfolio management platform with goal-aligned recommendations. The project consists of multiple platforms and services:
-- **Next.js Web App** - Admin dashboard and user portal (prod: 3500, dev: 3502)
+- **Next.js Web App** - Admin dashboard and user portal (local: 3800, dev: 3502, prod: 3500)
 - **iOS Consumer App** - Native SwiftUI mobile app for consumers (ios-consumer)
 - **iOS FA App** - Native SwiftUI mobile app for Financial Advisors (ios-fa)
 - **Android Consumer App** - Native Kotlin/Jetpack Compose app for consumers (android-consumer)
 - **Android FA App** - Native Kotlin/Jetpack Compose app for Financial Advisors (android-fa)
-- **Backend** - NestJS API service (port 3501)
+- **Backend** - NestJS API service (local: 3801, dev server: 3501)
 - **ML Service** - Machine learning recommendation engine
 
 ## Project Structure
@@ -47,7 +47,7 @@ sparrow-invest/
 │           ├── data/       # Models, repositories
 │           ├── core/       # Network, DI modules
 │           └── MainActivity.kt
-├── backend/                # NestJS API service (port 3501)
+├── backend/                # NestJS API service (local: 3801, dev: 3501)
 ├── ml-service/             # ML recommendation engine
 ├── proto/                  # Protocol buffer definitions
 ├── docs/                   # Documentation
@@ -88,7 +88,14 @@ sparrow-invest/
 - **Dev server**: `cd backend && npm run start:dev`
 - **Database migrate**: `cd backend && npm run db:migrate`
 - **Database seed**: `cd backend && npm run db:seed`
+- **Seed all data**: `cd backend && npm run db:seed:all`
 - **Prisma Studio**: `cd backend && npm run db:studio`
+
+### Docker (Local Dev)
+- **Start services**: `docker compose -f docker-compose.dev.yml up -d`
+- **Stop services**: `docker compose -f docker-compose.dev.yml down`
+- **Stop + wipe data**: `docker compose -f docker-compose.dev.yml down -v`
+- **View logs**: `docker compose -f docker-compose.dev.yml logs -f`
 
 ### ML Service
 - **Start**: `cd ml-service && python -m app.main`
@@ -129,13 +136,15 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 ### Subdomain Portal Separation
 - `sparrow-invest.com` → Landing page only (login/advisor/admin routes blocked, not yet public)
 - `admin.sparrow-invest.com` → Admin portal only (advisor routes blocked)
-- `localhost:3502` → Dev frontend (full access, no restrictions)
+- `localhost:3800` → Local dev frontend (full access, no restrictions)
+- `localhost:3502` → Dev server frontend (full access, no restrictions)
 - Implemented via Next.js edge middleware (`platforms/web/middleware.ts`) reading `Host` header
 - Defense-in-depth: client-side hostname guards in `AdminLayout.tsx`, `AdvisorLayout.tsx`, and `index.tsx`
 - Env vars `NEXT_PUBLIC_APP_HOSTNAME` / `NEXT_PUBLIC_ADMIN_HOSTNAME` control behavior; unset = dev mode
 - **Landing page status**: "Launching Soon" badges replace login/get-started buttons (not open to public)
 
 ### Deployment Architecture
+- **Local** (`dev` branch): full stack on ports **3800** (frontend) + **3801** (backend) + Docker services on 38xx
 - **Prod** (`main` branch): frontend-only on port **3500**, serves landing page via Cloudflare tunnel (`sparrow-invest.com`)
 - **Dev** (`dev` branch): full stack on ports **3502** (frontend) + **3501** (backend)
 - Cloudflare tunnel (`sparrow-tunnel` PM2 process) routes `sparrow-invest.com` → `localhost:3500` (prod)
@@ -193,22 +202,44 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 - Get fund details: `GET /mf/{schemeCode}`
 - Returns NAV history for CAGR calculations
 
-## Environment Setup
+## Local Development Setup
 
-### Web App (.env.local)
+**Quick start**: `git clone` → `./setup.sh` → full stack running in minutes.
+
+`setup.sh` handles: pre-flight checks, Docker services, env files, backend deps, DB schema + seeds, frontend deps.
+
+### Port Scheme
+
+| Service | Local (Mac) | Dev Server | Prod Server |
+|---------|-------------|------------|-------------|
+| Frontend | **3800** | 3502 | 3500 |
+| Backend | **3801** | 3501 | -- |
+| PostgreSQL | **3832** | 5432 | -- |
+| Redis | **3879** | 6379 | -- |
+| MinIO API | **3890** | -- | -- |
+| MinIO Console | **3891** | -- | -- |
+
+### Key Files
+- `docker-compose.dev.yml` (root) — PostgreSQL, Redis, MinIO on 3800-series ports
+- `backend/.env.example` → copy to `backend/.env` (defaults match docker-compose.dev.yml)
+- `platforms/web/.env.example` → copy to `platforms/web/.env.local`
+- `backend/docker-compose.yml` — **DEPRECATED**, uses standard ports that collide with system services
+
+### Environment Files
+
+**Backend** (`backend/.env`) — created from `backend/.env.example`:
 ```bash
-# Subdomain-based portal separation (unset for local dev = full access)
-NEXT_PUBLIC_APP_HOSTNAME=sparrow-invest.com
-NEXT_PUBLIC_ADMIN_HOSTNAME=admin.sparrow-invest.com
-# Server-side API proxy target (local dev points to deployed backend)
-BACKEND_URL=https://sparrow-invest.com
+PORT=3801
+DATABASE_URL="postgresql://siuser:sipassword@localhost:3832/sparrowinvest_local?schema=public"
+REDIS_HOST=localhost
+REDIS_PORT=3879
+MINIO_PORT=3890
 ```
 
-### Backend (.env)
+**Frontend** (`platforms/web/.env.local`) — created from `platforms/web/.env.example`:
 ```bash
-DATABASE_URL="postgresql://user:pass@localhost:5432/sparrowinvest"
-JWT_SECRET="your-secret-key"
-PORT=3501
+BACKEND_URL=http://localhost:3801
+# NEXT_PUBLIC_APP_HOSTNAME and NEXT_PUBLIC_ADMIN_HOSTNAME unset = dev mode (full access)
 ```
 
 ### Android FA App
@@ -226,6 +257,8 @@ PORT=3501
 | Emulator can't reach backend | Use `10.0.2.2` instead of `localhost` for Android emulator |
 | Admin routes 404 in production | Check `NEXT_PUBLIC_APP_HOSTNAME` — middleware blocks `/admin/*` on app subdomain |
 | Middleware not running | `middleware.ts` must be at `platforms/web/middleware.ts` (project root, not `src/`) for Pages Router |
+| Port 5432/6379 already in use | Use `docker-compose.dev.yml` (root), not `backend/docker-compose.yml` — local dev uses 3800-series ports |
+| Backend can't connect to DB | Ensure Docker services are running: `docker compose -f docker-compose.dev.yml up -d` |
 
 ---
 
