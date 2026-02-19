@@ -5,6 +5,15 @@ const nextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
 
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.BACKEND_URL || 'http://localhost:3501'}/api/:path*`,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {

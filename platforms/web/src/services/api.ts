@@ -3,9 +3,10 @@
  */
 
 const API_BASE = (() => {
-  const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3501';
+  // Use NEXT_PUBLIC_API_URL if set, otherwise use relative URLs (proxied via Next.js rewrites)
+  const url = process.env.NEXT_PUBLIC_API_URL || '';
   // Enforce HTTPS in production (browser environment only)
-  if (typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
+  if (url && typeof window !== 'undefined' && window.location.protocol === 'https:' && url.startsWith('http://')) {
     return url.replace('http://', 'https://');
   }
   return url;
