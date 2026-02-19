@@ -585,7 +585,7 @@ async function seedFAPortalData(advisorId: string) {
           totalInvested,
           currentValue: totalInvested + returns,
           returns,
-          returnsPct: (returns / totalInvested) * 100,
+          returnsPct: totalInvested > 0 ? (returns / totalInvested) * 100 : 0,
           nextSipDate,
           lastSipDate: completedInstallments > 0 ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) : null,
           stepUpPercent: Math.random() > 0.5 ? 10 : undefined,
