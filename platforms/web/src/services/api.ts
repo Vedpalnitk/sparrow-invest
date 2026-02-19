@@ -98,7 +98,12 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${endpoint}`, config);
+  } catch {
+    throw new Error('Network error — please check your connection and try again.');
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
