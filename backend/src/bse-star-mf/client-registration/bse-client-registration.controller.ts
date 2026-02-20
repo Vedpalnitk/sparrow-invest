@@ -1,0 +1,70 @@
+import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common'
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger'
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
+import { CurrentUser } from '../../common/decorators/current-user.decorator'
+import { BseUccService } from './bse-ucc.service'
+import { BseFatcaService } from './bse-fatca.service'
+import { BseCkycService } from './bse-ckyc.service'
+import { RegisterUccDto, UploadFatcaDto, UploadCkycDto } from './dto/register-ucc.dto'
+
+@ApiTags('BSE Client Registration')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('api/v1/bse/ucc')
+export class BseClientRegistrationController {
+  constructor(
+    private uccService: BseUccService,
+    private fatcaService: BseFatcaService,
+    private ckycService: BseCkycService,
+  ) {}
+
+  @Get(':clientId')
+  @ApiOperation({ summary: 'Get BSE registration status for a client' })
+  async getRegistrationStatus(
+    @CurrentUser() user: any,
+    @Param('clientId') clientId: string,
+  ) {
+    return this.uccService.getRegistrationStatus(clientId, user.id)
+  }
+
+  @Post(':clientId/register')
+  @ApiOperation({ summary: 'Submit UCC registration to BSE' })
+  async registerClient(
+    @CurrentUser() user: any,
+    @Param('clientId') clientId: string,
+    @Body() dto: RegisterUccDto,
+  ) {
+    return this.uccService.registerClient(clientId, user.id, dto)
+  }
+
+  @Put(':clientId')
+  @ApiOperation({ summary: 'Modify existing UCC registration' })
+  async modifyRegistration(
+    @CurrentUser() user: any,
+    @Param('clientId') clientId: string,
+    @Body() dto: RegisterUccDto,
+  ) {
+    dto.transType = 'MOD' as any
+    return this.uccService.registerClient(clientId, user.id, dto)
+  }
+
+  @Post(':clientId/fatca')
+  @ApiOperation({ summary: 'Upload FATCA declaration for client' })
+  async uploadFatca(
+    @CurrentUser() user: any,
+    @Param('clientId') clientId: string,
+    @Body() dto: UploadFatcaDto,
+  ) {
+    return this.fatcaService.uploadFatca(clientId, user.id, dto)
+  }
+
+  @Post(':clientId/ckyc')
+  @ApiOperation({ summary: 'Upload CKYC for client' })
+  async uploadCkyc(
+    @CurrentUser() user: any,
+    @Param('clientId') clientId: string,
+    @Body() dto: UploadCkycDto,
+  ) {
+    return this.ckycService.uploadCkyc(clientId, user.id, dto)
+  }
+}

@@ -51,7 +51,7 @@ type TxnTypeFilter = 'All' | 'Buy' | 'Sell' | 'SIP' | 'Switch' | 'SWP' | 'STP'
 type TxnStatusFilter = 'All' | 'Pending' | 'Completed' | 'Failed'
 type TxnSort = 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc'
 
-type TabId = 'overview' | 'family' | 'holdings' | 'transactions' | 'sips' | 'goals' | 'notes' | 'reports' | 'insurance'
+type TabId = 'overview' | 'family' | 'holdings' | 'transactions' | 'sips' | 'goals' | 'notes' | 'reports' | 'insurance' | 'bse'
 
 const ClientDetailPage = () => {
   const router = useRouter()
@@ -704,6 +704,7 @@ const ClientDetailPage = () => {
     { id: 'notes', label: 'Notes', count: notes.length },
     { id: 'reports', label: 'Reports' },
     { id: 'insurance', label: 'Insurance' },
+    { id: 'bse', label: 'BSE' },
   ]
 
   const getSipStatusColor = (status: string) => {
@@ -898,7 +899,7 @@ const ClientDetailPage = () => {
               </div>
             </div>
             <Link
-              href="/advisor/action-center"
+              href="/advisor/command-center"
               className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all hover:shadow-lg"
               style={{
                 background: `linear-gradient(135deg, ${colors.warning} 0%, ${colors.warning}DD 100%)`,
@@ -2331,6 +2332,92 @@ const ClientDetailPage = () => {
 
         {activeTab === 'insurance' && id && (
           <InsuranceTab clientId={id as string} />
+        )}
+
+        {/* ==================== BSE REGISTRATION TAB ==================== */}
+        {activeTab === 'bse' && id && (
+          <div className="space-y-6">
+            <FACard padding="md">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: `${colors.primary}15`, color: colors.primary }}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold" style={{ color: colors.textPrimary }}>BSE StAR MF Registration</h3>
+                    <p className="text-sm" style={{ color: colors.textSecondary }}>
+                      Register this client with BSE to enable live transactions
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={`/advisor/bse/clients/${id}/register`}
+                  className="px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:shadow-lg"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
+                    boxShadow: `0 4px 14px ${colors.glassShadow}`,
+                  }}
+                >
+                  Register / Update
+                </a>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div
+                  className="p-4 rounded-xl"
+                  style={{ background: colors.chipBg, border: `1px solid ${colors.cardBorder}` }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: colors.textTertiary }}>UCC Status</p>
+                  <p className="text-sm font-semibold" style={{ color: colors.textSecondary }}>Check BSE Clients page</p>
+                </div>
+                <div
+                  className="p-4 rounded-xl"
+                  style={{ background: colors.chipBg, border: `1px solid ${colors.cardBorder}` }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: colors.textTertiary }}>FATCA</p>
+                  <p className="text-sm font-semibold" style={{ color: colors.textSecondary }}>--</p>
+                </div>
+                <div
+                  className="p-4 rounded-xl"
+                  style={{ background: colors.chipBg, border: `1px solid ${colors.cardBorder}` }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: colors.textTertiary }}>CKYC</p>
+                  <p className="text-sm font-semibold" style={{ color: colors.textSecondary }}>--</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-3">
+                <a
+                  href="/advisor/bse/clients"
+                  className="text-sm font-medium hover:underline"
+                  style={{ color: colors.primary }}
+                >
+                  View all BSE registrations
+                </a>
+                <span style={{ color: colors.textTertiary }}>|</span>
+                <a
+                  href="/advisor/bse/mandates"
+                  className="text-sm font-medium hover:underline"
+                  style={{ color: colors.primary }}
+                >
+                  Mandates
+                </a>
+                <span style={{ color: colors.textTertiary }}>|</span>
+                <a
+                  href="/advisor/bse/orders"
+                  className="text-sm font-medium hover:underline"
+                  style={{ color: colors.primary }}
+                >
+                  Orders
+                </a>
+              </div>
+            </FACard>
+          </div>
         )}
       </div>
 

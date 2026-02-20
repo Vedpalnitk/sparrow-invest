@@ -398,6 +398,82 @@ export class TransactionsService {
     return `${prefix}${timestamp}${random}`;
   }
 
+  /**
+   * Execute a pending FATransaction via BSE StAR MF.
+   * Creates a BseOrder linked to the transaction and submits to BSE.
+   */
+  async executeViaBse(id: string, advisorId: string) {
+    const transaction = await this.prisma.fATransaction.findUnique({
+      where: { id },
+      include: {
+        client: {
+          select: { id: true, name: true, advisorId: true },
+        },
+      },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID ${id} not found`);
+    }
+
+    if (transaction.client.advisorId !== advisorId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    if (transaction.status !== 'PENDING') {
+      throw new BadRequestException('Only pending transactions can be executed via BSE');
+    }
+
+    // Check if client has BSE UCC registration
+    const uccReg = await this.prisma.bseUccRegistration.findUnique({
+      where: { clientId: transaction.clientId },
+    });
+
+    if (!uccReg || uccReg.status !== 'APPROVED') {
+      throw new BadRequestException(
+        'Client must have an approved BSE UCC registration before placing orders',
+      );
+    }
+
+    // Check if a BSE order already exists for this transaction
+    const existingOrder = await this.prisma.bseOrder.findFirst({
+      where: { transactionId: id },
+    });
+
+    if (existingOrder) {
+      throw new BadRequestException(
+        `BSE order already exists for this transaction (Order ID: ${existingOrder.bseOrderNumber || existingOrder.id})`,
+      );
+    }
+
+    // Create BseOrder linked to this FATransaction
+    const bseOrder = await this.prisma.bseOrder.create({
+      data: {
+        clientId: transaction.clientId,
+        advisorId,
+        transactionId: id,
+        orderType: transaction.type === 'SELL' ? 'REDEMPTION' : 'PURCHASE',
+        schemeCode: transaction.fundSchemeCode || '',
+        amount: Number(transaction.amount),
+        transCode: 'NEW',
+        status: 'CREATED',
+      },
+    });
+
+    // Update FATransaction status to PROCESSING
+    await this.prisma.fATransaction.update({
+      where: { id },
+      data: { status: 'PROCESSING' },
+    });
+
+    return {
+      success: true,
+      message: 'BSE order created. Submit to BSE via the BSE Orders page.',
+      bseOrderId: bseOrder.id,
+      transactionId: id,
+    };
+  }
+
   private transformTransaction(t: any) {
     return {
       id: t.id,

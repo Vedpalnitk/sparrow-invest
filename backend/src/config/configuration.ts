@@ -35,4 +35,10 @@ export default () => ({
     authToken: process.env.TWILIO_AUTH_TOKEN || '',
     from: process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886',
   },
+  bse: {
+    encryptionKey: process.env.BSE_ENCRYPTION_KEY || '',
+    mockMode: process.env.BSE_MOCK_MODE !== 'false',
+    baseUrl: process.env.BSE_BASE_URL || 'https://bsestarmfdemo.bseindia.com',
+    callbackUrl: process.env.BSE_CALLBACK_URL || 'http://localhost:3801/api/v1/bse/payments/callback',
+  },
 });

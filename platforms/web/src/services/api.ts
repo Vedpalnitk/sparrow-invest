@@ -1183,6 +1183,9 @@ export const transactionsApi = {
 
   cancel: (id: string) =>
     request<void>(`/api/v1/transactions/${id}/cancel`, { method: 'POST' }),
+
+  executeViaBse: (id: string) =>
+    request<{ success: boolean; message: string; bseOrderId: string }>(`/api/v1/transactions/${id}/execute-bse`, { method: 'POST' }),
 };
 
 // ============= SIPs API =============
@@ -1250,6 +1253,9 @@ export const sipsApi = {
 
   cancel: (id: string) =>
     request<{ success: boolean }>(`/api/v1/sips/${id}/cancel`, { method: 'POST' }),
+
+  registerWithBse: (id: string) =>
+    request<{ success: boolean; message: string; bseOrderId: string }>(`/api/v1/sips/${id}/register-bse`, { method: 'POST' }),
 };
 
 // ============= Goals API =============
@@ -1527,6 +1533,8 @@ export interface AdvisorDashboard {
 
 export const advisorDashboardApi = {
   get: () => request<AdvisorDashboard>('/api/v1/advisor/dashboard'),
+  getActionCalendar: (days = 30) =>
+    request<ActionCalendar>(`/api/v1/advisor/action-calendar?days=${days}`),
 };
 
 // ============= Advisor Insights API =============
@@ -1598,6 +1606,10 @@ export const advisorInsightsApi = {
     request<DeepAnalysisResult>(`/api/v1/advisor/insights/deep/${clientId}`, { method: 'POST' }),
   getStrategicInsights: () =>
     request<StrategicInsights>('/api/v1/advisor/insights/strategic'),
+  getCrossSellOpportunities: () =>
+    request<CrossSellOpportunity[]>('/api/v1/advisor/insights/cross-sell'),
+  getChurnRisk: () =>
+    request<ChurnRiskClient[]>('/api/v1/advisor/insights/churn-risk'),
 };
 
 // ============= Deep Analysis Types (Tier 2) =============
@@ -2295,7 +2307,82 @@ export const biApi = {
     request<Array<{ id: string; name: string; email: string; aum: number; lastTransactionDate: string; daysSinceLastTxn: number }>>('/api/v1/bi/dormant-clients'),
   triggerSnapshot: () =>
     request<{ success: boolean; date: string }>('/api/v1/bi/snapshot', { method: 'POST' }),
+  getMonthlyScorecard: () =>
+    request<MonthlyScorecard>('/api/v1/bi/monthly-scorecard'),
+  getRevenueAttribution: () =>
+    request<RevenueAttribution>('/api/v1/bi/revenue-attribution'),
+  getClientSegmentation: () =>
+    request<ClientSegmentation>('/api/v1/bi/client-segmentation'),
 };
+
+// ============= BI Extended Types =============
+
+export interface MonthlyScorecardDelta {
+  current: number; previous: number; delta: number; deltaPercent?: number
+}
+
+export interface MonthlyScorecard {
+  period: string; prevPeriod: string
+  aum: MonthlyScorecardDelta & { deltaPercent: number }
+  netFlows: { current: number; previous: number; delta: number }
+  sipBook: MonthlyScorecardDelta & { deltaPercent: number }
+  clientCount: MonthlyScorecardDelta & { deltaPercent: number }
+  newClients: number; lostClients: number
+}
+
+export interface RevenueAttributionAmc {
+  amcName: string; aumAmount: number; trailRate: number
+  estimatedTrail: number; holdingsCount: number; percentOfTotal: number
+}
+
+export interface RevenueAttribution {
+  totalTrailIncome: number
+  byAmc: RevenueAttributionAmc[]
+}
+
+export interface ClientTier {
+  tier: string; clientCount: number; totalAum: number
+  avgAum: number; percentOfAum: number
+  clients: Array<{ id: string; name: string; aum: number }>
+}
+
+export interface ClientSegmentation {
+  tiers: ClientTier[]
+  totalAum: number; totalClients: number
+}
+
+// ============= Insights Extended Types =============
+
+export interface CrossSellGap {
+  type: string; label: string; description: string; priority: string
+}
+
+export interface CrossSellOpportunity {
+  clientId: string; clientName: string; aum: number
+  riskProfile: string; gaps: CrossSellGap[]; gapCount: number
+}
+
+export interface ChurnRiskFactor {
+  factor: string; weight: number; detail: string
+}
+
+export interface ChurnRiskClient {
+  clientId: string; clientName: string; aum: number
+  riskScore: number; riskLevel: string
+  factors: ChurnRiskFactor[]
+  daysSinceLastTxn: number | null
+  recentRedemptionTotal: number; sipTrend: string
+}
+
+export interface ActionCalendarItem {
+  date: string; type: string; label: string; description: string
+  clientId: string; clientName: string; priority: string; daysFromNow: number
+}
+
+export interface ActionCalendar {
+  items: ActionCalendarItem[]
+  summary: { total: number; sipExpiring: number; birthdays: number; followUps: number }
+}
 
 // ============= Commissions API =============
 
@@ -2359,6 +2446,68 @@ export const commissionsApi = {
     request<CommissionRecord[]>('/api/v1/commissions/discrepancies'),
 };
 
+// ============= CAS Import API =============
+
+export interface CASImportResult {
+  id: string;
+  status: string;
+  context: string;
+  investorName?: string;
+  investorEmail?: string;
+  foliosImported: number;
+  schemesImported: number;
+  totalValue?: number;
+  createdAt: string;
+  errorMessage?: string;
+}
+
+export interface CASImportRecord {
+  id: string;
+  userId: string;
+  clientId?: string;
+  context: string;
+  investorName?: string;
+  investorEmail?: string;
+  casType?: string;
+  fileType?: string;
+  periodFrom?: string;
+  periodTo?: string;
+  foliosImported: number;
+  schemesImported: number;
+  totalValue?: number;
+  status: string;
+  errorMessage?: string;
+  createdAt: string;
+}
+
+export const casApi = {
+  importCAS: async (file: File, password: string, clientId?: string): Promise<CASImportResult> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('password', password);
+    if (clientId) formData.append('clientId', clientId);
+
+    const headers: Record<string, string> = {};
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${API_BASE}/api/v1/cas/import`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(error.message || `Import failed: ${res.status}`);
+    }
+
+    return res.json();
+  },
+  getImports: (clientId?: string) =>
+    request<CASImportRecord[]>(clientId ? `/api/v1/cas/imports/${clientId}` : '/api/v1/cas/imports'),
+};
+
 // ============= Upload Helper =============
 
 export async function requestUpload<T>(
@@ -2386,3 +2535,132 @@ export async function requestUpload<T>(
 
   return res.json();
 }
+
+// ============= BSE StAR MF API =============
+
+export const bseApi = {
+  // Credentials
+  credentials: {
+    getStatus: () =>
+      request<any>('/api/v1/bse/credentials'),
+    set: (data: { memberId: string; userIdBse: string; password: string; arn: string; euin?: string; passKey: string }) =>
+      request<any>('/api/v1/bse/credentials', { method: 'POST', body: data }),
+    test: () =>
+      request<{ success: boolean; message: string }>('/api/v1/bse/credentials/test', { method: 'POST' }),
+  },
+
+  // UCC (Client Registration)
+  ucc: {
+    getStatus: (clientId: string) =>
+      request<any>(`/api/v1/bse/ucc/${clientId}`),
+    register: (clientId: string, data: any) =>
+      request<any>(`/api/v1/bse/ucc/${clientId}/register`, { method: 'POST', body: data }),
+    modify: (clientId: string, data: any) =>
+      request<any>(`/api/v1/bse/ucc/${clientId}`, { method: 'PUT', body: data }),
+    uploadFatca: (clientId: string, data: any) =>
+      request<any>(`/api/v1/bse/ucc/${clientId}/fatca`, { method: 'POST', body: data }),
+    uploadCkyc: (clientId: string, data: any) =>
+      request<any>(`/api/v1/bse/ucc/${clientId}/ckyc`, { method: 'POST', body: data }),
+  },
+
+  // Mandates
+  mandates: {
+    list: (params?: { clientId?: string; status?: string }) => {
+      const query = new URLSearchParams()
+      if (params?.clientId) query.set('clientId', params.clientId)
+      if (params?.status) query.set('status', params.status)
+      const qs = query.toString()
+      return request<any>(`/api/v1/bse/mandates${qs ? `?${qs}` : ''}`)
+    },
+    create: (data: any) =>
+      request<any>('/api/v1/bse/mandates', { method: 'POST', body: data }),
+    getOne: (id: string) =>
+      request<any>(`/api/v1/bse/mandates/${id}`),
+    getAuthUrl: (id: string) =>
+      request<any>(`/api/v1/bse/mandates/${id}/auth-url`),
+    refreshStatus: (id: string) =>
+      request<any>(`/api/v1/bse/mandates/${id}/refresh-status`, { method: 'POST' }),
+    shift: (id: string, data: any) =>
+      request<any>(`/api/v1/bse/mandates/${id}/shift`, { method: 'POST', body: data }),
+  },
+
+  // Orders
+  orders: {
+    list: (params?: { clientId?: string; status?: string; orderType?: string; page?: number; limit?: number }) => {
+      const query = new URLSearchParams()
+      if (params?.clientId) query.set('clientId', params.clientId)
+      if (params?.status) query.set('status', params.status)
+      if (params?.orderType) query.set('orderType', params.orderType)
+      if (params?.page) query.set('page', String(params.page))
+      if (params?.limit) query.set('limit', String(params.limit))
+      const qs = query.toString()
+      return request<any>(`/api/v1/bse/orders${qs ? `?${qs}` : ''}`)
+    },
+    purchase: (data: any) =>
+      request<any>('/api/v1/bse/orders/purchase', { method: 'POST', body: data }),
+    redeem: (data: any) =>
+      request<any>('/api/v1/bse/orders/redeem', { method: 'POST', body: data }),
+    switchOrder: (data: any) =>
+      request<any>('/api/v1/bse/orders/switch', { method: 'POST', body: data }),
+    spread: (data: any) =>
+      request<any>('/api/v1/bse/orders/spread', { method: 'POST', body: data }),
+    getOne: (id: string) =>
+      request<any>(`/api/v1/bse/orders/${id}`),
+    cancel: (id: string) =>
+      request<any>(`/api/v1/bse/orders/${id}/cancel`, { method: 'POST' }),
+  },
+
+  // Payments
+  payments: {
+    initiate: (orderId: string, data: { paymentMode: string; bankCode?: string }) =>
+      request<any>(`/api/v1/bse/payments/${orderId}`, { method: 'POST', body: data }),
+    getStatus: (orderId: string) =>
+      request<any>(`/api/v1/bse/payments/${orderId}/status`),
+  },
+
+  // Systematic Plans
+  systematic: {
+    registerSip: (data: any) =>
+      request<any>('/api/v1/bse/systematic/sip', { method: 'POST', body: data }),
+    registerXsip: (data: any) =>
+      request<any>('/api/v1/bse/systematic/xsip', { method: 'POST', body: data }),
+    registerStp: (data: any) =>
+      request<any>('/api/v1/bse/systematic/stp', { method: 'POST', body: data }),
+    registerSwp: (data: any) =>
+      request<any>('/api/v1/bse/systematic/swp', { method: 'POST', body: data }),
+    cancel: (id: string) =>
+      request<any>(`/api/v1/bse/systematic/${id}/cancel`, { method: 'POST' }),
+    getChildOrders: (id: string) =>
+      request<any>(`/api/v1/bse/systematic/${id}/child-orders`),
+  },
+
+  // Reports
+  reports: {
+    orderStatus: (data: any) =>
+      request<any>('/api/v1/bse/reports/order-status', { method: 'POST', body: data }),
+    allotment: (data: any) =>
+      request<any>('/api/v1/bse/reports/allotment', { method: 'POST', body: data }),
+    redemption: (data: any) =>
+      request<any>('/api/v1/bse/reports/redemption', { method: 'POST', body: data }),
+    childOrders: (regnNo: string) =>
+      request<any>(`/api/v1/bse/reports/child-orders/${regnNo}`),
+  },
+
+  // Masters
+  masters: {
+    searchSchemes: (query?: string, page?: number, limit?: number) => {
+      const params = new URLSearchParams()
+      if (query) params.set('q', query)
+      if (page) params.set('page', String(page))
+      if (limit) params.set('limit', String(limit))
+      const qs = params.toString()
+      return request<any>(`/api/v1/bse/scheme-master${qs ? `?${qs}` : ''}`)
+    },
+    syncSchemes: () =>
+      request<any>('/api/v1/bse/scheme-master/sync', { method: 'POST' }),
+    listBanks: (mode?: string) =>
+      request<any>(`/api/v1/bse/banks${mode ? `?mode=${mode}` : ''}`),
+    taxStatusCodes: () =>
+      request<any>('/api/v1/bse/masters/tax-status'),
+  },
+};

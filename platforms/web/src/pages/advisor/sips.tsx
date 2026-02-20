@@ -407,6 +407,26 @@ const SIPsDashboard = () => {
                             {sip.status === 'Active' && (
                               <>
                                 <button
+                                  onClick={() => {
+                                    setActionLoading(sip.id)
+                                    sipsApi.registerWithBse(sip.id)
+                                      .then(() => {
+                                        showNotification('success', 'SIP registered with BSE StAR MF')
+                                        fetchSIPs()
+                                      })
+                                      .catch((err: any) => {
+                                        showNotification('error', err?.message || 'Failed to register with BSE')
+                                      })
+                                      .finally(() => setActionLoading(null))
+                                  }}
+                                  disabled={actionLoading === sip.id}
+                                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 disabled:opacity-50"
+                                  style={{ background: `${colors.primary}15`, color: colors.primary }}
+                                  title="Register with BSE"
+                                >
+                                  BSE
+                                </button>
+                                <button
                                   onClick={() => handlePauseSIP(sip.id)}
                                   disabled={actionLoading === sip.id}
                                   className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all hover:scale-105 disabled:opacity-50"

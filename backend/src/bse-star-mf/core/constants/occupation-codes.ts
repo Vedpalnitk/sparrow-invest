@@ -1,0 +1,17 @@
+export const BSE_OCCUPATION_CODES: Record<string, string> = {
+  '01': 'Business',
+  '02': 'Services',
+  '03': 'Professional',
+  '04': 'Agriculture',
+  '05': 'Retired',
+  '06': 'Housewife',
+  '07': 'Student',
+  '08': 'Others',
+  '09': 'Doctor',
+  '10': 'Private Sector Service',
+  '11': 'Public Sector Service',
+  '12': 'Government Service',
+  '41': 'Forex Dealer',
+  '42': 'Not Categorised',
+  '43': 'Unknown',
+}

@@ -105,6 +105,16 @@ export class TransactionsController {
     return this.transactionsService.cancelTransaction(id, getEffectiveAdvisorId(user));
   }
 
+  @Post(':id/execute-bse')
+  @ApiOperation({ summary: 'Execute a pending transaction via BSE StAR MF' })
+  @ApiResponse({ status: 200, description: 'BSE order created for the transaction' })
+  async executeViaBse(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+  ) {
+    return this.transactionsService.executeViaBse(id, getEffectiveAdvisorId(user));
+  }
+
   // ============================================
   // Client-facing endpoints (for managed users)
   // ============================================

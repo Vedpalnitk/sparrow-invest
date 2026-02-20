@@ -126,4 +126,14 @@ export class SipsController {
   ) {
     return this.sipsService.cancel(id, getEffectiveAdvisorId(user));
   }
+
+  @Post(':id/register-bse')
+  @ApiOperation({ summary: 'Register an active SIP with BSE StAR MF' })
+  @ApiResponse({ status: 200, description: 'BSE SIP registration order created' })
+  async registerWithBse(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+  ) {
+    return this.sipsService.registerWithBse(id, getEffectiveAdvisorId(user));
+  }
 }

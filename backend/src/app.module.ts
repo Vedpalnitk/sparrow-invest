@@ -37,6 +37,8 @@ import { CRMModule } from './crm/crm.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { BusinessIntelligenceModule } from './business-intelligence/business-intelligence.module';
 import { ComplianceModule } from './compliance/compliance.module';
+import { BseStarMfModule } from './bse-star-mf/bse-star-mf.module';
+import { CasImportModule } from './cas-import/cas-import.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -105,6 +107,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     BusinessIntelligenceModule,
     // Business Management - Compliance Tracking
     ComplianceModule,
+    // BSE StAR MF Integration
+    BseStarMfModule,
+    // CAS PDF Import (CAMS/KFintech portfolio ingestion)
+    CasImportModule,
   ],
   controllers: [],
   providers: [

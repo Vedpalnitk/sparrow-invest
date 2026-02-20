@@ -1,0 +1,99 @@
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common'
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger'
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
+import { CurrentUser } from '../../common/decorators/current-user.decorator'
+import { BseOrderService } from './bse-order.service'
+import { BseSwitchService } from './bse-switch.service'
+import { BseSpreadService } from './bse-spread.service'
+import { PlaceOrderDto, PlaceSwitchDto, PlaceSpreadDto } from './dto/place-order.dto'
+import { BseOrderStatus, BseOrderType } from '@prisma/client'
+
+@ApiTags('BSE Orders')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('api/v1/bse/orders')
+export class BseOrdersController {
+  constructor(
+    private orderService: BseOrderService,
+    private switchService: BseSwitchService,
+    private spreadService: BseSpreadService,
+  ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List BSE orders with filters' })
+  @ApiQuery({ name: 'clientId', required: false })
+  @ApiQuery({ name: 'status', required: false, enum: BseOrderStatus })
+  @ApiQuery({ name: 'orderType', required: false, enum: BseOrderType })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  async listOrders(
+    @CurrentUser() user: any,
+    @Query('clientId') clientId?: string,
+    @Query('status') status?: BseOrderStatus,
+    @Query('orderType') orderType?: BseOrderType,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.orderService.listOrders(user.id, {
+      clientId,
+      status,
+      orderType,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    })
+  }
+
+  @Post('purchase')
+  @ApiOperation({ summary: 'Place a lumpsum purchase order' })
+  async placePurchase(
+    @CurrentUser() user: any,
+    @Body() dto: PlaceOrderDto,
+  ) {
+    return this.orderService.placePurchase(user.id, dto)
+  }
+
+  @Post('redeem')
+  @ApiOperation({ summary: 'Place a redemption order' })
+  async placeRedemption(
+    @CurrentUser() user: any,
+    @Body() dto: PlaceOrderDto,
+  ) {
+    return this.orderService.placeRedemption(user.id, dto)
+  }
+
+  @Post('switch')
+  @ApiOperation({ summary: 'Place a switch order' })
+  async placeSwitch(
+    @CurrentUser() user: any,
+    @Body() dto: PlaceSwitchDto,
+  ) {
+    return this.switchService.placeSwitch(user.id, dto)
+  }
+
+  @Post('spread')
+  @ApiOperation({ summary: 'Place a spread order' })
+  async placeSpread(
+    @CurrentUser() user: any,
+    @Body() dto: PlaceSpreadDto,
+  ) {
+    return this.spreadService.placeSpread(user.id, dto)
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get order detail' })
+  async getOrder(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+  ) {
+    return this.orderService.getOrder(id, user.id)
+  }
+
+  @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancel an order' })
+  async cancelOrder(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+  ) {
+    return this.orderService.cancelOrder(id, user.id)
+  }
+}

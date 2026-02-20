@@ -1,0 +1,35 @@
+export const BSE_TAX_STATUS_CODES: Record<string, string> = {
+  '01': 'Individual',
+  '02': 'On behalf of Minor',
+  '03': 'HUF',
+  '04': 'Company',
+  '05': 'AOP/BOI',
+  '06': 'Partnership Firm',
+  '07': 'Body Corporate',
+  '08': 'Trust',
+  '09': 'Society',
+  '10': 'LLP',
+  '11': 'FII',
+  '12': 'NRI (NRE)',
+  '13': 'NRI (NRO)',
+  '14': 'NRI (FCNR)',
+  '15': 'NRI (Fund Type)',
+  '16': 'FI',
+  '17': 'Army',
+  '18': 'FPI – Category I',
+  '19': 'FPI – Category II',
+  '20': 'FPI – Category III',
+  '21': 'Government Bodies',
+  '22': 'Artificial Juridical Person',
+  '23': 'Multilateral/Bilateral Agency',
+  '24': 'Government of India',
+  '25': 'Proprietorship',
+  '26': 'Statutory Bodies',
+  '27': 'Unincorporated Association',
+  '28': 'Liquidator',
+  '29': 'Other',
+}
+
+export function getTaxStatusLabel(code: string): string {
+  return BSE_TAX_STATUS_CODES[code] || 'Unknown'
+}

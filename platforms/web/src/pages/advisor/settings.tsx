@@ -22,7 +22,7 @@ import StaffManagement from '@/components/advisor/StaffManagement'
 import { useAuth } from '@/context/AuthContext'
 
 // Settings tabs
-type SettingsTab = 'profile' | 'notifications' | 'display' | 'security' | 'staff'
+type SettingsTab = 'profile' | 'notifications' | 'display' | 'security' | 'staff' | 'bse'
 
 // Display preferences key in localStorage
 const DISPLAY_PREFS_KEY = 'fa-display-preferences'
@@ -200,6 +200,7 @@ const SettingsPage = () => {
     { id: 'display', label: 'Display', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
     { id: 'security', label: 'Security', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
     ...(isAdvisor ? [{ id: 'staff' as SettingsTab, label: 'Staff', icon: 'M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z' }] : []),
+    ...(isAdvisor ? [{ id: 'bse' as SettingsTab, label: 'BSE StAR MF', icon: 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z' }] : []),
   ]
 
   const toggleNotifPref = (category: string, channel: string) => {
@@ -1240,6 +1241,68 @@ const SettingsPage = () => {
             {/* Staff Tab */}
             {activeTab === 'staff' && isAdvisor && (
               <StaffManagement />
+            )}
+
+            {/* BSE StAR MF Tab */}
+            {activeTab === 'bse' && isAdvisor && (
+              <>
+                <FACard>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ background: `${colors.primary}15`, color: colors.primary }}
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold" style={{ color: colors.textPrimary }}>BSE StAR MF Integration</h3>
+                      <p className="text-sm" style={{ color: colors.textSecondary }}>Connect to BSE StAR MF for live mutual fund transactions</p>
+                    </div>
+                  </div>
+
+                  <p className="text-sm mb-5" style={{ color: colors.textSecondary }}>
+                    BSE StAR MF enables you to place real mutual fund orders, manage SIPs, mandates,
+                    and track allotments directly through the BSE platform. Configure your credentials
+                    and manage all BSE operations from the dedicated BSE section.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {[
+                      { label: 'Setup & Credentials', href: '/advisor/bse/setup', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z', description: 'Configure BSE member credentials and test connection' },
+                      { label: 'Client Registration', href: '/advisor/bse/clients', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', description: 'Register clients with BSE (UCC, FATCA, CKYC)' },
+                      { label: 'Mandates', href: '/advisor/bse/mandates', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', description: 'Manage e-NACH and XSIP mandates' },
+                      { label: 'Orders', href: '/advisor/bse/orders', icon: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z', description: 'View and manage BSE orders and payments' },
+                      { label: 'Reports', href: '/advisor/bse/reports', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', description: 'Allotment statements and order reports' },
+                      { label: 'Scheme Master', href: '/advisor/bse/scheme-master', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', description: 'Browse and search BSE mutual fund schemes' },
+                    ].map(item => (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        className="p-4 rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-md block"
+                        style={{
+                          background: colors.chipBg,
+                          border: `1px solid ${colors.cardBorder}`,
+                        }}
+                      >
+                        <div className="flex items-center gap-3 mb-2">
+                          <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: `${colors.primary}15`, color: colors.primary }}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-semibold" style={{ color: colors.textPrimary }}>{item.label}</p>
+                        </div>
+                        <p className="text-xs" style={{ color: colors.textTertiary }}>{item.description}</p>
+                      </a>
+                    ))}
+                  </div>
+                </FACard>
+              </>
             )}
           </div>
         </div>

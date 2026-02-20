@@ -402,6 +402,76 @@ export class SipsService {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   }
 
+  /**
+   * Register an existing FASIP with BSE StAR MF.
+   * Creates a BseOrder of type SIP linked to the FASIP record.
+   */
+  async registerWithBse(id: string, advisorId: string) {
+    const sip = await this.prisma.fASIP.findUnique({
+      where: { id },
+      include: {
+        client: {
+          select: { id: true, name: true, advisorId: true },
+        },
+      },
+    });
+
+    if (!sip) {
+      throw new NotFoundException(`SIP with ID ${id} not found`);
+    }
+
+    if (sip.client.advisorId !== advisorId) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    if (sip.status !== 'ACTIVE') {
+      throw new BadRequestException('Only active SIPs can be registered with BSE');
+    }
+
+    // Check if client has BSE UCC registration
+    const uccReg = await this.prisma.bseUccRegistration.findUnique({
+      where: { clientId: sip.clientId },
+    });
+
+    if (!uccReg || uccReg.status !== 'APPROVED') {
+      throw new BadRequestException(
+        'Client must have an approved BSE UCC registration before registering SIPs',
+      );
+    }
+
+    // Check if already registered
+    const existingOrder = await this.prisma.bseOrder.findFirst({
+      where: { sipId: id },
+    });
+
+    if (existingOrder) {
+      throw new BadRequestException(
+        `SIP already registered with BSE (BSE Reg No: ${existingOrder.bseRegistrationNo || existingOrder.id})`,
+      );
+    }
+
+    // Create BseOrder of type SIP
+    const bseOrder = await this.prisma.bseOrder.create({
+      data: {
+        clientId: sip.clientId,
+        advisorId,
+        sipId: id,
+        orderType: 'SIP',
+        schemeCode: sip.fundSchemeCode || '',
+        amount: Number(sip.amount),
+        transCode: 'NEW',
+        status: 'CREATED',
+      },
+    });
+
+    return {
+      success: true,
+      message: 'BSE SIP registration order created. Submit via BSE Orders page.',
+      bseOrderId: bseOrder.id,
+      sipId: id,
+    };
+  }
+
   private transformSIP(s: any) {
     return {
       id: s.id,

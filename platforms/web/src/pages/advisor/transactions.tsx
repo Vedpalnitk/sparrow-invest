@@ -484,6 +484,9 @@ const TransactionsPage = () => {
                     <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider cursor-pointer select-none group/th" style={{ color: colors.primary }} onClick={() => handleSort('status')}>
                       Status{sortIcon('status')}
                     </th>
+                    <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.primary }}>
+                      BSE
+                    </th>
                     <th className="w-8 px-2"></th>
                   </tr>
                 </thead>
@@ -535,6 +538,34 @@ const TransactionsPage = () => {
                             />
                             {txn.status}
                           </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {txn.status === 'Pending' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                transactionsApi.executeViaBse(txn.id)
+                                  .then(() => {
+                                    notification.success('BSE Order Created', 'Order submitted to BSE StAR MF')
+                                    fetchTransactions()
+                                  })
+                                  .catch((err: any) => {
+                                    notification.error('BSE Error', err?.message || 'Failed to create BSE order')
+                                  })
+                              }}
+                              className="text-xs font-semibold px-2.5 py-1 rounded-full transition-all hover:shadow-md whitespace-nowrap"
+                              style={{
+                                background: `${colors.primary}12`,
+                                color: colors.primary,
+                                border: `1px solid ${colors.primary}30`,
+                              }}
+                            >
+                              Execute BSE
+                            </button>
+                          )}
+                          {txn.status === 'Processing' && (
+                            <span className="text-xs font-medium" style={{ color: colors.warning }}>In BSE</span>
+                          )}
                         </td>
                         <td className="px-2 py-3">
                           <svg className="w-4 h-4" style={{ color: colors.textTertiary }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
