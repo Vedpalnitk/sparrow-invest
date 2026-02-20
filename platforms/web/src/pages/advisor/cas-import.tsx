@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import AdvisorLayout from '@/components/layout/AdvisorLayout'
 import { useFATheme, formatCurrency } from '@/utils/fa'
 import { FACard } from '@/components/advisor/shared'
@@ -21,6 +22,7 @@ interface Client {
 }
 
 const CASImportPage = () => {
+  const router = useRouter()
   const { colors, isDark } = useFATheme()
   const [clients, setClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
@@ -65,13 +67,25 @@ const CASImportPage = () => {
     <AdvisorLayout title="CAS Import">
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
-            Import CAS PDF
-          </h1>
-          <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>
-            Upload a CAMS or KFintech Consolidated Account Statement to import client portfolio data.
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <button
+              onClick={() => router.push('/advisor/cas-imports')}
+              className="flex items-center gap-1 text-xs font-semibold mb-2 transition-colors"
+              style={{ color: colors.textTertiary }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              All Imports
+            </button>
+            <h1 className="text-2xl font-bold" style={{ color: colors.textPrimary }}>
+              Import CAS PDF
+            </h1>
+            <p className="text-sm mt-1" style={{ color: colors.textSecondary }}>
+              Upload a CAMS or KFintech Consolidated Account Statement to import client portfolio data.
+            </p>
+          </div>
         </div>
 
         {/* Client Selector */}

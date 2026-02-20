@@ -17,6 +17,8 @@ import {
   FAEmptyState,
   FASpinner,
 } from '@/components/advisor/shared'
+import BseOrderPlacementModal from '@/components/bse/BseOrderPlacementModal'
+import BsePaymentModal from '@/components/bse/BsePaymentModal'
 
 type OrderType = 'Purchase' | 'Redemption' | 'Switch' | 'SIP' | 'STP' | 'SWP'
 type OrderStatus = 'Placed' | 'Confirmed' | 'Allotted' | 'Rejected' | 'Cancelled' | 'Pending'
@@ -83,6 +85,10 @@ const BSEOrdersPage = () => {
 
   // Expanded order
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
+
+  // Modals
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [paymentOrder, setPaymentOrder] = useState<BSEOrder | null>(null)
 
   const handleSearchChange = (value: string) => {
     setSearchInput(value)
@@ -152,6 +158,16 @@ const BSEOrdersPage = () => {
               {total > 0 ? `${total.toLocaleString('en-IN')} BSE orders` : 'Track BSE StAR MF order execution'}
             </p>
           </div>
+          <button
+            onClick={() => setShowOrderModal(true)}
+            className="px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:shadow-lg"
+            style={{
+              background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
+              boxShadow: `0 4px 14px ${colors.glassShadow}`,
+            }}
+          >
+            + New Order
+          </button>
         </div>
 
         {/* KPI Tiles */}
@@ -413,27 +429,41 @@ const BSEOrdersPage = () => {
                                     </div>
                                   )}
                                 </div>
-                                {order.status === 'Placed' && (
+                                {(order.status === 'Placed' || order.status === 'Confirmed') && (
                                   <div className="mt-3 flex items-center gap-2">
                                     <button
-                                      onClick={async (e) => {
+                                      onClick={(e) => {
                                         e.stopPropagation()
-                                        try {
-                                          await bseApi.orders.cancel(order.id)
-                                          fetchOrders()
-                                        } catch {
-                                          // Handle error silently
-                                        }
+                                        setPaymentOrder(order)
                                       }}
-                                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                                      className="px-3 py-1.5 rounded-full text-xs font-semibold text-white transition-all hover:shadow-lg"
                                       style={{
-                                        background: `${colors.error}10`,
-                                        border: `1px solid ${colors.error}30`,
-                                        color: colors.error,
+                                        background: `linear-gradient(135deg, ${colors.success} 0%, #059669 100%)`,
                                       }}
                                     >
-                                      Cancel Order
+                                      Pay Now
                                     </button>
+                                    {order.status === 'Placed' && (
+                                      <button
+                                        onClick={async (e) => {
+                                          e.stopPropagation()
+                                          try {
+                                            await bseApi.orders.cancel(order.id)
+                                            fetchOrders()
+                                          } catch {
+                                            // Handle error silently
+                                          }
+                                        }}
+                                        className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
+                                        style={{
+                                          background: `${colors.error}10`,
+                                          border: `1px solid ${colors.error}30`,
+                                          color: colors.error,
+                                        }}
+                                      >
+                                        Cancel Order
+                                      </button>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -508,6 +538,31 @@ const BSEOrdersPage = () => {
             </>
           )}
         </FACard>
+
+        {/* Order Placement Modal */}
+        <BseOrderPlacementModal
+          isOpen={showOrderModal}
+          onClose={() => setShowOrderModal(false)}
+          onSuccess={() => {
+            setShowOrderModal(false)
+            fetchOrders()
+          }}
+        />
+
+        {/* Payment Modal */}
+        {paymentOrder && (
+          <BsePaymentModal
+            isOpen={!!paymentOrder}
+            onClose={() => setPaymentOrder(null)}
+            onSuccess={() => {
+              setPaymentOrder(null)
+              fetchOrders()
+            }}
+            orderId={paymentOrder.id}
+            amount={paymentOrder.amount}
+            schemeName={paymentOrder.schemeName}
+          />
+        )}
       </div>
     </AdvisorLayout>
   )

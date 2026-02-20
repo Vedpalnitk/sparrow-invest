@@ -2465,6 +2465,8 @@ export interface CASImportRecord {
   id: string;
   userId: string;
   clientId?: string;
+  clientName?: string;
+  clientEmail?: string;
   context: string;
   investorName?: string;
   investorEmail?: string;

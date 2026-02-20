@@ -113,31 +113,26 @@ const COLORS_DARK = {
 }
 
 // Navigation items for Financial Advisor
-const ADVISOR_NAV_ITEMS = [
+// "pinned" items always show; collapsible sections can be toggled
+const ADVISOR_PINNED_ITEMS = [
+  { label: 'Dashboard', href: '/advisor/dashboard', icon: 'home' },
+]
+
+const ADVISOR_NAV_SECTIONS = [
   {
-    section: 'Overview',
-    items: [
-      { label: 'Dashboard', href: '/advisor/dashboard', icon: 'home' },
-    ]
-  },
-  {
-    section: 'Client Management',
+    section: 'Clients',
     items: [
       { label: 'Clients', href: '/advisor/clients', icon: 'users' },
       { label: 'Pipeline', href: '/advisor/pipeline', icon: 'user-plus' },
-      { label: 'Transactions', href: '/advisor/transactions', icon: 'arrows' },
       { label: 'Command Center', href: '/advisor/command-center', icon: 'clipboard' },
       { label: 'Insights', href: '/advisor/insights', icon: 'insights' },
     ]
   },
   {
-    section: 'Business',
+    section: 'Transactions',
     items: [
-      { label: 'AUM & Analytics', href: '/advisor/business', icon: 'chart-bar' },
-      { label: 'Commissions', href: '/advisor/commissions', icon: 'banknotes' },
-      { label: 'Team', href: '/advisor/team', icon: 'user-group' },
-      { label: 'Branches', href: '/advisor/branches', icon: 'building' },
-      { label: 'Compliance', href: '/advisor/compliance', icon: 'shield-check' },
+      { label: 'Transactions', href: '/advisor/transactions', icon: 'arrows' },
+      { label: 'CAS Imports', href: '/advisor/cas-imports', icon: 'upload' },
     ]
   },
   {
@@ -152,11 +147,37 @@ const ADVISOR_NAV_ITEMS = [
     ]
   },
   {
+    section: 'BSE StAR MF',
+    items: [
+      { label: 'BSE Setup', href: '/advisor/bse/setup', icon: 'bse' },
+      { label: 'BSE Clients', href: '/advisor/bse/clients', icon: 'users' },
+      { label: 'BSE Orders', href: '/advisor/bse/orders', icon: 'arrows' },
+      { label: 'BSE Mandates', href: '/advisor/bse/mandates', icon: 'document' },
+      { label: 'BSE Reports', href: '/advisor/bse/reports', icon: 'chart-bar' },
+    ]
+  },
+  {
+    section: 'Business',
+    items: [
+      { label: 'AUM & Analytics', href: '/advisor/business', icon: 'chart-bar' },
+      { label: 'Commissions', href: '/advisor/commissions', icon: 'banknotes' },
+      { label: 'Team', href: '/advisor/team', icon: 'user-group' },
+      { label: 'Branches', href: '/advisor/branches', icon: 'building' },
+      { label: 'Compliance', href: '/advisor/compliance', icon: 'shield-check' },
+    ]
+  },
+  {
     section: 'Account',
     items: [
       { label: 'Settings', href: '/advisor/settings', icon: 'settings' },
     ]
   },
+]
+
+// Flat list for staff permission filtering
+const ADVISOR_NAV_ITEMS = [
+  { section: 'Pinned', items: ADVISOR_PINNED_ITEMS },
+  ...ADVISOR_NAV_SECTIONS,
 ]
 
 // Icon component
@@ -260,6 +281,16 @@ const NavIcon = ({ name, className = "w-5 h-5" }: { name: string; className?: st
     'sparkles': (
       <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+      </svg>
+    ),
+    'upload': (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+      </svg>
+    ),
+    'bse': (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125v-3.75m16.5 3.75v3.75c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125v-3.75" />
       </svg>
     ),
     'settings': (
@@ -410,7 +441,7 @@ export default function AdvisorLayout({ children, title }: AdvisorLayoutProps) {
   }
 
   const isActiveLink = (href: string) => {
-    return router.pathname === href || router.asPath.startsWith(href + '?')
+    return router.pathname === href || router.asPath.startsWith(href + '?') || router.asPath.startsWith(href + '/')
   }
 
   // Close mobile sidebar on route change

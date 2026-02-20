@@ -194,6 +194,121 @@ Uses SwiftUI with standard Swift package structure in `platforms/ios-consumer/Sp
 - `platforms/android-fa/app/src/main/java/com/sparrowinvest/fa/ui/transactions/PlatformWebViewScreen.kt` - BSE/MFU WebView
 - `platforms/android-fa/app/src/main/java/com/sparrowinvest/fa/ui/clients/ClientDetailScreen.kt` - Client details
 
+## CAS PDF Import (CAMS/KFintech Portfolio Ingestion)
+
+Users upload password-protected CAS PDFs from CAMS/KFintech RTAs to import mutual fund portfolio data.
+
+### Architecture
+```
+Frontend → NestJS Backend (POST /api/v1/cas/import) → ML Service (POST /api/v1/cas/parse via casparser)
+```
+
+### Backend Module
+- **Location**: `backend/src/cas-import/` (module, controller, service, DTO)
+- **Module**: `CasImportModule` imported in `app.module.ts`
+- **DB Model**: `CASImport` in `schema.prisma` (tracks import status, investor info, counts)
+
+### ML Service
+- **Dependency**: `casparser==0.8.1` (MIT-licensed pdfminer backend)
+- **Endpoint**: `POST /api/v1/cas/parse` (multipart: file + password)
+- **Venv**: Python 3.12 at `ml-service/venv/`
+
+### CAS API Endpoints
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/v1/cas/import` | POST | Upload CAS PDF (multipart: file + password + optional clientId) |
+| `/api/v1/cas/imports` | GET | List logged-in user's CAS imports (includes client name) |
+| `/api/v1/cas/imports/:clientId` | GET | List CAS imports for a specific FA client |
+
+### CAS Frontend Pages
+| Page | Path | Purpose |
+|------|------|---------|
+| CAS Imports (Management) | `/advisor/cas-imports` | All imports dashboard with status/filters |
+| Import CAS (Upload) | `/advisor/cas-import` | Upload form with client selector |
+| Import Portfolio (Self) | `/import-portfolio` | Self-service user CAS upload |
+
+### Import Flows
+- **FA flow** (clientId provided): Upserts `FAHolding` + creates `FATransaction` records
+- **Self-service flow** (no clientId): Upserts `Folio` + `Holding` records
+- **ISIN lookup**: Tries `SchemePlan.isin` first, falls back to `mfapiSchemeCode` matching AMFI code
+- **CAS password**: Typically PAN + DOB in DDMMYYYY format (auto-filled for FA clients)
+
+## BSE StAR MF Integration
+
+Full BSE StAR MF API integration for real mutual fund transactions via a partner MFD.
+
+### Backend Module
+- **Location**: `backend/src/bse-star-mf/` (~54 files)
+- **Module**: `BseStarMfModule` imported in `app.module.ts`
+- **Mock mode**: `BSE_MOCK_MODE=true` in `.env` for local dev (no BSE UAT needed)
+
+### BSE Database Models (Prisma)
+| Model | Purpose |
+|-------|---------|
+| `BsePartnerCredential` | Encrypted BSE credentials per advisor |
+| `BseSessionToken` | Cached auth tokens with TTL |
+| `BseUccRegistration` | FAClient → BSE UCC client mapping |
+| `BseMandate` | Mandate records (XSIP/ISIP/NetBanking) |
+| `BseOrder` | All BSE orders (purchase, redemption, SIP, etc.) |
+| `BseChildOrder` | SIP/XSIP installment records |
+| `BsePayment` | Payment records and status |
+| `BseApiLog` | Sanitized audit log of BSE API calls |
+| `BseSchemeMaster` | Scheme reference data |
+| `BseBankMaster` | Bank codes for payment modes |
+
+### BSE API Endpoints
+| Route | Purpose |
+|-------|---------|
+| `POST /api/v1/bse/credentials` | Set BSE partner credentials |
+| `POST /api/v1/bse/credentials/test` | Test BSE connection |
+| `POST /api/v1/bse/ucc/:clientId/register` | Register client UCC |
+| `POST /api/v1/bse/ucc/:clientId/fatca` | Upload FATCA |
+| `POST /api/v1/bse/mandates` | Register mandate |
+| `POST /api/v1/bse/orders/purchase` | Place purchase order |
+| `POST /api/v1/bse/orders/redeem` | Place redemption |
+| `POST /api/v1/bse/orders/switch` | Place switch order |
+| `POST /api/v1/bse/payments/:orderId` | Initiate payment |
+| `POST /api/v1/bse/systematic/sip` | Register SIP |
+| `POST /api/v1/bse/systematic/xsip` | Register XSIP |
+| `GET /api/v1/bse/scheme-master` | Search BSE schemes |
+
+### BSE Frontend Pages
+| Page | Path |
+|------|------|
+| BSE Setup | `/advisor/bse/setup` |
+| BSE Clients (UCC) | `/advisor/bse/clients` |
+| UCC Registration | `/advisor/bse/clients/[id]/register` |
+| BSE Orders | `/advisor/bse/orders` |
+| Order Detail | `/advisor/bse/orders/[id]` |
+| BSE Mandates | `/advisor/bse/mandates` |
+| Mandate Detail | `/advisor/bse/mandates/[id]` |
+| BSE Reports | `/advisor/bse/reports` |
+| Scheme Browser | `/advisor/bse/scheme-master` |
+
+### BSE Components (`components/bse/`)
+- `BseOrderPlacementModal` — 4-type order form (purchase/redeem/switch/spread)
+- `BsePaymentModal` — Payment mode selection (DIRECT/NODAL/NEFT/UPI)
+- `BseSchemePicker` — Autocomplete scheme search with 300ms debounce
+- `BseStatusBadge` — Color-coded status pills (28 statuses)
+- `BseOrderTimeline` — Horizontal lifecycle visualization
+- `MandateRegistrationForm` — Mandate type, amount, bank, dates
+- `UccRegistrationForm` — 5-step registration wizard
+
+### BSE Cron Jobs
+| Job | Schedule | Purpose |
+|-----|----------|---------|
+| Mandate status poll | Every 30 min | Poll BSE for pending mandates |
+| Order status poll | Every 15 min | Poll BSE for pending orders |
+| Allotment sync | Weekdays 9pm | Nightly allotment reconciliation |
+| Scheme master sync | Sunday 2am | Weekly scheme data refresh |
+
+### BSE Notes
+- Database uses `prisma db push` (no migrations directory)
+- BSE credentials encrypted with AES-256-GCM at rest
+- Dual protocol: SOAP 1.2 (legacy) + REST/JSON (newer endpoints)
+- `bseApi` namespace in `services/api.ts` (~50 endpoint methods)
+- See `docs/bse-star-mf-integration.md` for full reference
+
 ## External APIs
 
 ### MFAPI.in (Mutual Fund API)

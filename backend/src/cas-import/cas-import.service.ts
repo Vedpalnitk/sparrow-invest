@@ -193,10 +193,13 @@ export class CasImportService {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 50,
+      include: { client: { select: { id: true, name: true, email: true } } },
     });
     return imports.map((i) => ({
       ...i,
       totalValue: i.totalValue ? Number(i.totalValue) : null,
+      clientName: i.client?.name || null,
+      clientEmail: i.client?.email || null,
     }));
   }
 
