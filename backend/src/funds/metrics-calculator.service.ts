@@ -56,15 +56,32 @@ export class MetricsCalculatorService {
     let skipped = 0;
     let failed = 0;
 
+    // Batch load all NAV history in chunks (fixes N+1: ~17 queries instead of ~8,142)
+    const CHUNK_SIZE = 500;
+    const planIds = plans.map(p => p.id);
+    const historyByPlan = new Map<string, NavPoint[]>();
+
+    this.logger.log(`Loading NAV history for ${planIds.length} plans in chunks of ${CHUNK_SIZE}...`);
+
+    for (let i = 0; i < planIds.length; i += CHUNK_SIZE) {
+      const chunk = planIds.slice(i, i + CHUNK_SIZE);
+      const rows = await this.prisma.schemePlanNavHistory.findMany({
+        where: { schemePlanId: { in: chunk } },
+        orderBy: [{ schemePlanId: 'asc' }, { navDate: 'asc' }],
+        select: { schemePlanId: true, navDate: true, nav: true },
+      });
+
+      for (const row of rows) {
+        if (!historyByPlan.has(row.schemePlanId)) historyByPlan.set(row.schemePlanId, []);
+        historyByPlan.get(row.schemePlanId)!.push({ date: row.navDate, nav: Number(row.nav) });
+      }
+    }
+
+    this.logger.log(`NAV history loaded: ${historyByPlan.size} plans with data`);
+
     for (const plan of plans) {
       try {
-        const raw = await this.prisma.schemePlanNavHistory.findMany({
-          where: { schemePlanId: plan.id },
-          orderBy: { navDate: 'asc' },
-          select: { navDate: true, nav: true },
-        });
-
-        const history: NavPoint[] = raw.map(r => ({ date: r.navDate, nav: Number(r.nav) }));
+        const history = historyByPlan.get(plan.id) || [];
 
         if (history.length < 5) {
           skipped++;
@@ -230,35 +247,37 @@ export class MetricsCalculatorService {
       byCategory.set(fund.categoryId, list);
     }
 
-    // Assign ratings within each category
+    // Collect all rating assignments across categories
     let totalRated = 0;
+    const allRatingGroups = new Map<number, string[]>();
 
     for (const [, categoryFunds] of byCategory) {
-      // Need at least 3 funds in category to rank meaningfully
       if (categoryFunds.length < 3) continue;
-
-      // Sort descending by score (best first)
       categoryFunds.sort((a, b) => b.score - a.score);
-
       const n = categoryFunds.length;
 
       for (let i = 0; i < n; i++) {
-        const percentile = i / n; // 0 = best, 1 = worst
+        const percentile = i / n;
         let rating: number;
-
         if (percentile < 0.10) rating = 5;
-        else if (percentile < 0.325) rating = 4;  // 10% + 22.5%
-        else if (percentile < 0.675) rating = 3;  // + 35%
-        else if (percentile < 0.90) rating = 2;   // + 22.5%
+        else if (percentile < 0.325) rating = 4;
+        else if (percentile < 0.675) rating = 3;
+        else if (percentile < 0.90) rating = 2;
         else rating = 1;
 
-        await this.prisma.schemePlanMetrics.update({
-          where: { schemePlanId: categoryFunds[i].id },
-          data: { fundRating: rating },
-        });
-
+        const ids = allRatingGroups.get(rating) || [];
+        ids.push(categoryFunds[i].id);
+        allRatingGroups.set(rating, ids);
         totalRated++;
       }
+    }
+
+    // Batch update: 5 queries instead of ~5,823
+    for (const [rating, ids] of allRatingGroups) {
+      await this.prisma.schemePlanMetrics.updateMany({
+        where: { schemePlanId: { in: ids } },
+        data: { fundRating: rating },
+      });
     }
 
     return totalRated;
@@ -331,15 +350,26 @@ export class MetricsCalculatorService {
       const target = new Date(latest.date);
       target.setDate(target.getDate() - daysAgo);
       const targetTime = target.getTime();
+      const tolerance = 20 * 24 * 60 * 60 * 1000;
 
-      // Find closest NAV within 7-day tolerance
+      // Binary search for closest date (history is sorted ascending by navDate)
+      let lo = 0, hi = history.length - 1;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (history[mid].date.getTime() < targetTime) lo = mid + 1;
+        else hi = mid - 1;
+      }
+
+      // Check candidates around insertion point
       let best: NavPoint | null = null;
       let bestDiff = Infinity;
-      for (const p of history) {
-        const diff = Math.abs(p.date.getTime() - targetTime);
-        if (diff < bestDiff && diff <= 7 * 24 * 60 * 60 * 1000) {
-          best = p;
-          bestDiff = diff;
+      for (const idx of [lo - 1, lo, lo + 1]) {
+        if (idx >= 0 && idx < history.length) {
+          const diff = Math.abs(history[idx].date.getTime() - targetTime);
+          if (diff < bestDiff && diff <= tolerance) {
+            best = history[idx];
+            bestDiff = diff;
+          }
         }
       }
       return best;
@@ -380,15 +410,16 @@ export class MetricsCalculatorService {
 
   /**
    * Annualized volatility = std_dev(daily_log_returns) × √252
-   * Requires at least 1 year (252 trading days) of data.
+   * Requires at least 63 trading days (~3 months) of data.
    */
   private calculateVolatility(history: NavPoint[]): number | null {
-    if (history.length < TRADING_DAYS_PER_YEAR) return null;
+    const MIN_DAYS = 63;
+    if (history.length < MIN_DAYS) return null;
 
     const dailyLogReturns = this.getDailyLogReturns(history);
-    if (dailyLogReturns.length < TRADING_DAYS_PER_YEAR) return null;
+    if (dailyLogReturns.length < MIN_DAYS) return null;
 
-    // Use last 252 data points
+    // Use last 252 data points (or whatever is available if less)
     const recent = dailyLogReturns.slice(-TRADING_DAYS_PER_YEAR);
     const stdDev = this.standardDeviation(recent);
 
@@ -400,7 +431,8 @@ export class MetricsCalculatorService {
    */
   private calculateSharpeRatio(history: NavPoint[], volatility: number | null): number | null {
     if (volatility == null || volatility === 0) return null;
-    if (history.length < TRADING_DAYS_PER_YEAR) return null;
+    const MIN_DAYS = 63;
+    if (history.length < MIN_DAYS) return null;
 
     const recent = history.slice(-TRADING_DAYS_PER_YEAR);
     const annualizedReturn = this.annualizedReturnFromNavs(recent[0].nav, recent[recent.length - 1].nav, 1);
@@ -413,10 +445,11 @@ export class MetricsCalculatorService {
    * Only considers negative returns for the denominator.
    */
   private calculateSortinoRatio(history: NavPoint[]): number | null {
-    if (history.length < TRADING_DAYS_PER_YEAR) return null;
+    const MIN_DAYS = 63;
+    if (history.length < MIN_DAYS) return null;
 
     const dailyLogReturns = this.getDailyLogReturns(history);
-    const recent = dailyLogReturns.slice(-TRADING_DAYS_PER_YEAR);
+    const recent = dailyLogReturns.slice(-Math.min(dailyLogReturns.length, TRADING_DAYS_PER_YEAR));
 
     // Daily risk-free rate
     const dailyRf = Math.log(1 + RISK_FREE_RATE) / TRADING_DAYS_PER_YEAR;
@@ -447,7 +480,8 @@ export class MetricsCalculatorService {
     history: NavPoint[],
     benchmarkHistory: NavPoint[],
   ): { alpha: number | null; beta: number | null } {
-    if (history.length < TRADING_DAYS_PER_YEAR || benchmarkHistory.length < TRADING_DAYS_PER_YEAR) {
+    const MIN_DAYS = 63;
+    if (history.length < MIN_DAYS || benchmarkHistory.length < MIN_DAYS) {
       return { alpha: null, beta: null };
     }
 

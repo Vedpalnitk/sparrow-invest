@@ -280,6 +280,7 @@ model SchemePlanNav {
 
   schemePlan SchemePlan @relation(fields: [schemePlanId], references: [id], onDelete: Cascade)
 
+  @@index([navDate])
   @@map("scheme_plan_nav")
 }
 
@@ -331,7 +332,6 @@ model SchemePlanNavHistory {
   schemePlan SchemePlan @relation(fields: [schemePlanId], references: [id], onDelete: Cascade)
 
   @@unique([schemePlanId, navDate])
-  @@index([schemePlanId, navDate(sort: Desc)])
   @@map("scheme_plan_nav_history")
 }
 
@@ -449,6 +449,7 @@ model Folio {
   @@unique([userId, providerId, folioNumber])
   @@index([userId])
   @@index([providerId])
+  @@index([panNumber])
   @@map("folios")
 }
 
@@ -466,6 +467,7 @@ model Holding {
   folio Folio @relation(fields: [folioId], references: [id], onDelete: Cascade)
 
   @@unique([folioId, schemePlanId])
+  @@index([folioId])
   @@map("holdings")
 }
 
@@ -528,7 +530,7 @@ model PersonaMlMapping {
   personaId    String
   modelId      String?
   modelPurpose String // 'classification', 'optimization', 'recommendation'
-  weight       Float    @default(1.0)
+  weight       Decimal  @default(1.0) @db.Decimal(6, 4)
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
 
@@ -565,7 +567,7 @@ model AllocationComponent {
   id                 String   @id @default(uuid())
   strategyId         String
   label              String
-  allocationPercent  Float
+  allocationPercent  Decimal  @db.Decimal(8, 4)
   note               String?
   fundCategoryFilter Json?
   riskLevel          String?
@@ -581,7 +583,7 @@ model RiskConstraint {
   id              String   @id @default(uuid())
   strategyId      String
   constraintType  String
-  constraintValue Float
+  constraintValue Decimal  @db.Decimal(14, 4)
   description     String?
   createdAt       DateTime @default(now())
 
@@ -642,7 +644,7 @@ model AbTest {
   modelId            String
   controlVersionId   String
   treatmentVersionId String
-  trafficSplit       Float     @default(0.5)
+  trafficSplit       Decimal   @default(0.5) @db.Decimal(4, 3)
   status             String    @default("draft")
   startDate          DateTime?
   endDate            DateTime?
@@ -677,14 +679,21 @@ model AbTestResult {
 // USER MANAGEMENT
 // =============================================
 
+enum UserRole {
+  user
+  advisor
+  admin
+  fa_staff
+}
+
 model User {
-  id           String    @id @default(uuid())
-  email        String    @unique
-  phone        String?
-  passwordHash String
-  isActive     Boolean   @default(true)
-  isVerified   Boolean   @default(false)
-  role         String    @default("user")
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  phone               String?
+  passwordHash        String
+  isActive            Boolean   @default(true)
+  isVerified          Boolean   @default(false)
+  role                UserRole  @default(user)
   lastLoginAt         DateTime?
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
@@ -700,47 +709,57 @@ model User {
   folios             Folio[]
 
   // FA Portal Relations
-  advisorClients     FAClient[] @relation("AdvisorClients") // Clients managed by this advisor
-  clientProfile      FAClient?  @relation("ClientUser")     // If user is also an FA client
+  advisorClients FAClient[] @relation("AdvisorClients") // Clients managed by this advisor
+  clientProfile  FAClient?  @relation("ClientUser") // If user is also an FA client
 
   // New Relations (Goals, Points, Portfolio History, etc.)
-  goals              UserGoal[]
-  points             UserPoints?
-  portfolioHistory   UserPortfolioHistory[]
-  taxSummaries       UserTaxSummary[]
-  dividends          DividendRecord[]
-  connectedAccounts  ConnectedBrokerAccount[]
-  advisorProfile     AdvisorProfile?
-  advisorReviews     AdvisorReview[]   @relation("ReviewerReviews")
-  chatSessions       AIChatSession[]
-  actions            UserAction[]
-  notificationPrefs  NotificationPreference[]
-  notificationLogs   NotificationLog[]
-  savedAnalyses      SavedAnalysis[] @relation("AdvisorSavedAnalyses")
-  communications     FACommunicationLog[] @relation("AdvisorCommunications")
-  ownedStaff         FAStaffMember[] @relation("FAStaffOwner")
-  staffProfile       FAStaffMember? @relation("FAStaffUser")
+  goals             UserGoal[]
+  points            UserPoints?
+  portfolioHistory  UserPortfolioHistory[]
+  taxSummaries      UserTaxSummary[]
+  dividends         DividendRecord[]
+  connectedAccounts ConnectedBrokerAccount[]
+  advisorProfile    AdvisorProfile?
+  advisorReviews    AdvisorReview[]          @relation("ReviewerReviews")
+  chatSessions      AIChatSession[]
+  actions           UserAction[]
+  notificationPrefs NotificationPreference[]
+  notificationLogs  NotificationLog[]
+  savedAnalyses     SavedAnalysis[]          @relation("AdvisorSavedAnalyses")
+  communications    FACommunicationLog[]     @relation("AdvisorCommunications")
+  ownedStaff        FAStaffMember[]          @relation("FAStaffOwner")
+  staffProfile      FAStaffMember?           @relation("FAStaffUser")
 
   // Business Management Relations
-  branches           Branch[]
-  commissionRates    CommissionRateMaster[]
-  commissionRecords  CommissionRecord[]
-  brokerageUploads   BrokerageUpload[]
-  aumSnapshots       AUMSnapshot[]
-  crmTasks           CRMTask[]       @relation("TaskAdvisor")
-  crmActivities      CRMActivityLog[] @relation("ActivityAdvisor")
-  complianceRecords  ComplianceRecord[]
-  auditLogs          AuditLog[]
+  branches          Branch[]
+  commissionRates   CommissionRateMaster[]
+  commissionRecords CommissionRecord[]
+  brokerageUploads  BrokerageUpload[]
+  aumSnapshots      AUMSnapshot[]
+  crmTasks          CRMTask[]              @relation("TaskAdvisor")
+  crmActivities     CRMActivityLog[]       @relation("ActivityAdvisor")
+  prospects         Prospect[]             @relation("ProspectAdvisor")
+  complianceRecords ComplianceRecord[]
+  auditLogs         AuditLog[]
 
   // BSE StAR MF Relations
-  bseCredential      BsePartnerCredential?
+  bseCredential BsePartnerCredential?
 
   // NSE NMF Relations
-  nseCredential      NsePartnerCredential?
+  nseCredential NsePartnerCredential?
 
   // CAS Import Relations
-  casImports         CASImport[]
+  casImports CASImport[]
 
+  // Organization & Commission Relations
+  organizationArns      OrganizationArn[]
+  euinCommissionSplits  EuinCommissionSplit[]
+  euinCommissionPayouts EuinCommissionPayout[]
+
+  deletedAt DateTime? @map("deleted_at")
+
+  @@index([isActive])
+  @@index([role])
   @@map("users")
 }
 
@@ -753,10 +772,10 @@ model UserProfile {
   panNumber           String?
   dateOfBirth         DateTime? @db.Date
   goal                String?
-  targetAmount        Float?
+  targetAmount        Decimal?  @db.Decimal(14, 2)
   targetYear          Int?
-  monthlySip          Float?
-  lumpSum             Float?
+  monthlySip          Decimal?  @db.Decimal(14, 2)
+  lumpSum             Decimal?  @db.Decimal(14, 2)
   liquidity           String?
   riskTolerance       String?
   knowledge           String?
@@ -781,13 +800,15 @@ model UserPortfolioSnapshot {
   id                 String   @id @default(uuid())
   userId             String
   snapshotDate       DateTime @db.Date
-  totalValue         Float?
+  totalValue         Decimal? @db.Decimal(14, 2)
   allocationSnapshot Json?
   fundsSnapshot      Json?
   createdAt          DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([snapshotDate])
   @@map("user_portfolio_snapshots")
 }
 
@@ -823,6 +844,7 @@ model ApiLog {
   user User? @relation(fields: [userId], references: [id])
 
   @@index([createdAt])
+  @@index([userId])
   @@map("api_logs")
 }
 
@@ -832,8 +854,8 @@ model PersonaAnalytics {
   personaId       String?
   userCount       Int      @default(0)
   newUsers        Int      @default(0)
-  avgSipAmount    Float?
-  avgTargetAmount Float?
+  avgSipAmount    Decimal? @db.Decimal(14, 2)
+  avgTargetAmount Decimal? @db.Decimal(14, 2)
   createdAt       DateTime @default(now())
 
   @@unique([date, personaId])
@@ -847,7 +869,7 @@ model MlInferenceLog {
   userId        String?
   inputFeatures Json?
   prediction    Json?
-  confidence    Float?
+  confidence    Decimal? @db.Decimal(6, 4)
   latencyMs     Int?
   createdAt     DateTime @default(now())
 
@@ -920,55 +942,56 @@ enum InsurancePolicyStatus {
 }
 
 model FAClient {
-  id           String         @id @default(uuid())
-  advisorId    String         @map("advisor_id")
-  userId       String?        @unique @map("user_id") // Link to User if they have app login
-  name         String
-  email        String
-  phone        String
-  pan          String?
-  dateOfBirth  DateTime?      @map("date_of_birth") @db.Date
-  address      String?
-  city         String?
-  state        String?
-  pincode      String?
-  riskProfile  FARiskProfile  @default(MODERATE) @map("risk_profile")
-  status       FAClientStatus @default(PENDING_KYC)
-  kycStatus    FAKycStatus    @default(PENDING) @map("kyc_status")
-  nomineeName  String?        @map("nominee_name")
-  nomineeRelation String?     @map("nominee_relation")
-  nomineePercent  Int?        @map("nominee_percent")
+  id              String         @id @default(uuid())
+  advisorId       String         @map("advisor_id")
+  userId          String?        @unique @map("user_id") // Link to User if they have app login
+  name            String
+  email           String
+  phone           String
+  pan             String?
+  dateOfBirth     DateTime?      @map("date_of_birth") @db.Date
+  address         String?
+  city            String?
+  state           String?
+  pincode         String?
+  riskProfile     FARiskProfile  @default(MODERATE) @map("risk_profile")
+  status          FAClientStatus @default(PENDING_KYC)
+  kycStatus       FAKycStatus    @default(PENDING) @map("kyc_status")
+  nomineeName     String?        @map("nominee_name")
+  nomineeRelation String?        @map("nominee_relation")
+  nomineePercent  Int?           @map("nominee_percent")
   // Family grouping fields
-  familyGroupId   String?     @map("family_group_id") // UUID to group family members
-  familyRole      String?     @map("family_role") // SELF, SPOUSE, CHILD, PARENT, SIBLING
-  familyHeadId    String?     @map("family_head_id") // Reference to primary family member
-  assignedRmId    String?     @map("assigned_rm_id") // Staff member assigned as RM
-  tags            String[]    @default([])
-  importantDates  Json?       @map("important_dates") // { anniversary: "2025-06-15", ... }
-  lastActiveAt DateTime?      @map("last_active_at")
-  deletedAt    DateTime?      @map("deleted_at")
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
+  familyGroupId   String?        @map("family_group_id") // UUID to group family members
+  familyRole      String?        @map("family_role") // SELF, SPOUSE, CHILD, PARENT, SIBLING
+  familyHeadId    String?        @map("family_head_id") // Reference to primary family member
+  assignedRmId    String?        @map("assigned_rm_id") // Staff member assigned as RM
+  tags            String[]       @default([])
+  importantDates  Json?          @map("important_dates") // { anniversary: "2025-06-15", ... }
+  lastActiveAt    DateTime?      @map("last_active_at")
+  deletedAt       DateTime?      @map("deleted_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
 
-  advisor      User           @relation("AdvisorClients", fields: [advisorId], references: [id])
-  user         User?          @relation("ClientUser", fields: [userId], references: [id])
+  advisor      User            @relation("AdvisorClients", fields: [advisorId], references: [id])
+  user         User?           @relation("ClientUser", fields: [userId], references: [id])
   holdings     FAHolding[]
   transactions FATransaction[]
   sips         FASIP[]
   bankAccounts FABankAccount[]
 
   // New Relations
-  goals            UserGoal[]
-  portfolioHistory UserPortfolioHistory[]
-  dividends        DividendRecord[]
-  savedAnalyses    SavedAnalysis[]
-  communications   FACommunicationLog[] @relation("ClientCommunications")
+  goals             UserGoal[]
+  portfolioHistory  UserPortfolioHistory[]
+  dividends         DividendRecord[]
+  savedAnalyses     SavedAnalysis[]
+  communications    FACommunicationLog[]   @relation("ClientCommunications")
   insurancePolicies InsurancePolicy[]
 
   // Business Management Relations
-  assignedRm       FAStaffMember?   @relation("ClientRM", fields: [assignedRmId], references: [id])
-  crmTasks         CRMTask[]
-  crmActivities    CRMActivityLog[]
+  assignedRm            FAStaffMember?   @relation("ClientRM", fields: [assignedRmId], references: [id])
+  crmTasks              CRMTask[]
+  crmActivities         CRMActivityLog[]
+  convertedFromProspect Prospect?        @relation("ConvertedClient")
 
   // BSE StAR MF Relations
   bseUccRegistration BseUccRegistration?
@@ -981,29 +1004,31 @@ model FAClient {
   nseOrders          NseOrder[]
 
   // CAS Import Relations
-  casImports         CASImport[]
+  casImports CASImport[]
 
   @@unique([advisorId, email])
   @@index([advisorId])
   @@index([status])
   @@index([familyGroupId])
   @@index([assignedRmId])
+  @@index([advisorId, status])
   @@map("fa_clients")
 }
 
 model FABankAccount {
-  id            String  @id @default(uuid())
-  clientId      String  @map("client_id")
-  bankName      String  @map("bank_name")
-  accountNumber String  @map("account_number")
+  id            String    @id @default(uuid())
+  clientId      String    @map("client_id")
+  bankName      String    @map("bank_name")
+  accountNumber String    @map("account_number")
   ifsc          String
-  accountType   String  @default("Savings") @map("account_type") // Savings, Current
-  isPrimary     Boolean @default(false) @map("is_primary")
-  mandateStatus String? @map("mandate_status") // Active, Pending, Expired
+  accountType   String    @default("Savings") @map("account_type") // Savings, Current
+  isPrimary     Boolean   @default(false) @map("is_primary")
+  mandateStatus String?   @map("mandate_status") // Active, Pending, Expired
   deletedAt     DateTime? @map("deleted_at")
 
   client FAClient @relation(fields: [clientId], references: [id], onDelete: Restrict)
 
+  @@index([clientId])
   @@map("fa_bank_accounts")
 }
 
@@ -1012,31 +1037,32 @@ model FABankAccount {
 // =============================================
 
 model FAHolding {
-  id              String   @id @default(uuid())
-  clientId        String   @map("client_id")
-  schemePlanId    String?  @map("scheme_plan_id") // Link to actual scheme
-  fundName        String   @map("fund_name")
-  fundSchemeCode  String   @map("fund_scheme_code")
-  fundCategory    String   @map("fund_category")
-  assetClass      String   @map("asset_class")
-  folioNumber     String   @map("folio_number")
-  units           Decimal  @db.Decimal(14, 4)
-  avgNav          Decimal  @map("avg_nav") @db.Decimal(14, 4)
-  currentNav      Decimal  @map("current_nav") @db.Decimal(14, 4)
-  investedValue   Decimal  @map("invested_value") @db.Decimal(14, 2)
-  currentValue    Decimal  @map("current_value") @db.Decimal(14, 2)
-  absoluteGain    Decimal  @map("absolute_gain") @db.Decimal(14, 2)
-  absoluteGainPct Decimal  @map("absolute_gain_pct") @db.Decimal(8, 4)
-  xirr            Decimal? @db.Decimal(8, 4)
-  lastTxnDate     DateTime @map("last_txn_date") @db.Date
+  id              String    @id @default(uuid())
+  clientId        String    @map("client_id")
+  schemePlanId    String?   @map("scheme_plan_id") // Link to actual scheme
+  fundName        String    @map("fund_name")
+  fundSchemeCode  String    @map("fund_scheme_code")
+  fundCategory    String    @map("fund_category")
+  assetClass      String    @map("asset_class")
+  folioNumber     String    @map("folio_number")
+  units           Decimal   @db.Decimal(14, 4)
+  avgNav          Decimal   @map("avg_nav") @db.Decimal(14, 4)
+  currentNav      Decimal   @map("current_nav") @db.Decimal(14, 4)
+  investedValue   Decimal   @map("invested_value") @db.Decimal(14, 2)
+  currentValue    Decimal   @map("current_value") @db.Decimal(14, 2)
+  absoluteGain    Decimal   @map("absolute_gain") @db.Decimal(14, 2)
+  absoluteGainPct Decimal   @map("absolute_gain_pct") @db.Decimal(8, 4)
+  xirr            Decimal?  @db.Decimal(8, 4)
+  lastTxnDate     DateTime  @map("last_txn_date") @db.Date
   deletedAt       DateTime? @map("deleted_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   client FAClient @relation(fields: [clientId], references: [id], onDelete: Restrict)
 
   @@unique([clientId, folioNumber, fundSchemeCode])
   @@index([clientId])
+  @@index([schemePlanId])
   @@map("fa_holdings")
 }
 
@@ -1079,6 +1105,8 @@ model FATransaction {
   paymentMode    String?             @map("payment_mode") // Net Banking, UPI, NACH, Cheque
   remarks        String?
   sipId          String?             @map("sip_id") // Link to SIP if it's a SIP transaction
+  euin           String?
+  arnNumber      String?             @map("arn_number")
   deletedAt      DateTime?           @map("deleted_at")
   createdAt      DateTime            @default(now()) @map("created_at")
   updatedAt      DateTime            @updatedAt @map("updated_at")
@@ -1089,6 +1117,10 @@ model FATransaction {
   @@index([clientId])
   @@index([status])
   @@index([date])
+  @@index([type])
+  @@index([sipId])
+  @@index([clientId, date(sort: Desc)])
+  @@index([clientId, status])
   @@map("fa_transactions")
 }
 
@@ -1145,6 +1177,8 @@ model FASIP {
   @@index([clientId])
   @@index([status])
   @@index([nextSipDate])
+  @@index([clientId, status])
+  @@index([status, nextSipDate])
   @@map("fa_sips")
 }
 
@@ -1467,8 +1501,10 @@ model ConnectedBrokerAccount {
   status           BrokerConnectionStatus @default(PENDING)
   accountId        String?                @map("account_id")
   lastSyncAt       DateTime?              @map("last_sync_at")
-  accessToken      String?                @map("access_token")
-  refreshToken     String?                @map("refresh_token")
+  accessTokenEnc   String?                @map("access_token_enc")
+  accessTokenIv    String?                @map("access_token_iv")
+  refreshTokenEnc  String?                @map("refresh_token_enc")
+  refreshTokenIv   String?                @map("refresh_token_iv")
   tokenExpiresAt   DateTime?              @map("token_expires_at")
   importedHoldings Boolean                @default(false) @map("imported_holdings")
   createdAt        DateTime               @default(now()) @map("created_at")
@@ -1676,13 +1712,13 @@ enum ComplianceStatus {
 }
 
 model NotificationPreference {
-  id        String              @id @default(uuid())
-  userId    String              @map("user_id")
+  id        String               @id @default(uuid())
+  userId    String               @map("user_id")
   category  NotificationCategory
   channel   NotificationChannel
-  enabled   Boolean             @default(true)
-  createdAt DateTime            @default(now()) @map("created_at")
-  updatedAt DateTime            @updatedAt @map("updated_at")
+  enabled   Boolean              @default(true)
+  createdAt DateTime             @default(now()) @map("created_at")
+  updatedAt DateTime             @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1692,17 +1728,17 @@ model NotificationPreference {
 }
 
 model NotificationLog {
-  id         String             @id @default(uuid())
-  userId     String             @map("user_id")
+  id         String               @id @default(uuid())
+  userId     String               @map("user_id")
   category   NotificationCategory
   channel    NotificationChannel
-  status     NotificationStatus @default(PENDING)
+  status     NotificationStatus   @default(PENDING)
   subject    String?
   body       String?
-  externalId String?            @map("external_id")
+  externalId String?              @map("external_id")
   error      String?
-  sentAt     DateTime?          @map("sent_at")
-  createdAt  DateTime           @default(now()) @map("created_at")
+  sentAt     DateTime?            @map("sent_at")
+  createdAt  DateTime             @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1735,18 +1771,18 @@ model FACommunicationLog {
 }
 
 model FAStaffMember {
-  id           String     @id @default(uuid())
-  ownerId      String     @map("owner_id")
-  staffUserId  String     @unique @map("staff_user_id")
-  displayName  String     @map("display_name")
-  allowedPages String[]   @map("allowed_pages")
-  staffRole    StaffRole  @default(RM) @map("staff_role")
+  id           String    @id @default(uuid())
+  ownerId      String    @map("owner_id")
+  staffUserId  String    @unique @map("staff_user_id")
+  displayName  String    @map("display_name")
+  allowedPages String[]  @map("allowed_pages")
+  staffRole    StaffRole @default(RM) @map("staff_role")
   euin         String?
-  euinExpiry   DateTime?  @map("euin_expiry") @db.Date
-  branchId     String?    @map("branch_id")
-  isActive     Boolean    @default(true) @map("is_active")
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  euinExpiry   DateTime? @map("euin_expiry") @db.Date
+  branchId     String?   @map("branch_id")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   owner     User    @relation("FAStaffOwner", fields: [ownerId], references: [id])
   staffUser User    @relation("FAStaffUser", fields: [staffUserId], references: [id], onDelete: Cascade)
@@ -1756,6 +1792,10 @@ model FAStaffMember {
   assignedClients FAClient[]       @relation("ClientRM")
   assignedTasks   CRMTask[]        @relation("TaskAssignee")
   activityLogs    CRMActivityLog[]
+
+  // Commission Relations
+  commissionSplits  EuinCommissionSplit[]
+  commissionPayouts EuinCommissionPayout[]
 
   @@unique([ownerId, staffUserId])
   @@index([ownerId])
@@ -1824,14 +1864,14 @@ enum AnalysisStatus {
 }
 
 model SavedAnalysis {
-  id             String         @id @default(uuid())
-  advisorId      String         @map("advisor_id")
-  clientId       String         @map("client_id")
-  title          String
-  status         AnalysisStatus @default(DRAFT)
-  latestVersion  Int            @default(1) @map("latest_version")
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
+  id            String         @id @default(uuid())
+  advisorId     String         @map("advisor_id")
+  clientId      String         @map("client_id")
+  title         String
+  status        AnalysisStatus @default(DRAFT)
+  latestVersion Int            @default(1) @map("latest_version")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
 
   advisor  User              @relation("AdvisorSavedAnalyses", fields: [advisorId], references: [id])
   client   FAClient          @relation(fields: [clientId], references: [id], onDelete: Cascade)
@@ -1882,8 +1922,8 @@ model InsurancePolicy {
   createdAt        DateTime              @default(now()) @map("created_at")
   updatedAt        DateTime              @updatedAt @map("updated_at")
 
-  payments         PremiumPayment[]
-  documents        PolicyDocument[]
+  payments  PremiumPayment[]
+  documents PolicyDocument[]
 
   @@index([clientId])
   @@map("insurance_policies")
@@ -1945,19 +1985,19 @@ model Branch {
 // =============================================
 
 model CommissionRateMaster {
-  id               String    @id @default(uuid())
-  advisorId        String    @map("advisor_id")
-  amcId            String    @map("amc_id")
-  schemeCategory   String    @map("scheme_category")
-  trailRatePercent Decimal   @map("trail_rate_percent") @db.Decimal(6, 4)
-  upfrontRatePercent Decimal @default(0) @map("upfront_rate_percent") @db.Decimal(6, 4)
-  effectiveFrom    DateTime  @map("effective_from") @db.Date
-  effectiveTo      DateTime? @map("effective_to") @db.Date
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  id                 String    @id @default(uuid())
+  advisorId          String    @map("advisor_id")
+  amcId              String    @map("amc_id")
+  schemeCategory     String    @map("scheme_category")
+  trailRatePercent   Decimal   @map("trail_rate_percent") @db.Decimal(6, 4)
+  upfrontRatePercent Decimal   @default(0) @map("upfront_rate_percent") @db.Decimal(6, 4)
+  effectiveFrom      DateTime  @map("effective_from") @db.Date
+  effectiveTo        DateTime? @map("effective_to") @db.Date
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
-  advisor  User     @relation(fields: [advisorId], references: [id])
-  amc      Provider @relation(fields: [amcId], references: [id])
+  advisor User     @relation(fields: [advisorId], references: [id])
+  amc     Provider @relation(fields: [amcId], references: [id])
 
   @@index([advisorId])
   @@index([amcId])
@@ -1965,42 +2005,77 @@ model CommissionRateMaster {
 }
 
 model CommissionRecord {
-  id           String           @id @default(uuid())
-  advisorId    String           @map("advisor_id")
-  period       String           // "2026-01", "2026-02", etc.
-  amcId        String           @map("amc_id")
-  aumAmount    Decimal          @default(0) @map("aum_amount") @db.Decimal(16, 2)
-  expectedTrail Decimal         @default(0) @map("expected_trail") @db.Decimal(14, 2)
-  actualTrail  Decimal          @default(0) @map("actual_trail") @db.Decimal(14, 2)
-  status       CommissionStatus @default(EXPECTED)
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
+  id            String           @id @default(uuid())
+  advisorId     String           @map("advisor_id")
+  period        String // "2026-01", "2026-02", etc.
+  amcId         String           @map("amc_id")
+  aumAmount     Decimal          @default(0) @map("aum_amount") @db.Decimal(16, 2)
+  expectedTrail Decimal          @default(0) @map("expected_trail") @db.Decimal(14, 2)
+  actualTrail   Decimal          @default(0) @map("actual_trail") @db.Decimal(14, 2)
+  euin          String?
+  arnNumber     String?          @map("arn_number")
+  reconciledAt  DateTime?        @map("reconciled_at")
+  reconciledBy  String?          @map("reconciled_by")
+  status        CommissionStatus @default(EXPECTED)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
 
   advisor User @relation(fields: [advisorId], references: [id])
 
-  @@unique([advisorId, period, amcId])
+  @@unique([advisorId, period, amcId, arnNumber])
   @@index([advisorId])
   @@index([period])
+  @@index([arnNumber])
   @@map("commission_records")
 }
 
 model BrokerageUpload {
-  id          String                @id @default(uuid())
-  advisorId   String                @map("advisor_id")
-  fileName    String                @map("file_name")
-  fileUrl     String?               @map("file_url")
-  source      BrokerageSource       @default(MANUAL)
-  recordCount Int                   @default(0) @map("record_count")
-  status      BrokerageUploadStatus @default(PENDING)
-  parsedData  Json?                 @map("parsed_data")
-  errorMessage String?              @map("error_message")
-  createdAt   DateTime              @default(now()) @map("created_at")
-  updatedAt   DateTime              @updatedAt @map("updated_at")
+  id             String                @id @default(uuid())
+  advisorId      String                @map("advisor_id")
+  fileName       String                @map("file_name")
+  fileUrl        String?               @map("file_url")
+  source         BrokerageSource       @default(MANUAL)
+  arnNumber      String?               @map("arn_number")
+  totalBrokerage Decimal               @default(0) @map("total_brokerage") @db.Decimal(14, 2)
+  recordCount    Int                   @default(0) @map("record_count")
+  status         BrokerageUploadStatus @default(PENDING)
+  parsedData     Json?                 @map("parsed_data")
+  errorMessage   String?               @map("error_message")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
 
-  advisor User @relation(fields: [advisorId], references: [id])
+  advisor   User                @relation(fields: [advisorId], references: [id])
+  lineItems BrokerageLineItem[]
 
   @@index([advisorId])
+  @@index([status])
   @@map("brokerage_uploads")
+}
+
+model BrokerageLineItem {
+  id              String   @id @default(uuid())
+  uploadId        String   @map("upload_id")
+  amcName         String   @map("amc_name")
+  schemeName      String?  @map("scheme_name")
+  schemeCode      String?  @map("scheme_code")
+  isin            String?
+  folioNo         String?  @map("folio_no")
+  investorName    String?  @map("investor_name")
+  transactionType String?  @map("transaction_type")
+  aum             Decimal  @default(0) @db.Decimal(16, 2)
+  grossCommission Decimal  @default(0) @map("gross_commission") @db.Decimal(14, 4)
+  tds             Decimal  @default(0) @db.Decimal(14, 4)
+  netCommission   Decimal  @default(0) @map("net_commission") @db.Decimal(14, 4)
+  euin            String?
+  arnNumber       String?  @map("arn_number")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  upload BrokerageUpload @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  @@index([uploadId])
+  @@index([amcName])
+  @@index([arnNumber])
+  @@map("brokerage_line_items")
 }
 
 // =============================================
@@ -2110,12 +2185,12 @@ model ComplianceRecord {
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String   @map("user_id")
-  action     String   // CREATE, UPDATE, DELETE, EXECUTE, CANCEL, PAYMENT, LOGIN, REGISTER
+  action     String // CREATE, UPDATE, DELETE, EXECUTE, CANCEL, PAYMENT, LOGIN, REGISTER
   entityType String   @map("entity_type") // FATransaction, FASIP, BseOrder, NseOrder, BsePayment, NsePayment, User, etc.
   entityId   String?  @map("entity_id")
   oldValue   Json?    @map("old_value")
   newValue   Json?    @map("new_value")
-  details    Json?    // Structured audit data (old values, new values, metadata)
+  details    Json? // Structured audit data (old values, new values, metadata)
   ipAddress  String?  @map("ip_address")
   userAgent  String?  @map("user_agent")
   createdAt  DateTime @default(now()) @map("created_at")
@@ -2207,22 +2282,22 @@ enum BsePaymentStatus {
 
 // BSE Partner Credentials (encrypted)
 model BsePartnerCredential {
-  id             String   @id @default(uuid())
-  userId         String   @unique @map("user_id")
-  memberId       String   @map("member_id")
-  userIdBse      String   @map("user_id_bse")
-  passwordEnc    String   @map("password_enc")
-  arn            String
-  euin           String?
-  passKeyEnc     String   @map("pass_key_enc")
-  ivMemberId     String   @map("iv_member_id")
-  ivPassword     String   @map("iv_password")
-  ivPassKey      String   @map("iv_pass_key")
-  isActive       Boolean  @default(true) @map("is_active")
-  lastTestedAt   DateTime? @map("last_tested_at")
-  testStatus     String?  @map("test_status")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id           String    @id @default(uuid())
+  userId       String    @unique @map("user_id")
+  memberId     String    @map("member_id")
+  userIdBse    String    @map("user_id_bse")
+  passwordEnc  String    @map("password_enc")
+  arn          String
+  euin         String?
+  passKeyEnc   String    @map("pass_key_enc")
+  ivMemberId   String    @map("iv_member_id")
+  ivPassword   String    @map("iv_password")
+  ivPassKey    String    @map("iv_pass_key")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastTestedAt DateTime? @map("last_tested_at")
+  testStatus   String?   @map("test_status")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -2231,12 +2306,12 @@ model BsePartnerCredential {
 
 // BSE Session Token Cache
 model BseSessionToken {
-  id           String         @id @default(uuid())
-  userId       String         @map("user_id")
-  sessionType  BseSessionType @map("session_type")
-  token        String
-  expiresAt    DateTime       @map("expires_at")
-  createdAt    DateTime       @default(now()) @map("created_at")
+  id          String         @id @default(uuid())
+  userId      String         @map("user_id")
+  sessionType BseSessionType @map("session_type")
+  token       String
+  expiresAt   DateTime       @map("expires_at")
+  createdAt   DateTime       @default(now()) @map("created_at")
 
   @@unique([userId, sessionType])
   @@index([expiresAt])
@@ -2271,26 +2346,26 @@ model BseUccRegistration {
 
 // BSE Mandate Records
 model BseMandate {
-  id              String          @id @default(uuid())
-  clientId        String          @map("client_id")
-  advisorId       String          @map("advisor_id")
-  mandateId       String?         @unique @map("mandate_id")
-  mandateType     BseMandateType  @map("mandate_type")
+  id              String           @id @default(uuid())
+  clientId        String           @map("client_id")
+  advisorId       String           @map("advisor_id")
+  mandateId       String?          @unique @map("mandate_id")
+  mandateType     BseMandateType   @map("mandate_type")
   status          BseMandateStatus @default(CREATED)
-  amount          Decimal         @db.Decimal(14, 2)
-  bankAccountId   String?         @map("bank_account_id")
-  bankCode        String?         @map("bank_code")
-  startDate       DateTime?       @map("start_date") @db.Date
-  endDate         DateTime?       @map("end_date") @db.Date
+  amount          Decimal          @db.Decimal(14, 2)
+  bankAccountId   String?          @map("bank_account_id")
+  bankCode        String?          @map("bank_code")
+  startDate       DateTime?        @map("start_date") @db.Date
+  endDate         DateTime?        @map("end_date") @db.Date
   umrn            String?
-  authUrl         String?         @map("auth_url")
-  bseResponseCode String?         @map("bse_response_code")
-  bseResponseMsg  String?         @map("bse_response_msg")
-  deletedAt       DateTime?       @map("deleted_at")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
+  authUrl         String?          @map("auth_url")
+  bseResponseCode String?          @map("bse_response_code")
+  bseResponseMsg  String?          @map("bse_response_msg")
+  deletedAt       DateTime?        @map("deleted_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
 
-  client FAClient  @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  client FAClient   @relation(fields: [clientId], references: [id], onDelete: Restrict)
   orders BseOrder[]
 
   @@index([clientId])
@@ -2310,7 +2385,7 @@ model BseOrder {
   orderType         BseOrderType   @map("order_type")
   status            BseOrderStatus @default(CREATED)
   bseOrderNumber    String?        @unique @map("bse_order_number")
-  bseRegistrationNo String?       @map("bse_registration_no")
+  bseRegistrationNo String?        @map("bse_registration_no")
   transCode         String?        @map("trans_code")
   schemeCode        String?        @map("scheme_code")
   schemeName        String?        @map("scheme_name")
@@ -2336,14 +2411,16 @@ model BseOrder {
   bseResponseMsg    String?        @map("bse_response_msg")
   submittedAt       DateTime?      @map("submitted_at")
   allottedAt        DateTime?      @map("allotted_at")
+  euin              String?
+  arnNumber         String?        @map("arn_number")
   deletedAt         DateTime?      @map("deleted_at")
   createdAt         DateTime       @default(now()) @map("created_at")
   updatedAt         DateTime       @updatedAt @map("updated_at")
 
-  client       FAClient       @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  mandate      BseMandate?    @relation(fields: [mandateId], references: [id])
-  payment      BsePayment?
-  childOrders  BseChildOrder[]
+  client      FAClient        @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  mandate     BseMandate?     @relation(fields: [mandateId], references: [id])
+  payment     BsePayment?
+  childOrders BseChildOrder[]
 
   @@index([clientId])
   @@index([advisorId])
@@ -2351,25 +2428,27 @@ model BseOrder {
   @@index([orderType])
   @@index([transactionId])
   @@index([sipId])
+  @@index([advisorId, status])
+  @@index([createdAt])
   @@map("bse_orders")
 }
 
 // BSE Child Order (SIP/XSIP/STP/SWP installments)
 model BseChildOrder {
-  id              String   @id @default(uuid())
-  orderId         String   @map("order_id")
-  installmentNo   Int      @map("installment_no")
-  orderDate       DateTime @map("order_date") @db.Date
-  orderNumber     String?  @map("order_number")
-  amount          Decimal? @db.Decimal(14, 2)
-  units           Decimal? @db.Decimal(14, 4)
-  nav             Decimal? @db.Decimal(14, 4)
+  id              String    @id @default(uuid())
+  orderId         String    @map("order_id")
+  installmentNo   Int       @map("installment_no")
+  orderDate       DateTime  @map("order_date") @db.Date
+  orderNumber     String?   @map("order_number")
+  amount          Decimal?  @db.Decimal(14, 2)
+  units           Decimal?  @db.Decimal(14, 4)
+  nav             Decimal?  @db.Decimal(14, 4)
   status          String?
-  bseResponseCode String?  @map("bse_response_code")
-  bseResponseMsg  String?  @map("bse_response_msg")
+  bseResponseCode String?   @map("bse_response_code")
+  bseResponseMsg  String?   @map("bse_response_msg")
   deletedAt       DateTime? @map("deleted_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   order BseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -2418,41 +2497,42 @@ model BseApiLog {
 
   @@index([advisorId, createdAt(sort: Desc)])
   @@index([apiName])
+  @@index([createdAt])
   @@map("bse_api_logs")
 }
 
 // BSE Scheme Master (reference data)
 model BseSchemeMaster {
-  id              String   @id @default(uuid())
-  schemeCode      String   @unique @map("scheme_code")
-  rtaSchemeCode   String?  @map("rta_scheme_code")
-  isin            String?
-  amcCode         String?  @map("amc_code")
-  schemeName      String   @map("scheme_name")
-  schemeType      String?  @map("scheme_type")
-  schemePlan      String?  @map("scheme_plan")
-  schemeOption     String?  @map("scheme_option")
-  purchaseAllowed Boolean  @default(false) @map("purchase_allowed")
-  redemptionAllowed Boolean @default(false) @map("redemption_allowed")
-  sipAllowed      Boolean  @default(false) @map("sip_allowed")
-  stpAllowed      Boolean  @default(false) @map("stp_allowed")
-  swpAllowed      Boolean  @default(false) @map("swp_allowed")
-  switchAllowed   Boolean  @default(false) @map("switch_allowed")
-  minPurchaseAmt  Decimal? @map("min_purchase_amt") @db.Decimal(14, 2)
-  maxPurchaseAmt  Decimal? @map("max_purchase_amt") @db.Decimal(14, 2)
-  purchaseMultiple Decimal? @map("purchase_multiple") @db.Decimal(14, 2)
-  minRedemptionAmt Decimal? @map("min_redemption_amt") @db.Decimal(14, 2)
-  minSipAmt       Decimal? @map("min_sip_amt") @db.Decimal(14, 2)
-  maxSipAmt       Decimal? @map("max_sip_amt") @db.Decimal(14, 2)
-  sipDates        String?  @map("sip_dates")
-  sipFrequencies  String?  @map("sip_frequencies")
-  startDate       DateTime? @map("start_date") @db.Date
-  endDate         DateTime? @map("end_date") @db.Date
-  exitLoad        String?  @map("exit_load")
-  lockInPeriod    String?  @map("lock_in_period")
-  lastSyncedAt    DateTime? @map("last_synced_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  schemeCode        String    @unique @map("scheme_code")
+  rtaSchemeCode     String?   @map("rta_scheme_code")
+  isin              String?
+  amcCode           String?   @map("amc_code")
+  schemeName        String    @map("scheme_name")
+  schemeType        String?   @map("scheme_type")
+  schemePlan        String?   @map("scheme_plan")
+  schemeOption      String?   @map("scheme_option")
+  purchaseAllowed   Boolean   @default(false) @map("purchase_allowed")
+  redemptionAllowed Boolean   @default(false) @map("redemption_allowed")
+  sipAllowed        Boolean   @default(false) @map("sip_allowed")
+  stpAllowed        Boolean   @default(false) @map("stp_allowed")
+  swpAllowed        Boolean   @default(false) @map("swp_allowed")
+  switchAllowed     Boolean   @default(false) @map("switch_allowed")
+  minPurchaseAmt    Decimal?  @map("min_purchase_amt") @db.Decimal(14, 2)
+  maxPurchaseAmt    Decimal?  @map("max_purchase_amt") @db.Decimal(14, 2)
+  purchaseMultiple  Decimal?  @map("purchase_multiple") @db.Decimal(14, 2)
+  minRedemptionAmt  Decimal?  @map("min_redemption_amt") @db.Decimal(14, 2)
+  minSipAmt         Decimal?  @map("min_sip_amt") @db.Decimal(14, 2)
+  maxSipAmt         Decimal?  @map("max_sip_amt") @db.Decimal(14, 2)
+  sipDates          String?   @map("sip_dates")
+  sipFrequencies    String?   @map("sip_frequencies")
+  startDate         DateTime? @map("start_date") @db.Date
+  endDate           DateTime? @map("end_date") @db.Date
+  exitLoad          String?   @map("exit_load")
+  lockInPeriod      String?   @map("lock_in_period")
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@index([amcCode])
   @@index([isin])
@@ -2472,8 +2552,8 @@ enum CASImportStatus {
 }
 
 enum CASImportContext {
-  SELF       // Self-service user importing own portfolio
-  FA_CLIENT  // FA importing for a client
+  SELF // Self-service user importing own portfolio
+  FA_CLIENT // FA importing for a client
 }
 
 model CASImport {
@@ -2503,14 +2583,14 @@ model CASImport {
 }
 
 model BseBankMaster {
-  id            String  @id @default(uuid())
-  bankCode      String  @unique @map("bank_code")
-  bankName      String  @map("bank_name")
-  directAllowed Boolean @default(false) @map("direct_allowed")
-  nodalAllowed  Boolean @default(false) @map("nodal_allowed")
-  neftAllowed   Boolean @default(false) @map("neft_allowed")
-  upiAllowed    Boolean @default(false) @map("upi_allowed")
-  isActive      Boolean @default(true) @map("is_active")
+  id            String   @id @default(uuid())
+  bankCode      String   @unique @map("bank_code")
+  bankName      String   @map("bank_name")
+  directAllowed Boolean  @default(false) @map("direct_allowed")
+  nodalAllowed  Boolean  @default(false) @map("nodal_allowed")
+  neftAllowed   Boolean  @default(false) @map("neft_allowed")
+  upiAllowed    Boolean  @default(false) @map("upi_allowed")
+  isActive      Boolean  @default(true) @map("is_active")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
@@ -2551,6 +2631,7 @@ enum NseOrderType {
 
 enum NseOrderStatus {
   CREATED
+  QUEUED
   SUBMITTED
   TWO_FA_PENDING
   AUTH_PENDING
@@ -2603,20 +2684,20 @@ enum NseSystematicStatus {
 
 // NSE Partner Credentials (encrypted)
 model NsePartnerCredential {
-  id                String   @id @default(uuid())
-  userId            String   @unique @map("user_id")
-  memberId          String   @map("member_id")
-  loginUserId       String   @map("login_user_id")
-  apiSecretEnc      String   @map("api_secret_enc")
-  memberLicenseKeyEnc String @map("member_license_key_enc")
-  ivApiSecret       String   @map("iv_api_secret")
-  ivMemberLicenseKey String  @map("iv_member_license_key")
-  ipWhitelist       String[] @default([]) @map("ip_whitelist")
-  isActive          Boolean  @default(true) @map("is_active")
-  lastTestedAt      DateTime? @map("last_tested_at")
-  testStatus        String?  @map("test_status")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                  String    @id @default(uuid())
+  userId              String    @unique @map("user_id")
+  memberId            String    @map("member_id")
+  loginUserId         String    @map("login_user_id")
+  apiSecretEnc        String    @map("api_secret_enc")
+  memberLicenseKeyEnc String    @map("member_license_key_enc")
+  ivApiSecret         String    @map("iv_api_secret")
+  ivMemberLicenseKey  String    @map("iv_member_license_key")
+  ipWhitelist         String[]  @default([]) @map("ip_whitelist")
+  isActive            Boolean   @default(true) @map("is_active")
+  lastTestedAt        DateTime? @map("last_tested_at")
+  testStatus          String?   @map("test_status")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -2672,7 +2753,7 @@ model NseMandate {
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
 
-  client FAClient    @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  client FAClient   @relation(fields: [clientId], references: [id], onDelete: Restrict)
   orders NseOrder[]
 
   @@index([clientId])
@@ -2683,64 +2764,68 @@ model NseMandate {
 
 // NSE Orders (Purchase, Redemption, Switch)
 model NseOrder {
-  id                String         @id @default(uuid())
-  clientId          String         @map("client_id")
-  advisorId         String         @map("advisor_id")
-  transactionId     String?        @map("transaction_id")
-  mandateId         String?        @map("mandate_id")
-  orderType         NseOrderType   @map("order_type")
-  status            NseOrderStatus @default(CREATED)
-  nseOrderId        String?        @unique @map("nse_order_id")
-  schemeCode        String?        @map("scheme_code")
-  schemeName        String?        @map("scheme_name")
-  amount            Decimal?       @db.Decimal(14, 2)
-  units             Decimal?       @db.Decimal(14, 4)
-  nav               Decimal?       @db.Decimal(14, 4)
-  allottedUnits     Decimal?       @map("allotted_units") @db.Decimal(14, 4)
-  allottedNav       Decimal?       @map("allotted_nav") @db.Decimal(14, 4)
-  allottedAmount    Decimal?       @map("allotted_amount") @db.Decimal(14, 2)
-  folioNumber       String?        @map("folio_number")
-  dematPhysical     String?        @map("demat_physical")
-  switchSchemeCode  String?        @map("switch_scheme_code")
-  switchSchemeName  String?        @map("switch_scheme_name")
-  nseResponseCode   String?        @map("nse_response_code")
-  nseResponseMsg    String?        @map("nse_response_msg")
-  submittedAt       DateTime?      @map("submitted_at")
-  allottedAt        DateTime?      @map("allotted_at")
-  deletedAt         DateTime?      @map("deleted_at")
-  createdAt         DateTime       @default(now()) @map("created_at")
-  updatedAt         DateTime       @updatedAt @map("updated_at")
+  id               String         @id @default(uuid())
+  clientId         String         @map("client_id")
+  advisorId        String         @map("advisor_id")
+  transactionId    String?        @map("transaction_id")
+  mandateId        String?        @map("mandate_id")
+  orderType        NseOrderType   @map("order_type")
+  status           NseOrderStatus @default(CREATED)
+  nseOrderId       String?        @unique @map("nse_order_id")
+  schemeCode       String?        @map("scheme_code")
+  schemeName       String?        @map("scheme_name")
+  amount           Decimal?       @db.Decimal(14, 2)
+  units            Decimal?       @db.Decimal(14, 4)
+  nav              Decimal?       @db.Decimal(14, 4)
+  allottedUnits    Decimal?       @map("allotted_units") @db.Decimal(14, 4)
+  allottedNav      Decimal?       @map("allotted_nav") @db.Decimal(14, 4)
+  allottedAmount   Decimal?       @map("allotted_amount") @db.Decimal(14, 2)
+  folioNumber      String?        @map("folio_number")
+  dematPhysical    String?        @map("demat_physical")
+  switchSchemeCode String?        @map("switch_scheme_code")
+  switchSchemeName String?        @map("switch_scheme_name")
+  nseResponseCode  String?        @map("nse_response_code")
+  nseResponseMsg   String?        @map("nse_response_msg")
+  submittedAt      DateTime?      @map("submitted_at")
+  allottedAt       DateTime?      @map("allotted_at")
+  euin             String?
+  arnNumber        String?        @map("arn_number")
+  deletedAt        DateTime?      @map("deleted_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
 
-  client       FAClient       @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  mandate      NseMandate?    @relation(fields: [mandateId], references: [id])
-  payment      NsePayment?
-  childOrders  NseChildOrder[]
+  client      FAClient        @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  mandate     NseMandate?     @relation(fields: [mandateId], references: [id])
+  payment     NsePayment?
+  childOrders NseChildOrder[]
 
   @@index([clientId])
   @@index([advisorId])
   @@index([status])
   @@index([orderType])
   @@index([transactionId])
+  @@index([advisorId, status])
+  @@index([createdAt])
   @@map("nse_orders")
 }
 
 // NSE Child Order (SIP/XSIP installment records)
 model NseChildOrder {
-  id              String   @id @default(uuid())
-  orderId         String   @map("order_id")
-  registrationId  String?  @map("registration_id")
-  installmentNo   Int      @map("installment_no")
-  orderDate       DateTime @map("order_date") @db.Date
-  orderNumber     String?  @map("order_number")
-  amount          Decimal? @db.Decimal(14, 2)
-  units           Decimal? @db.Decimal(14, 4)
-  nav             Decimal? @db.Decimal(14, 4)
+  id              String    @id @default(uuid())
+  orderId         String    @map("order_id")
+  registrationId  String?   @map("registration_id")
+  installmentNo   Int       @map("installment_no")
+  orderDate       DateTime  @map("order_date") @db.Date
+  orderNumber     String?   @map("order_number")
+  amount          Decimal?  @db.Decimal(14, 2)
+  units           Decimal?  @db.Decimal(14, 4)
+  nav             Decimal?  @db.Decimal(14, 4)
   status          String?
-  nseResponseCode String?  @map("nse_response_code")
-  nseResponseMsg  String?  @map("nse_response_msg")
+  nseResponseCode String?   @map("nse_response_code")
+  nseResponseMsg  String?   @map("nse_response_msg")
   deletedAt       DateTime? @map("deleted_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   order NseOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -2830,43 +2915,195 @@ model NseApiLog {
 
   @@index([advisorId, createdAt(sort: Desc)])
   @@index([apiName])
+  @@index([createdAt])
   @@map("nse_api_logs")
 }
 
 // NSE Scheme Master (reference data)
 model NseSchemeMaster {
-  id              String   @id @default(uuid())
-  schemeCode      String   @unique @map("scheme_code")
-  isin            String?
-  amcCode         String?  @map("amc_code")
-  schemeName      String   @map("scheme_name")
-  schemeType      String?  @map("scheme_type")
-  schemePlan      String?  @map("scheme_plan")
-  schemeOption    String?  @map("scheme_option")
-  purchaseAllowed Boolean  @default(false) @map("purchase_allowed")
-  redemptionAllowed Boolean @default(false) @map("redemption_allowed")
-  sipAllowed      Boolean  @default(false) @map("sip_allowed")
-  stpAllowed      Boolean  @default(false) @map("stp_allowed")
-  swpAllowed      Boolean  @default(false) @map("swp_allowed")
-  switchAllowed   Boolean  @default(false) @map("switch_allowed")
-  minPurchaseAmt  Decimal? @map("min_purchase_amt") @db.Decimal(14, 2)
-  maxPurchaseAmt  Decimal? @map("max_purchase_amt") @db.Decimal(14, 2)
-  purchaseMultiple Decimal? @map("purchase_multiple") @db.Decimal(14, 2)
-  minRedemptionAmt Decimal? @map("min_redemption_amt") @db.Decimal(14, 2)
-  minSipAmt       Decimal? @map("min_sip_amt") @db.Decimal(14, 2)
-  maxSipAmt       Decimal? @map("max_sip_amt") @db.Decimal(14, 2)
-  sipDates        String?  @map("sip_dates")
-  sipFrequencies  String?  @map("sip_frequencies")
-  startDate       DateTime? @map("start_date") @db.Date
-  endDate         DateTime? @map("end_date") @db.Date
-  exitLoad        String?  @map("exit_load")
-  lockInPeriod    String?  @map("lock_in_period")
-  lastSyncedAt    DateTime? @map("last_synced_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  schemeCode        String    @unique @map("scheme_code")
+  isin              String?
+  amcCode           String?   @map("amc_code")
+  schemeName        String    @map("scheme_name")
+  schemeType        String?   @map("scheme_type")
+  schemePlan        String?   @map("scheme_plan")
+  schemeOption      String?   @map("scheme_option")
+  purchaseAllowed   Boolean   @default(false) @map("purchase_allowed")
+  redemptionAllowed Boolean   @default(false) @map("redemption_allowed")
+  sipAllowed        Boolean   @default(false) @map("sip_allowed")
+  stpAllowed        Boolean   @default(false) @map("stp_allowed")
+  swpAllowed        Boolean   @default(false) @map("swp_allowed")
+  switchAllowed     Boolean   @default(false) @map("switch_allowed")
+  minPurchaseAmt    Decimal?  @map("min_purchase_amt") @db.Decimal(14, 2)
+  maxPurchaseAmt    Decimal?  @map("max_purchase_amt") @db.Decimal(14, 2)
+  purchaseMultiple  Decimal?  @map("purchase_multiple") @db.Decimal(14, 2)
+  minRedemptionAmt  Decimal?  @map("min_redemption_amt") @db.Decimal(14, 2)
+  minSipAmt         Decimal?  @map("min_sip_amt") @db.Decimal(14, 2)
+  maxSipAmt         Decimal?  @map("max_sip_amt") @db.Decimal(14, 2)
+  sipDates          String?   @map("sip_dates")
+  sipFrequencies    String?   @map("sip_frequencies")
+  startDate         DateTime? @map("start_date") @db.Date
+  endDate           DateTime? @map("end_date") @db.Date
+  exitLoad          String?   @map("exit_load")
+  lockInPeriod      String?   @map("lock_in_period")
+  lastSyncedAt      DateTime? @map("last_synced_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   @@index([amcCode])
   @@index([isin])
   @@index([schemeName])
   @@map("nse_scheme_master")
+}
+
+// =============================================
+// PROSPECTS / SALES PIPELINE
+// =============================================
+
+enum ProspectStage {
+  DISCOVERY
+  ANALYSIS
+  PROPOSAL
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum LeadSource {
+  REFERRAL
+  WEBSITE
+  LINKEDIN
+  EVENT
+  COLD_CALL
+  SOCIAL_MEDIA
+  OTHER
+}
+
+model Prospect {
+  id                String        @id @default(uuid())
+  advisorId         String        @map("advisor_id")
+  name              String
+  email             String
+  phone             String
+  potentialAum      Decimal       @default(0) @map("potential_aum") @db.Decimal(14, 2)
+  stage             ProspectStage @default(DISCOVERY)
+  source            LeadSource    @default(OTHER)
+  notes             String?
+  referredBy        String?       @map("referred_by")
+  nextAction        String?       @map("next_action")
+  nextActionDate    DateTime?     @map("next_action_date") @db.Date
+  convertedClientId String?       @unique @map("converted_client_id")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  advisor         User                  @relation("ProspectAdvisor", fields: [advisorId], references: [id])
+  convertedClient FAClient?             @relation("ConvertedClient", fields: [convertedClientId], references: [id])
+  meetingNotes    ProspectMeetingNote[]
+
+  @@index([advisorId, stage])
+  @@index([advisorId, createdAt(sort: Desc)])
+  @@map("prospects")
+}
+
+model ProspectMeetingNote {
+  id          String   @id @default(uuid())
+  prospectId  String   @map("prospect_id")
+  title       String
+  content     String
+  meetingType String   @map("meeting_type")
+  meetingDate DateTime @map("meeting_date") @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId])
+  @@map("prospect_meeting_notes")
+}
+
+// =============================================
+// ADMIN - SYSTEM SETTINGS
+// =============================================
+
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedBy String?  @map("updated_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_settings")
+}
+
+// =============================================
+// ORGANIZATION - MULTI-ARN SUPPORT
+// =============================================
+
+model OrganizationArn {
+  id        String   @id @default(uuid())
+  advisorId String   @map("advisor_id")
+  arnNumber String   @map("arn_number")
+  label     String?
+  isDefault Boolean  @default(false) @map("is_default")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  advisor User @relation(fields: [advisorId], references: [id])
+
+  @@unique([advisorId, arnNumber])
+  @@index([advisorId])
+  @@map("organization_arns")
+}
+
+// =============================================
+// EUIN COMMISSION SHARING
+// =============================================
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+  DISPUTED
+}
+
+model EuinCommissionSplit {
+  id            String    @id @default(uuid())
+  advisorId     String    @map("advisor_id")
+  staffMemberId String    @map("staff_member_id")
+  splitPercent  Decimal   @map("split_percent") @db.Decimal(5, 2)
+  effectiveFrom DateTime  @map("effective_from") @db.Date
+  effectiveTo   DateTime? @map("effective_to") @db.Date
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  advisor     User          @relation(fields: [advisorId], references: [id])
+  staffMember FAStaffMember @relation(fields: [staffMemberId], references: [id])
+
+  @@index([advisorId])
+  @@index([staffMemberId])
+  @@map("euin_commission_splits")
+}
+
+model EuinCommissionPayout {
+  id              String       @id @default(uuid())
+  advisorId       String       @map("advisor_id")
+  staffMemberId   String       @map("staff_member_id")
+  euin            String
+  period          String
+  grossCommission Decimal      @map("gross_commission") @db.Decimal(14, 2)
+  splitPercent    Decimal      @map("split_percent") @db.Decimal(5, 2)
+  payoutAmount    Decimal      @map("payout_amount") @db.Decimal(14, 2)
+  status          PayoutStatus @default(PENDING)
+  paidAt          DateTime?    @map("paid_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  advisor     User          @relation(fields: [advisorId], references: [id])
+  staffMember FAStaffMember @relation(fields: [staffMemberId], references: [id])
+
+  @@unique([advisorId, staffMemberId, period])
+  @@index([advisorId])
+  @@index([staffMemberId])
+  @@map("euin_commission_payouts")
 }
